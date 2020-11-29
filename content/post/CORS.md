@@ -7,6 +7,9 @@ tags = [
     "CORS",
     "XMLHttpRequest",
 ]
+categories = [
+    "WEB"
+]
 +++
 
 CORS

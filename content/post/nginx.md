@@ -8,6 +8,9 @@ tags = [
     "apache",
     "event-driven"
 ]
+categories= [
+    "WEB"
+]
 +++
 nginx 란?
 

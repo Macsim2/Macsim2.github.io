@@ -8,6 +8,9 @@ tags = [
     "modulation",
     "wireless communication"
 ]
+categories = [
+  "Daily"
+]
 +++
 
 얼마전 친구와 카레를 먹으러 간날 생긴 일이다. 카레를 먹던 친구는 나에게 물었다.

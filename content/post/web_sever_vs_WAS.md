@@ -7,6 +7,9 @@ tags = [
     "Web Server",
     "WAS",
 ]
+categories = [
+    "WEB"
+]
 aliases = ["migrate-from-jekyl"]
 +++
 # Web Server vs WAS(Web Application Server)
