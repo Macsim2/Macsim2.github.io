@@ -1,6 +1,6 @@
 [submodule "public"]
 	path = public
-	url = https://github.com/Macsim2/Macsim2.github.io
+	url = https://github.com/Macsim2/Macsim2.github.io.git
 	branch = master
 [submodule "hugo-clarity"]
 	path = hugo-clarity
