@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>apache on Clarity</title>
+    <link>https://macsim2.github.io/tags/apache/</link>
+    <description>Recent content in apache on Clarity</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>Copyright © 2008–2018, Steve Francia and the Hugo Authors; all rights reserved.</copyright>
+    <lastBuildDate>Sun, 01 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/apache/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>nginx</title>
+      <link>https://macsim2.github.io/post/nginx/</link>
+      <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/post/nginx/</guid>
+      <description>&lt;p&gt;nginx 란?&lt;/p&gt;
+&lt;p&gt;nginx란 reverse proxy, load balancer, mail proxy and HTTP cache 등으로 사용되는 웹 서버이다.&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

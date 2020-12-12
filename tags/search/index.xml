@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Search on Clarity</title>
+    <link>https://macsim2.github.io/tags/search/</link>
+    <description>Recent content in Search on Clarity</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>Copyright © 2008–2018, Steve Francia and the Hugo Authors; all rights reserved.</copyright>
+    <lastBuildDate>Sun, 29 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/search/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Binary Search</title>
+      <link>https://macsim2.github.io/post/binary_search/</link>
+      <pubDate>Sun, 29 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/post/binary_search/</guid>
+      <description>&lt;p&gt;오늘은 Binary Search(이분 검색)에 대해서 알아보고자 한다.&lt;/p&gt;
+&lt;p&gt;이전에 검색에 대해 간단한 convention을 알아보자.&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
