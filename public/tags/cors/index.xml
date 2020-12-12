@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>CORS on Clarity</title>
+    <link>https://macsim2.github.io/tags/cors/</link>
+    <description>Recent content in CORS on Clarity</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>Copyright © 2008–2018, Steve Francia and the Hugo Authors; all rights reserved.</copyright>
+    <lastBuildDate>Sat, 14 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/cors/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CORS</title>
+      <link>https://macsim2.github.io/post/cors/</link>
+      <pubDate>Sat, 14 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/post/cors/</guid>
+      <description>CORS
+쓸데없이 계속 떠드는 글 안보기 
+하루는 어줍짢게 html과 그에 딸린 javascript 파일을 코딩하고 있을 때다. 왠지 익숙한 문구가 보였다. 브라우저 console탭에서 보이는 아래와 같은 메세지가 보였다.
+ Access to XMLHttpRequest at &amp;lsquo;~~~&amp;rsquo; from origin &amp;lsquo;~~~&amp;rsquo; has been blocked by CORS policy: No &amp;lsquo;Access-Control-Allow-Origin&amp;rsquo; header is present on the requested resource.
+ 이전에는 어떻게 대처했는지 기억도 잘 안나고 쉽게 문제가 해결된 것 같았다. 그런데 이번에는 CORS 문제가 아니었던 것 같았는데 이런 오류가 보였다.</description>
+    </item>
+    
+  </channel>
+</rss>

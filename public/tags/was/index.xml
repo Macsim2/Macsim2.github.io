@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>WAS on Clarity</title>
+    <link>https://macsim2.github.io/tags/was/</link>
+    <description>Recent content in WAS on Clarity</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>Copyright © 2008–2018, Steve Francia and the Hugo Authors; all rights reserved.</copyright>
+    <lastBuildDate>Sun, 22 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/was/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Web Server vs WAS</title>
+      <link>https://macsim2.github.io/post/web_sever_vs_was/</link>
+      <pubDate>Sun, 22 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/post/web_sever_vs_was/</guid>
+      <description>Web Server vs WAS(Web Application Server) 이전부터 좀 처럼 머리속에 안들어오는 내용이 있다. 따지면 그런것들이 많지만 오늘은 간단하게나마 기억할 수 있도록 기록을 남기려 한다.
+그 주인공은 바로 Web Server 와 WAS(Web application Server)이다. 웹 쪽에서 꽤 자주 등장하는 단어들인데 명확한 개념을 모르고 넘어간다는 점이 걸렸다.
+오늘은 이 두 개념과 기능 차이점만 간단하게 나열해보자..
+   Web Server 는 HTTP를 통해 웹 브라우저에서 요청하는 html 문서나 오브젝트(ex image file)을 전송 해주는 서비스 프로그램을 말한다.</description>
+    </item>
+    
+  </channel>
+</rss>
