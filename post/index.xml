@@ -8,62 +8,6 @@
     <copyright>Copyright © 2008–2018, Steve Francia and the Hugo Authors; all rights reserved.</copyright>
     <lastBuildDate>Mon, 11 Mar 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Binary Search</title>
-      <link>https://macsim2.github.io/post/binary_search/</link>
-      <pubDate>Sun, 29 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/post/binary_search/</guid>
-      <description>&lt;p&gt;오늘은 Binary Search(이분 검색)에 대해서 알아보고자 한다.&lt;/p&gt;
-&lt;p&gt;이전에 검색에 대해 간단한 convention을 알아보자.&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title>Web Server vs WAS</title>
-      <link>https://macsim2.github.io/post/web_sever_vs_was/</link>
-      <pubDate>Sun, 22 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/post/web_sever_vs_was/</guid>
-      <description>Web Server vs WAS(Web Application Server) 이전부터 좀 처럼 머리속에 안들어오는 내용이 있다. 따지면 그런것들이 많지만 오늘은 간단하게나마 기억할 수 있도록 기록을 남기려 한다.
-그 주인공은 바로 Web Server 와 WAS(Web application Server)이다. 웹 쪽에서 꽤 자주 등장하는 단어들인데 명확한 개념을 모르고 넘어간다는 점이 걸렸다.
-오늘은 이 두 개념과 기능 차이점만 간단하게 나열해보자..
-   Web Server 는 HTTP를 통해 웹 브라우저에서 요청하는 html 문서나 오브젝트(ex image file)을 전송 해주는 서비스 프로그램을 말한다.</description>
-    </item>
-    
-    <item>
-      <title>CORS</title>
-      <link>https://macsim2.github.io/post/cors/</link>
-      <pubDate>Sat, 14 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/post/cors/</guid>
-      <description>CORS
-쓸데없이 계속 떠드는 글 안보기 
-하루는 어줍짢게 html과 그에 딸린 javascript 파일을 코딩하고 있을 때다. 왠지 익숙한 문구가 보였다. 브라우저 console탭에서 보이는 아래와 같은 메세지가 보였다.
- Access to XMLHttpRequest at &amp;lsquo;~~~&amp;rsquo; from origin &amp;lsquo;~~~&amp;rsquo; has been blocked by CORS policy: No &amp;lsquo;Access-Control-Allow-Origin&amp;rsquo; header is present on the requested resource.
- 이전에는 어떻게 대처했는지 기억도 잘 안나고 쉽게 문제가 해결된 것 같았다. 그런데 이번에는 CORS 문제가 아니었던 것 같았는데 이런 오류가 보였다.</description>
-    </item>
-    
-    <item>
-      <title>wireless communication</title>
-      <link>https://macsim2.github.io/post/wireless_communication/</link>
-      <pubDate>Wed, 11 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/post/wireless_communication/</guid>
-      <description>&lt;p&gt;얼마전 친구와 카레를 먹으러 간날 생긴 일이다. 카레를 먹던 친구는 나에게 물었다.
-카카오톡도 통신중에 1bit이라도 틀릴 수 있지 않나..?
-100%란 없을텐데 어떻게 데이터 신뢰성을 보장할 수 있나?&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title>nginx</title>
-      <link>https://macsim2.github.io/post/nginx/</link>
-      <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/post/nginx/</guid>
-      <description>&lt;p&gt;nginx 란?&lt;/p&gt;
-&lt;p&gt;nginx란 reverse proxy, load balancer, mail proxy and HTTP cache 등으로 사용되는 웹 서버이다.&lt;/p&gt;</description>
-    </item>
-    
-    <item>
       <title>Markdown Syntax Guide</title>
       <link>https://macsim2.github.io/post/markdown-syntax/</link>
       <pubDate>Mon, 11 Mar 2019 00:00:00 +0000</pubDate>
