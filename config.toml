@@ -39,7 +39,7 @@ series = "series"
 
 [params]
 author = "macsim"
-introDescription = "Technologist, perpetual student, teacher, continual incremental improvement."
+introDescription = "Developer for continuous incremental improvement."
 # description = "" # set your site's description here. will be use for home page content meta tags (seo). Alternatively set this description in your homepage content file i.e content/_index.md. Whatever is set in the latter will take precedence
 
 # Google analytics Id

@@ -1,5 +1,5 @@
 [[main]]
-  name = "Home"
+  name = "Posts"
   url = "/"
   weight = -110
 
@@ -9,8 +9,9 @@
   weight = -109
 
 #####################################
-### url 위치 기준 ~/hugo/content/ ###
+### url 위치 기준 ~/hugo/public/ ####
 #####################################
+
 # Submenus are done this way: parent -> identifier
 [[main]]
   name = "Links"
