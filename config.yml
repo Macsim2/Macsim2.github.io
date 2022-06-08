@@ -23,8 +23,6 @@ languages:
         taxonomies:
           category: categories
           tag: tags
-          search: search
-          archive: archives
           series: series
         menu:
             main:
