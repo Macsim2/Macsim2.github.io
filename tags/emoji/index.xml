@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>emoji on Clarity</title>
+    <title>emoji on PaperMod</title>
     <link>https://macsim2.github.io/tags/emoji/</link>
-    <description>Recent content in emoji on Clarity</description>
+    <description>Recent content in emoji on PaperMod</description>
+    <image>
+      <url>https://macsim2.github.io/papermod-cover.png</url>
+      <link>https://macsim2.github.io/papermod-cover.png</link>
+    </image>
     <generator>Hugo -- gohugo.io</generator>
-    <copyright>Copyright © 2008–2018, Steve Francia and the Hugo Authors; all rights reserved.</copyright>
     <lastBuildDate>Tue, 05 Mar 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/emoji/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Emoji Support</title>
-      <link>https://macsim2.github.io/post/emoji-support/</link>
+      <link>https://macsim2.github.io/posts/emoji-support/</link>
       <pubDate>Tue, 05 Mar 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://macsim2.github.io/post/emoji-support/</guid>
-      <description>&lt;p&gt;Emoji can be enabled in a Hugo project in a number of ways.&lt;/p&gt;</description>
+      <guid>https://macsim2.github.io/posts/emoji-support/</guid>
+      <description>Guide to emoji usage in Hugo</description>
     </item>
     
   </channel>

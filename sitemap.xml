@@ -4,12 +4,19 @@
   <sitemap>
     <loc>https://macsim2.github.io/en/sitemap.xml</loc>
     
+      <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+    
+  </sitemap>
+  
+  <sitemap>
+    <loc>https://macsim2.github.io/fr/sitemap.xml</loc>
+    
       <lastmod>2019-03-11T00:00:00+00:00</lastmod>
     
   </sitemap>
   
   <sitemap>
-    <loc>https://macsim2.github.io/pt/sitemap.xml</loc>
+    <loc>https://macsim2.github.io/fa/sitemap.xml</loc>
     
       <lastmod>2019-03-11T00:00:00+00:00</lastmod>
     
