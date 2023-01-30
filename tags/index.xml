@@ -9,34 +9,7 @@
       <link>https://macsim2.github.io/papermod-cover.png</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Tue, 20 Dec 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>asr</title>
-      <link>https://macsim2.github.io/tags/asr/</link>
-      <pubDate>Tue, 20 Dec 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/asr/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>summary</title>
-      <link>https://macsim2.github.io/tags/summary/</link>
-      <pubDate>Tue, 20 Dec 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/summary/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>wenet</title>
-      <link>https://macsim2.github.io/tags/wenet/</link>
-      <pubDate>Tue, 20 Dec 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/wenet/</guid>
-      <description></description>
-    </item>
-    
+    <lastBuildDate>Wed, 20 Jan 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>PaperMod</title>
       <link>https://macsim2.github.io/tags/papermod/</link>
@@ -61,96 +34,6 @@
       <pubDate>Sun, 29 Nov 2020 00:00:00 +0000</pubDate>
       
       <guid>https://macsim2.github.io/tags/search/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>WAS</title>
-      <link>https://macsim2.github.io/tags/was/</link>
-      <pubDate>Sun, 22 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/was/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Web Server</title>
-      <link>https://macsim2.github.io/tags/web-server/</link>
-      <pubDate>Sun, 22 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/web-server/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>CORS</title>
-      <link>https://macsim2.github.io/tags/cors/</link>
-      <pubDate>Sat, 14 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/cors/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>XMLHttpRequest</title>
-      <link>https://macsim2.github.io/tags/xmlhttprequest/</link>
-      <pubDate>Sat, 14 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/xmlhttprequest/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>modulation</title>
-      <link>https://macsim2.github.io/tags/modulation/</link>
-      <pubDate>Wed, 11 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/modulation/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>parity check</title>
-      <link>https://macsim2.github.io/tags/parity-check/</link>
-      <pubDate>Wed, 11 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/parity-check/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>wireless communication</title>
-      <link>https://macsim2.github.io/tags/wireless-communication/</link>
-      <pubDate>Wed, 11 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/wireless-communication/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>apache</title>
-      <link>https://macsim2.github.io/tags/apache/</link>
-      <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/apache/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>event-driven</title>
-      <link>https://macsim2.github.io/tags/event-driven/</link>
-      <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/event-driven/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>nginx</title>
-      <link>https://macsim2.github.io/tags/nginx/</link>
-      <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/nginx/</guid>
       <description></description>
     </item>
     
