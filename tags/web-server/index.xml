@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Web Server on PaperMod</title>
+    <link>https://macsim2.github.io/tags/web-server/</link>
+    <description>Recent content in Web Server on PaperMod</description>
+    <image>
+      <url>https://macsim2.github.io/papermod-cover.png</url>
+      <link>https://macsim2.github.io/papermod-cover.png</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Sun, 22 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/web-server/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Web Server and WAS</title>
+      <link>https://macsim2.github.io/posts/web_server_vs_was/</link>
+      <pubDate>Sun, 22 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/web_server_vs_was/</guid>
+      <description>Web Server and WAS brief differences</description>
+    </item>
+    
+  </channel>
+</rss>

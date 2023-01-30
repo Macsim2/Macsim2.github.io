@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Algorithm on PaperMod</title>
+    <link>https://macsim2.github.io/categories/algorithm/</link>
+    <description>Recent content in Algorithm on PaperMod</description>
+    <image>
+      <url>https://macsim2.github.io/papermod-cover.png</url>
+      <link>https://macsim2.github.io/papermod-cover.png</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Sun, 29 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/categories/algorithm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Binary Search</title>
+      <link>https://macsim2.github.io/posts/binary_search/</link>
+      <pubDate>Sun, 29 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/binary_search/</guid>
+      <description>concepts of Search and feature of Binary Search.</description>
+    </item>
+    
+  </channel>
+</rss>
