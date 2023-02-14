@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>nginx on PaperMod</title>
+    <title>nginx on Macsim&#39;s blog</title>
     <link>https://macsim2.github.io/tags/nginx/</link>
-    <description>Recent content in nginx on PaperMod</description>
+    <description>Recent content in nginx on Macsim&#39;s blog</description>
     <image>
       <url>https://macsim2.github.io/papermod-cover.png</url>
       <link>https://macsim2.github.io/papermod-cover.png</link>
@@ -12,10 +12,10 @@
     <lastBuildDate>Sun, 01 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/nginx/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>nginx</title>
-      <link>https://macsim2.github.io/posts/private/nginx/</link>
+      <link>https://macsim2.github.io/posts/dev/nginx/</link>
       <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
       
-      <guid>https://macsim2.github.io/posts/private/nginx/</guid>
+      <guid>https://macsim2.github.io/posts/dev/nginx/</guid>
       <description>nginx brief description</description>
     </item>
     

@@ -8,14 +8,29 @@
     <loc>https://macsim2.github.io/posts/papermod/papermod-features/</loc>
     <lastmod>2021-01-20T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/tags/papermod/</loc>
+    <loc>https://macsim2.github.io/posts/papermod/papermod-faq/</loc>
     <lastmod>2021-01-20T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/series/papermod/</loc>
+    <loc>https://macsim2.github.io/posts/papermod/papermod-icons/</loc>
     <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/papermod/papermod-variables/</loc>
+    <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/speech/58.com.wenet/</loc>
+    <lastmod>2022-12-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/asr/</loc>
+    <lastmod>2022-12-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/categories/asr/</loc>
+    <lastmod>2022-12-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/categories/</loc>
+    <lastmod>2022-12-20T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/</loc>
-    <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+    <lastmod>2022-12-20T00:00:00+00:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -32,11 +47,8 @@
                 href="https://macsim2.github.io/"
                 />
   </url><url>
-    <loc>https://macsim2.github.io/posts/papermod/</loc>
-    <lastmod>2021-01-20T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://macsim2.github.io/posts/</loc>
-    <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+    <lastmod>2022-12-20T00:00:00+00:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="fr"
@@ -53,26 +65,62 @@
                 href="https://macsim2.github.io/posts/"
                 />
   </url><url>
+    <loc>https://macsim2.github.io/tags/speech/</loc>
+    <lastmod>2022-12-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/</loc>
+    <lastmod>2022-12-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/papermod/</loc>
+    <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/series/papermod/</loc>
+    <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/papermod/</loc>
+    <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>https://macsim2.github.io/series/</loc>
     <lastmod>2021-01-20T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/tags/</loc>
-    <lastmod>2021-01-20T00:00:00+00:00</lastmod>
+    <loc>https://macsim2.github.io/tags/cors/</loc>
+    <lastmod>2020-11-14T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/categories/algorithm/</loc>
-    <lastmod>2020-11-29T00:00:00+00:00</lastmod>
+    <loc>https://macsim2.github.io/posts/dev/cors/</loc>
+    <lastmod>2020-11-14T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/tags/binary-search/</loc>
-    <lastmod>2020-11-29T00:00:00+00:00</lastmod>
+    <loc>https://macsim2.github.io/categories/web/</loc>
+    <lastmod>2020-11-14T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/posts/binary_search/</loc>
-    <lastmod>2020-11-29T00:00:00+00:00</lastmod>
+    <loc>https://macsim2.github.io/tags/xmlhttprequest/</loc>
+    <lastmod>2020-11-14T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/categories/</loc>
-    <lastmod>2020-11-29T00:00:00+00:00</lastmod>
+    <loc>https://macsim2.github.io/categories/communication/</loc>
+    <lastmod>2020-11-11T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/tags/search/</loc>
-    <lastmod>2020-11-29T00:00:00+00:00</lastmod>
+    <loc>https://macsim2.github.io/tags/modulation/</loc>
+    <lastmod>2020-11-11T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/parity-check/</loc>
+    <lastmod>2020-11-11T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/wireless-communication/</loc>
+    <lastmod>2020-11-11T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/anything/wireless_communication/</loc>
+    <lastmod>2020-11-11T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/apache/</loc>
+    <lastmod>2020-11-01T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/event-driven/</loc>
+    <lastmod>2020-11-01T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/nginx/</loc>
+    <lastmod>2020-11-01T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/dev/nginx/</loc>
+    <lastmod>2020-11-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/tags/css/</loc>
     <lastmod>2019-03-11T00:00:00+00:00</lastmod>
