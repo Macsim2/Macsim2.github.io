@@ -11,8 +11,15 @@
     </image>
     <generator>Hugo -- 0.131.0</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 08 Mar 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 21 Feb 2023 21:10:51 +0900</lastBuildDate>
     <atom:link href="https://macsim2.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Classification Metric</title>
+      <link>https://macsim2.github.io/post/classification_metric/</link>
+      <pubDate>Tue, 21 Feb 2023 21:10:51 +0900</pubDate>
+      <guid>https://macsim2.github.io/post/classification_metric/</guid>
+      <description>Accuracy, Precision, Recall, F1-score</description>
+    </item>
     <item>
       <title>Math Typesetting</title>
       <link>https://macsim2.github.io/post/math-typesetting/</link>
