@@ -2,15 +2,15 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Categories on Macsim&#39;s blog</title>
-    <link>http://https://macsim2.github.io/categories/</link>
+    <link>https://macsim2.github.io/categories/</link>
     <description>Recent content in Categories on Macsim&#39;s blog</description>
     <image>
       <title>Macsim&#39;s blog</title>
-      <url>http://https:/macsim2.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
-      <link>http://https:/macsim2.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+      <url>https://macsim2.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://macsim2.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- 0.131.0</generator>
     <language>en</language>
-    <atom:link href="http://https://macsim2.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://macsim2.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>
