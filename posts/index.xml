@@ -1,95 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>Posts on Macsim&#39;s blog</title>
+    <title>📚posts on macsim&#39;s Blog</title>
     <link>https://macsim2.github.io/posts/</link>
-    <description>Recent content in Posts on Macsim&#39;s blog</description>
-    <image>
-      <url>https://macsim2.github.io/papermod-cover.png</url>
-      <link>https://macsim2.github.io/papermod-cover.png</link>
-    </image>
+    <description>Recent content in 📚posts on macsim&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Tue, 20 Dec 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>58.com AI lab with WeNet</title>
-      <link>https://macsim2.github.io/posts/speech/58.com.wenet/</link>
-      <pubDate>Tue, 20 Dec 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/speech/58.com.wenet/</guid>
-      <description>about how 58.com use WeNet</description>
-    </item>
-    
-    <item>
-      <title>CORS</title>
-      <link>https://macsim2.github.io/posts/dev/cors/</link>
-      <pubDate>Sat, 14 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/dev/cors/</guid>
-      <description>CORS</description>
-    </item>
-    
-    <item>
-      <title>Wireless Communication</title>
-      <link>https://macsim2.github.io/posts/anything/wireless_communication/</link>
-      <pubDate>Wed, 11 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/anything/wireless_communication/</guid>
-      <description>The way make sure confidence in wireless communication</description>
-    </item>
-    
-    <item>
-      <title>nginx</title>
-      <link>https://macsim2.github.io/posts/dev/nginx/</link>
-      <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/dev/nginx/</guid>
-      <description>nginx brief description</description>
-    </item>
-    
-    <item>
-      <title>Markdown Syntax Guide</title>
-      <link>https://macsim2.github.io/posts/markdown-syntax/</link>
-      <pubDate>Mon, 11 Mar 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/markdown-syntax/</guid>
-      <description>Sample article showcasing basic Markdown syntax and formatting for HTML elements.</description>
-    </item>
-    
-    <item>
-      <title>Rich Content</title>
-      <link>https://macsim2.github.io/posts/rich-content/</link>
-      <pubDate>Sun, 10 Mar 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/rich-content/</guid>
-      <description>A brief description of Hugo Shortcodes</description>
-    </item>
-    
-    <item>
-      <title>Placeholder Text</title>
-      <link>https://macsim2.github.io/posts/placeholder-text/</link>
-      <pubDate>Sat, 09 Mar 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/placeholder-text/</guid>
-      <description>Lorem Ipsum Dolor Si Amet</description>
-    </item>
-    
-    <item>
-      <title>Math Typesetting</title>
-      <link>https://macsim2.github.io/posts/math-typesetting/</link>
-      <pubDate>Fri, 08 Mar 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/math-typesetting/</guid>
-      <description>A brief guide to setup KaTeX</description>
-    </item>
-    
-    <item>
-      <title>Emoji Support</title>
-      <link>https://macsim2.github.io/posts/emoji-support/</link>
-      <pubDate>Tue, 05 Mar 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/posts/emoji-support/</guid>
-      <description>Guide to emoji usage in Hugo</description>
-    </item>
-    
+    <language>en-us</language>
+    <lastBuildDate>Sat, 10 Aug 2024 15:27:53 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

@@ -1,32 +1,10 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>Series on Macsim&#39;s blog</title>
+    <title>Series on macsim&#39;s Blog</title>
     <link>https://macsim2.github.io/series/</link>
-    <description>Recent content in Series on Macsim&#39;s blog</description>
-    <image>
-      <url>https://macsim2.github.io/papermod-cover.png</url>
-      <link>https://macsim2.github.io/papermod-cover.png</link>
-    </image>
+    <description>Recent content in Series on macsim&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Wed, 20 Jan 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/series/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>PaperMod</title>
-      <link>https://macsim2.github.io/series/papermod/</link>
-      <pubDate>Wed, 20 Jan 2021 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/series/papermod/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Themes Guide</title>
-      <link>https://macsim2.github.io/series/themes-guide/</link>
-      <pubDate>Mon, 11 Mar 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://macsim2.github.io/series/themes-guide/</guid>
-      <description></description>
-    </item>
-    
+    <language>en-us</language><atom:link href="https://macsim2.github.io/series/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>
