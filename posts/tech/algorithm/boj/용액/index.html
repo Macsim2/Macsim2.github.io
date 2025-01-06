@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>용액 | macsim&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="BOJ 2467 문제 같은 양의 두 용액을 혼합하여 특성값이 0 에 가장 가까운 용액을 만들려고 한다. 입력 2 &lt;= N &lt;= 100,000 예제 입력 1 5 -99 -2 -1 4 98 예제 입력 2 4 -100 -2 -1 103 출력 예제 출력 1 -99 98 예제 출력 2 -2 -1 풀이 제한시간이 1초이고, 입력 범위가 $10^5$ 이므로 $n^2$ 의 시간복잡도를 넘어가면 안될 듯 하다. naive한 방식은 $n^2$ 인데 결국은 dp나 메모">
+<meta name="author" content="macsim">
+<link rel="canonical" href="https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="https://macsim2.github.io/img/Q.gif">
+<link rel="apple-touch-icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script defer src="https://unpkg.com/mermaid@8.8.1/dist/mermaid.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="용액" />
+<meta property="og:description" content="BOJ 2467 문제 같은 양의 두 용액을 혼합하여 특성값이 0 에 가장 가까운 용액을 만들려고 한다. 입력 2 &lt;= N &lt;= 100,000 예제 입력 1 5 -99 -2 -1 4 98 예제 입력 2 4 -100 -2 -1 103 출력 예제 출력 1 -99 98 예제 출력 2 -2 -1 풀이 제한시간이 1초이고, 입력 범위가 $10^5$ 이므로 $n^2$ 의 시간복잡도를 넘어가면 안될 듯 하다. naive한 방식은 $n^2$ 인데 결국은 dp나 메모" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-07T18:30:33+09:00" />
+<meta property="article:modified_time" content="2024-09-07T18:30:33+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="용액"/>
+<meta name="twitter:description" content="BOJ 2467 문제 같은 양의 두 용액을 혼합하여 특성값이 0 에 가장 가까운 용액을 만들려고 한다. 입력 2 &lt;= N &lt;= 100,000 예제 입력 1 5 -99 -2 -1 4 98 예제 입력 2 4 -100 -2 -1 103 출력 예제 출력 1 -99 98 예제 출력 2 -2 -1 풀이 제한시간이 1초이고, 입력 범위가 $10^5$ 이므로 $n^2$ 의 시간복잡도를 넘어가면 안될 듯 하다. naive한 방식은 $n^2$ 인데 결국은 dp나 메모"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "https://macsim2.github.io/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "https://macsim2.github.io/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "용액",
+      "item": "https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "용액",
+  "name": "용액",
+  "description": "BOJ 2467 문제 같은 양의 두 용액을 혼합하여 특성값이 0 에 가장 가까운 용액을 만들려고 한다. 입력 2 \u0026lt;= N \u0026lt;= 100,000 예제 입력 1 5 -99 -2 -1 4 98 예제 입력 2 4 -100 -2 -1 103 출력 예제 출력 1 -99 98 예제 출력 2 -2 -1 풀이 제한시간이 1초이고, 입력 범위가 $10^5$ 이므로 $n^2$ 의 시간복잡도를 넘어가면 안될 듯 하다. naive한 방식은 $n^2$ 인데 결국은 dp나 메모",
+  "keywords": [
+    ""
+  ],
+  "articleBody": "BOJ 2467 문제 같은 양의 두 용액을 혼합하여 특성값이 0 에 가장 가까운 용액을 만들려고 한다.\n입력 2 \u003c= N \u003c= 100,000\n예제 입력 1 5 -99 -2 -1 4 98\n예제 입력 2 4 -100 -2 -1 103\n출력 예제 출력 1 -99 98\n예제 출력 2 -2 -1 풀이 제한시간이 1초이고, 입력 범위가 $10^5$ 이므로 $n^2$ 의 시간복잡도를 넘어가면 안될 듯 하다. naive한 방식은 $n^2$ 인데 결국은 dp나 메모이제이션 등의 다른 풀이, 아이디어가 필요해 보인다. 그러다 투 포인터 방법으로 푸는게 직감적으로 맞겠다 싶었다. 문제는 투 포인터를 양끝에서 두고 시작하는것만 생각했는데, 검색 찬스로 시작부분에 l, r 두 포인터를 두고 푼다는 힌트를 듣고 풀었다.\n투포인터 방식은 두 포인터를 어떻게 움직이는 기준을 세우는지가 관건인것 같다. +) 용액이 정렬을 안해도 된다.\n",
+  "wordCount" : "293",
+  "inLanguage": "en",
+  "datePublished": "2024-09-07T18:30:33+09:00",
+  "dateModified": "2024-09-07T18:30:33+09:00",
+  "author":[{
+    "@type": "Person",
+    "name": "macsim"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://macsim2.github.io/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://macsim2.github.io/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://macsim2.github.io/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 Home</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                용액<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+            </h1>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2024-09-07
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>293 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>1 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "https://macsim2.github.io/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#boj-2467httpswwwacmicpcnetproblem2467" aria-label="BOJ 2467"><a href="https://www.acmicpc.net/problem/2467">BOJ 2467</a></a></li>
+                <li>
+                    <a href="#%eb%ac%b8%ec%a0%9c" aria-label="문제">문제</a></li>
+                <li>
+                    <a href="#%ec%9e%85%eb%a0%a5" aria-label="입력">입력</a></li>
+                <li>
+                    <a href="#%ec%b6%9c%eb%a0%a5" aria-label="출력">출력</a></li>
+                <li>
+                    <a href="#%ed%92%80%ec%9d%b4" aria-label="풀이">풀이</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><h1 id="boj-2467httpswwwacmicpcnetproblem2467"><a href="https://www.acmicpc.net/problem/2467">BOJ 2467</a><a hidden class="anchor" aria-hidden="true" href="#boj-2467httpswwwacmicpcnetproblem2467">#</a></h1>
+<h1 id="문제">문제<a hidden class="anchor" aria-hidden="true" href="#문제">#</a></h1>
+<p>같은 양의 두 용액을 혼합하여 특성값이 0 에 가장 가까운 용액을 만들려고 한다.</p>
+<h1 id="입력">입력<a hidden class="anchor" aria-hidden="true" href="#입력">#</a></h1>
+<p>2 &lt;= N &lt;= 100,000</p>
+<p>예제 입력 1 <br>
+5 <br>
+-99 -2 -1 4 98</p>
+<p>예제 입력 2 <br>
+4 <br>
+-100 -2 -1 103</p>
+<h1 id="출력">출력<a hidden class="anchor" aria-hidden="true" href="#출력">#</a></h1>
+<p>예제 출력 1 <br>
+-99 98</p>
+<p>예제 출력 2 <br>
+-2 -1 <br></p>
+<hr>
+<h1 id="풀이">풀이<a hidden class="anchor" aria-hidden="true" href="#풀이">#</a></h1>
+<p>제한시간이 1초이고, 입력 범위가 $10^5$ 이므로 $n^2$ 의 시간복잡도를 넘어가면 안될 듯 하다.
+naive한 방식은 $n^2$ 인데 결국은 dp나 메모이제이션 등의 다른 풀이, 아이디어가 필요해 보인다. <br>
+그러다 투 포인터 방법으로 푸는게 직감적으로 맞겠다 싶었다. <br>
+문제는 투 포인터를 양끝에서 두고 시작하는것만 생각했는데, 검색 찬스로 시작부분에 l, r 두 포인터를 두고 푼다는 힌트를 듣고 풀었다.</p>
+<p>투포인터 방식은 두 포인터를 어떻게 움직이는 기준을 세우는지가 관건인것 같다.
++) 용액이 정렬을 안해도 된다.</p>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="https://macsim2.github.io/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="https://macsim2.github.io/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="next" href="https://macsim2.github.io/posts/tech/algorithm/boj/lcs2/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>LCS2</span>
+  </a>
+</nav>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="https://macsim2.github.io/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>
