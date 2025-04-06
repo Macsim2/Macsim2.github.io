@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Momentum in DeepLearning | macsim&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="about Momentum">
+<meta name="author" content="macsim">
+<link rel="canonical" href="http://localhost:1313/posts/tech/deeplearning/momentum/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/img/Q.gif">
+<link rel="apple-touch-icon" href="http://localhost:1313/img/Q.gif">
+<link rel="mask-icon" href="http://localhost:1313/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="http://localhost:1313/posts/tech/deeplearning/momentum/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script defer src="https://unpkg.com/mermaid@8.8.1/dist/mermaid.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="Momentum in DeepLearning" />
+<meta property="og:description" content="about Momentum" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/posts/tech/deeplearning/momentum/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-03-16T01:17:26+09:00" />
+<meta property="article:modified_time" content="2025-03-16T01:17:26+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Momentum in DeepLearning"/>
+<meta name="twitter:description" content="about Momentum"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "http://localhost:1313/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "http://localhost:1313/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Momentum in DeepLearning",
+      "item": "http://localhost:1313/posts/tech/deeplearning/momentum/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Momentum in DeepLearning",
+  "name": "Momentum in DeepLearning",
+  "description": "about Momentum",
+  "keywords": [
+    ""
+  ],
+  "articleBody": "모멘텀의 기본 개념과 직관적 이해 물리학에서의 모멘텀과 딥러닝에서의 적용 물리학에서 모멘텀(momentum)이란 질량과 속도의 곱으로 정의되는 물리량으로, 물체의 운동 상태를 나타낸다. 이 개념이 딥러닝의 최적화 알고리즘에 어떻게 적용되는지 살펴보자.\n물리적 세계에서는:\n공이 경사진 언덕을 굴러 내려갈 때, 처음에는 천천히 움직이다가 점점 속도가 붙는다 속도가 붙은 공은 작은 장애물을 만나도 관성에 의해 멈추지 않고 계속 전진한다 움직이는 방향을 바꾸기 위해서는 이미 가지고 있는 관성을 극복해야 한다 딥러닝 최적화에서의 모멘텀도 이와 매우 유사하게 작동한다:\n파라미터 업데이트가 일관된 방향으로 계속되면 더 큰 “속도\"가 붙는다 이렇게 속도가 붙은 업데이트는 작은 지역적 장애물(지역 최소값, 노이즈)을 건너뛸 수 있다 이전 업데이트 방향의 정보를 기억하여 다음 업데이트에 반영한다 단순 경사 하강법의 한계 기본적인 경사 하강법(Gradient Descent)은 다음과 같은 문제점을 갖는다\n느린 수렴 속도 손실 함수의 경사가 완만한 지역에서는 매우 작은 스텝으로 이동한다 최적점까지 도달하는 데 많은 반복이 필요하다 진동(oscillation) 문제 좁고 깊은 계곡 형태의 손실 함수에서는 경사가 양쪽으로 급격하게 변한다 파라미터가 계곡 양쪽을 왔다 갔다 하면서 진동하고, 최적점을 향해 효율적으로 진행하지 못한다 지역 최소값에 쉽게 갇힘 경사만 고려하므로 조금만 오목한 지점에서 쉽게 갇힐 수 있다 안장점(saddle point) 문제 고차원 공간의 안장점에서는 일부 방향의 경사가 0에 가까워져 빠져나오기 어렵다 모멘텀이 문제를 해결하는 방식 모멘텀이 어떻게 위 문제들을 해결하는지 직관적으로 이해해보자\n가속 효과 공이 언덕을 내려갈 때처럼, 일관된 방향으로의 업데이트는 “가속” 된다 평평한 지역(경사가 작은 곳)에서도 이전 업데이트의 관성으로 더 빠르게 진행한다 진동 감소 좁은 계곡에서 진동할 때, 모멘텀은 마치 “평균화” 역할을 한다 이전 스텝들의 방향 정보가 누적되어 전체적인 하강 방향을 유지한다 지역 최소값 탈출: 얕은 지역 최소값에서는 이미 가지고 있던 “속도” 로 인해 극복하고 빠져나갈 수 있다 마치 공이 작은 움푹 패인 곳을 지나쳐 가듯이 작동한다 모멘텀의 수학적 정의와 작동 원리 모멘텀 방정식 소개 모멘텀 방법은 기본 경사 하강법을 확장하여 이전 업데이트 방향의 정보를 활용하여 현재의 업데이트 방향을 정하는 방법이다.\n수학적으로 다음과 같이 정의된다\n속도 벡터 업데이트 $$v_t = \\gamma v_{t-1} + \\eta \\nabla J(\\theta_t)$$\n파라미터 업데이트 $$\\theta_{t+1} = \\theta_t - v_t$$ 여기서, $v_t$: 현재 속도 벡터 (이전 그래디언트들의 기억)\n$\\gamma$: 모멘텀 계수 (일반적으로 0.9 또는 0.99로 설정)\n$\\eta$: 학습률\n$\\nabla J(\\theta_t)$: 현재 파라미터에서의 손실 함수 기울기\n이 두 단계를 합치면 다음과 같이 표현할 수도 있다. $$\\theta_{t+1} = \\theta_t - \\gamma v_{t-1} - \\eta \\nabla J(\\theta_t)$$\n모멘텀 계수($\\gamma$)의 의미와 영향 모멘텀 계수 $\\gamma$는 이전 속도의 영향력을 조절하는 하이퍼파라미터로, 0과 1 사이의 값을 가진다.\n$\\gamma = 0$: 모멘텀이 없는 표준 경사 하강법과 동일 $\\gamma \\approx 1$: 이전 속도의 영향이 매우 크게 유지됨 $\\gamma$ 값에 따른 효과:\n큰 $\\gamma$ 값(0.9~0.99) 장점: 장기적인 방향성 유지, 작은 지역 변동 무시 단점: 과도한 모멘텀으로 최적점을 지나칠 수 있음 작은 $\\gamma$ 값(0.5~0.8): 장점: 현재 기울기에 더 민감하게 반응 단점: 모멘텀의 이점이 줄어듦 모멘텀 vs 일반 SGD 비교 표 문제 상황 일반 경사 하강법(SGD) 모멘텀 방법 평평한 지역 (경사가 작은 구간) 매우 느린 진행, 작은 업데이트 이전 방향 관성으로 더 빠르게 진행 좁은 계곡 형태의 곡면 양쪽 벽 사이에서 진동, 비효율적인 경로 진동 감소, 계곡을 따라 더 직접적으로 하강 얕은 지역 최소값 쉽게 갇힘 관성으로 빠져나갈 가능성 높음 안장점 매우 느리게 빠져나옴 이전 업데이트 방향 덕분에 더 빠르게 탈출 $\\gamma$ 값 범위 최적화 특성 장점 단점 적합한 상황 낮음 (0.5~0.7) 현재 그래디언트에 더 민감 지역 변화에 더 잘 반응 모멘텀의 이점 감소 비교적 부드러운 손실 함수 중간 (0.8~0.9) 균형 잡힌 반응 적절한 수렴 속도와 안정성 - 대부분의 딥러닝 모델 (기본값으로 추천) 높음 (0.95~0.99) 과거 그래디언트의 영향이 강함 지역 노이즈에 강인, 빠른 진행 목표 지점을 지나칠 수 있음 노이즈가 많은 손실 함수, 매우 복잡한 지형 ",
+  "wordCount" : "1648",
+  "inLanguage": "ko",
+  "datePublished": "2025-03-16T01:17:26+09:00",
+  "dateModified": "2025-03-16T01:17:26+09:00",
+  "author":[{
+    "@type": "Person",
+    "name": "macsim"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/tech/deeplearning/momentum/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="http://localhost:1313/">🏠 홈</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">posts</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                Momentum in DeepLearning<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+            </h1>
+            <div class="post-description">
+                about Momentum
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2025-03-16
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>1648 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>4 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="http://localhost:1313/tags/deeplearning/" style="color: var(--secondary)!important;">DeepLearning</a>
+                &nbsp;<a href="http://localhost:1313/tags/optimizer/" style="color: var(--secondary)!important;">Optimizer</a>
+                &nbsp;<a href="http://localhost:1313/tags/sgd/" style="color: var(--secondary)!important;">SGD</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "http://localhost:1313/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%eb%aa%a8%eb%a9%98%ed%85%80%ec%9d%98-%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90%ea%b3%bc-%ec%a7%81%ea%b4%80%ec%a0%81-%ec%9d%b4%ed%95%b4" aria-label="모멘텀의 기본 개념과 직관적 이해">모멘텀의 기본 개념과 직관적 이해</a><ul>
+                        
+                <li>
+                    <a href="#%eb%ac%bc%eb%a6%ac%ed%95%99%ec%97%90%ec%84%9c%ec%9d%98-%eb%aa%a8%eb%a9%98%ed%85%80%ea%b3%bc-%eb%94%a5%eb%9f%ac%eb%8b%9d%ec%97%90%ec%84%9c%ec%9d%98-%ec%a0%81%ec%9a%a9" aria-label="물리학에서의 모멘텀과 딥러닝에서의 적용">물리학에서의 모멘텀과 딥러닝에서의 적용</a></li>
+                <li>
+                    <a href="#%eb%8b%a8%ec%88%9c-%ea%b2%bd%ec%82%ac-%ed%95%98%ea%b0%95%eb%b2%95%ec%9d%98-%ed%95%9c%ea%b3%84" aria-label="단순 경사 하강법의 한계">단순 경사 하강법의 한계</a></li>
+                <li>
+                    <a href="#%eb%aa%a8%eb%a9%98%ed%85%80%ec%9d%b4-%eb%ac%b8%ec%a0%9c%eb%a5%bc-%ed%95%b4%ea%b2%b0%ed%95%98%eb%8a%94-%eb%b0%a9%ec%8b%9d" aria-label="모멘텀이 문제를 해결하는 방식">모멘텀이 문제를 해결하는 방식</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%eb%aa%a8%eb%a9%98%ed%85%80%ec%9d%98-%ec%88%98%ed%95%99%ec%a0%81-%ec%a0%95%ec%9d%98%ec%99%80-%ec%9e%91%eb%8f%99-%ec%9b%90%eb%a6%ac" aria-label="모멘텀의 수학적 정의와 작동 원리">모멘텀의 수학적 정의와 작동 원리</a><ul>
+                        
+                <li>
+                    <a href="#%eb%aa%a8%eb%a9%98%ed%85%80-%eb%b0%a9%ec%a0%95%ec%8b%9d-%ec%86%8c%ea%b0%9c" aria-label="모멘텀 방정식 소개">모멘텀 방정식 소개</a></li>
+                <li>
+                    <a href="#%eb%aa%a8%eb%a9%98%ed%85%80-%ea%b3%84%ec%88%98gamma%ec%9d%98-%ec%9d%98%eb%af%b8%ec%99%80-%ec%98%81%ed%96%a5" aria-label="모멘텀 계수($\gamma$)의 의미와 영향">모멘텀 계수($\gamma$)의 의미와 영향</a></li>
+                <li>
+                    <a href="#%eb%aa%a8%eb%a9%98%ed%85%80-vs-%ec%9d%bc%eb%b0%98-sgd-%eb%b9%84%ea%b5%90-%ed%91%9c" aria-label="모멘텀 vs 일반 SGD 비교 표">모멘텀 vs 일반 SGD 비교 표</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><h2 id="모멘텀의-기본-개념과-직관적-이해">모멘텀의 기본 개념과 직관적 이해<a hidden class="anchor" aria-hidden="true" href="#모멘텀의-기본-개념과-직관적-이해">#</a></h2>
+<h3 id="물리학에서의-모멘텀과-딥러닝에서의-적용">물리학에서의 모멘텀과 딥러닝에서의 적용<a hidden class="anchor" aria-hidden="true" href="#물리학에서의-모멘텀과-딥러닝에서의-적용">#</a></h3>
+<p>물리학에서 모멘텀(momentum)이란 질량과 속도의 곱으로 정의되는 물리량으로, 물체의 운동 상태를 나타낸다. 이 개념이 딥러닝의 최적화 알고리즘에 어떻게 적용되는지 살펴보자.</p>
+<p>물리적 세계에서는:</p>
+<ul>
+<li>공이 경사진 언덕을 굴러 내려갈 때, 처음에는 천천히 움직이다가 점점 속도가 붙는다</li>
+<li>속도가 붙은 공은 작은 장애물을 만나도 관성에 의해 멈추지 않고 계속 전진한다</li>
+<li>움직이는 방향을 바꾸기 위해서는 이미 가지고 있는 관성을 극복해야 한다</li>
+</ul>
+<p>딥러닝 최적화에서의 모멘텀도 이와 매우 유사하게 작동한다:</p>
+<ul>
+<li>파라미터 업데이트가 일관된 방향으로 계속되면 더 큰 &ldquo;속도&quot;가 붙는다</li>
+<li>이렇게 속도가 붙은 업데이트는 작은 지역적 장애물(지역 최소값, 노이즈)을 건너뛸 수 있다</li>
+<li>이전 업데이트 방향의 정보를 기억하여 다음 업데이트에 반영한다</li>
+</ul>
+<h3 id="단순-경사-하강법의-한계">단순 경사 하강법의 한계<a hidden class="anchor" aria-hidden="true" href="#단순-경사-하강법의-한계">#</a></h3>
+<p>기본적인 경사 하강법(Gradient Descent)은 다음과 같은 문제점을 갖는다</p>
+<ol>
+<li>느린 수렴 속도</li>
+</ol>
+<ul>
+<li>손실 함수의 경사가 완만한 지역에서는 매우 작은 스텝으로 이동한다</li>
+<li>최적점까지 도달하는 데 많은 반복이 필요하다</li>
+</ul>
+<ol start="2">
+<li>진동(oscillation) 문제</li>
+</ol>
+<ul>
+<li>좁고 깊은 계곡 형태의 손실 함수에서는 경사가 양쪽으로 급격하게 변한다</li>
+<li>파라미터가 계곡 양쪽을 왔다 갔다 하면서 진동하고, 최적점을 향해 효율적으로 진행하지 못한다</li>
+</ul>
+<ol start="3">
+<li>지역 최소값에 쉽게 갇힘</li>
+</ol>
+<ul>
+<li>경사만 고려하므로 조금만 오목한 지점에서 쉽게 갇힐 수 있다</li>
+</ul>
+<ol start="4">
+<li>안장점(saddle point) 문제
+고차원 공간의 안장점에서는 일부 방향의 경사가 0에 가까워져 빠져나오기 어렵다</li>
+</ol>
+<h3 id="모멘텀이-문제를-해결하는-방식">모멘텀이 문제를 해결하는 방식<a hidden class="anchor" aria-hidden="true" href="#모멘텀이-문제를-해결하는-방식">#</a></h3>
+<p>모멘텀이 어떻게 위 문제들을 해결하는지 직관적으로 이해해보자</p>
+<ol>
+<li>가속 효과</li>
+</ol>
+<ul>
+<li>공이 언덕을 내려갈 때처럼, 일관된 방향으로의 업데이트는 &ldquo;가속&rdquo; 된다</li>
+<li>평평한 지역(경사가 작은 곳)에서도 이전 업데이트의 관성으로 더 빠르게 진행한다</li>
+</ul>
+<ol start="2">
+<li>진동 감소</li>
+</ol>
+<ul>
+<li>좁은 계곡에서 진동할 때, 모멘텀은 마치 &ldquo;평균화&rdquo; 역할을 한다</li>
+<li>이전 스텝들의 방향 정보가 누적되어 전체적인 하강 방향을 유지한다</li>
+</ul>
+<ol start="3">
+<li>지역 최소값 탈출:</li>
+</ol>
+<ul>
+<li>얕은 지역 최소값에서는 이미 가지고 있던 &ldquo;속도&rdquo; 로 인해 극복하고 빠져나갈 수 있다</li>
+<li>마치 공이 작은 움푹 패인 곳을 지나쳐 가듯이 작동한다</li>
+</ul>
+<h2 id="모멘텀의-수학적-정의와-작동-원리">모멘텀의 수학적 정의와 작동 원리<a hidden class="anchor" aria-hidden="true" href="#모멘텀의-수학적-정의와-작동-원리">#</a></h2>
+<h3 id="모멘텀-방정식-소개">모멘텀 방정식 소개<a hidden class="anchor" aria-hidden="true" href="#모멘텀-방정식-소개">#</a></h3>
+<p>모멘텀 방법은 기본 경사 하강법을 확장하여 이전 업데이트 방향의 정보를 활용하여 현재의 업데이트 방향을 정하는 방법이다.<br>
+수학적으로 다음과 같이 정의된다</p>
+<ol>
+<li>
+<p>속도 벡터 업데이트
+$$v_t = \gamma v_{t-1} + \eta \nabla J(\theta_t)$$</p>
+</li>
+<li>
+<p>파라미터 업데이트
+$$\theta_{t+1} = \theta_t - v_t$$
+여기서, <br>
+$v_t$: 현재 속도 벡터 (이전 그래디언트들의 기억)<br>
+$\gamma$: 모멘텀 계수 (일반적으로 0.9 또는 0.99로 설정)<br>
+$\eta$: 학습률<br>
+$\nabla J(\theta_t)$: 현재 파라미터에서의 손실 함수 기울기<br></p>
+</li>
+</ol>
+<p>이 두 단계를 합치면 다음과 같이 표현할 수도 있다.
+$$\theta_{t+1} = \theta_t - \gamma v_{t-1} - \eta \nabla J(\theta_t)$$</p>
+<h3 id="모멘텀-계수gamma의-의미와-영향">모멘텀 계수($\gamma$)의 의미와 영향<a hidden class="anchor" aria-hidden="true" href="#모멘텀-계수gamma의-의미와-영향">#</a></h3>
+<p>모멘텀 계수 $\gamma$는 이전 속도의 영향력을 조절하는 하이퍼파라미터로, 0과 1 사이의 값을 가진다.</p>
+<ul>
+<li>$\gamma = 0$: 모멘텀이 없는 표준 경사 하강법과 동일</li>
+<li>$\gamma \approx 1$: 이전 속도의 영향이 매우 크게 유지됨</li>
+</ul>
+<p>$\gamma$ 값에 따른 효과:</p>
+<ol>
+<li>큰 $\gamma$ 값(0.9~0.99)</li>
+</ol>
+<ul>
+<li>장점: 장기적인 방향성 유지, 작은 지역 변동 무시</li>
+<li>단점: 과도한 모멘텀으로 최적점을 지나칠 수 있음</li>
+</ul>
+<ol start="2">
+<li>작은 $\gamma$ 값(0.5~0.8):</li>
+</ol>
+<ul>
+<li>장점: 현재 기울기에 더 민감하게 반응</li>
+<li>단점: 모멘텀의 이점이 줄어듦</li>
+</ul>
+<h3 id="모멘텀-vs-일반-sgd-비교-표">모멘텀 vs 일반 SGD 비교 표<a hidden class="anchor" aria-hidden="true" href="#모멘텀-vs-일반-sgd-비교-표">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>문제 상황</th>
+<th>일반 경사 하강법(SGD)</th>
+<th>모멘텀 방법</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>평평한 지역 (경사가 작은 구간)</td>
+<td>매우 느린 진행, 작은 업데이트</td>
+<td>이전 방향 관성으로 더 빠르게 진행</td>
+</tr>
+<tr>
+<td>좁은 계곡 형태의 곡면</td>
+<td>양쪽 벽 사이에서 진동, 비효율적인 경로</td>
+<td>진동 감소, 계곡을 따라 더 직접적으로 하강</td>
+</tr>
+<tr>
+<td>얕은 지역 최소값</td>
+<td>쉽게 갇힘</td>
+<td>관성으로 빠져나갈 가능성 높음</td>
+</tr>
+<tr>
+<td>안장점</td>
+<td>매우 느리게 빠져나옴</td>
+<td>이전 업데이트 방향 덕분에 더 빠르게 탈출</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>$\gamma$ 값 범위</th>
+<th>최적화 특성</th>
+<th>장점</th>
+<th>단점</th>
+<th>적합한 상황</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>낮음 (0.5~0.7)</td>
+<td>현재 그래디언트에 더 민감</td>
+<td>지역 변화에 더 잘 반응</td>
+<td>모멘텀의 이점 감소</td>
+<td>비교적 부드러운 손실 함수</td>
+</tr>
+<tr>
+<td>중간 (0.8~0.9)</td>
+<td>균형 잡힌 반응</td>
+<td>적절한 수렴 속도와 안정성</td>
+<td>-</td>
+<td>대부분의 딥러닝 모델 (기본값으로 추천)</td>
+</tr>
+<tr>
+<td>높음 (0.95~0.99)</td>
+<td>과거 그래디언트의 영향이 강함</td>
+<td>지역 노이즈에 강인, 빠른 진행</td>
+<td>목표 지점을 지나칠 수 있음</td>
+<td>노이즈가 많은 손실 함수, 매우 복잡한 지형</td>
+</tr>
+</tbody>
+</table>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="http://localhost:1313/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="http://localhost:1313/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/tech/algorithm/leet/3472/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>Longest Palindromic Subsequence After at Most K Operations</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/tech/asr/beam_search/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>Beam Search</span>
+  </a>
+</nav>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="http://localhost:1313/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

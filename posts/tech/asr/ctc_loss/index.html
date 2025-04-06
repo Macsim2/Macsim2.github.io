@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>macsim&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT">
+<meta name="author" content="macsim">
+<link rel="canonical" href="https://macsim2.github.io/posts/tech/asr/ctc_loss/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="https://macsim2.github.io/img/Q.gif">
+<link rel="apple-touch-icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="https://macsim2.github.io/posts/tech/asr/ctc_loss/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="" />
+<meta property="og:description" content="요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://macsim2.github.io/posts/tech/asr/ctc_loss/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "https://macsim2.github.io/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "https://macsim2.github.io/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "",
+      "item": "https://macsim2.github.io/posts/tech/asr/ctc_loss/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "",
+  "name": "",
+  "description": "요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT",
+  "keywords": [
+    
+  ],
+  "articleBody": "요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다.\n계획:\nASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CTC와의 차이점 장단점 예제 두 손실 함수의 비교 실제 구현 및 사용 사례 이 응답에서는 두 손실 함수의 수학적 정의, 작동 원리, 장단점, 구현 방식 등을 설명하고, 가능한 경우 코드 예제와 시각적 설명을 포함하겠습니다.# ASR에서의 CTC Loss와 RNN-T Loss 상세 설명\n음성 인식(ASR)에서 가장 중요한 두 손실 함수인 CTC(Connectionist Temporal Classification)와 RNN-T(Recurrent Neural Network Transducer)에 대해 자세히 설명하겠습니다.\n1. ASR의 기본 문제와 도전 과제 ASR의 핵심 문제:\n가변 길이 입력(음성 신호)을 가변 길이 출력(텍스트)으로 변환 입력과 출력 사이의 명확한 정렬(alignment)이 없음 입력이 출력보다 훨씬 더 길고 중복됨 (예: 30ms 프레임마다 특징 추출) 2. CTC Loss (Connectionist Temporal Classification) 2.1 기본 개념 CTC는 명시적인 정렬 없이 시퀀스 데이터를 학습하기 위한 알고리즘입니다.\n핵심 아이디어: 모든 가능한 정렬을 고려하고, 올바른 출력을 생성하는 모든 정렬의 확률 합을 최대화 특수 기호 blank(보통 ‘-’ 또는 ‘ε’로 표기)를 도입하여 반복 문자 처리와 정렬 유연성 확보 2.2 수학적 정의 입력 시퀀스 $X = (x_1, x_2, …, x_T)$와 출력 레이블 $Y = (y_1, y_2, …, y_U)$가 있을 때:\n모델은 각 타임스텝 $t$마다 모든 가능한 레이블 $k$ (레이블 집합 + blank)에 대한 확률 $P(k|t)$ 출력 경로(path) $\\pi = (\\pi_1, \\pi_2, …, \\pi_T)$는 각 타임스텝마다의 레이블 예측 경로에서 레이블 시퀀스로의 매핑 함수 $\\mathcal{B}$를 정의: blank 제거 및 반복 문자 병합 CTC Loss는 다음과 같이 정의됩니다:\n$L_{CTC} = -\\log P(Y|X) = -\\log \\sum_{\\pi \\in \\mathcal{B}^{-1}(Y)} \\prod_{t=1}^{T} P(\\pi_t|t)$\n여기서 $\\mathcal{B}^{-1}(Y)$는 $Y$로 매핑되는 모든 가능한 경로의 집합입니다.\n2.3 계산 과정 (Forward-Backward 알고리즘) 직접적인 계산은 조합 폭발 문제가 있어 동적 프로그래밍을 활용합니다:\nForward 변수 $\\alpha(t,s)$: 시간 $t$까지 레이블의 $s$번째 위치까지 생성할 확률 Backward 변수 $\\beta(t,s)$: 시간 $t$부터 끝까지 레이블의 $s$번째 위치부터 끝까지 생성할 확률 최종 확률: $P(Y|X) = \\sum_{s} \\alpha(T,s) = \\sum_{s} \\beta(1,s)$\n2.4 CTC의 장단점 장점:\n정렬이 필요 없음 (end-to-end 학습 가능) 계산 효율성이 상대적으로 높음 구현이 비교적 간단함 단점:\n조건부 독립 가정: 각 타임스텝의 출력이 이전 출력과 독립적 언어 모델링 능력 부족 빈 출력(전체가 blank) 문제 가능성 3. RNN-T Loss (RNN Transducer) 3.1 기본 개념 RNN-T는 CTC의 한계를 극복하기 위해 개발된 알고리즘입니다.\n핵심 아이디어: 음향 모델(인코더)과 예측 네트워크(언어 모델)의 결합 이전 출력에 조건부로 현재 출력을 생성 (자기회귀 특성) 3.2 모델 구조 RNN-T는 세 가지 주요 컴포넌트로 구성됩니다:\n인코더(Encoder): 음향 특징을 처리하는 RNN (시간 $t$에 대한 함수) 예측 네트워크(Prediction Network): 이전 출력을 처리하는 RNN (출력 인덱스 $u$에 대한 함수) 조인트 네트워크(Joint Network): 인코더와 예측 네트워크의 출력을 결합 3.3 수학적 정의 RNN-T는 CTC와 유사하게 모든 가능한 정렬을 고려하지만, 조건부 확률이 다릅니다:\n$L_{RNN-T} = -\\log P(Y|X) = -\\log \\sum_{\\pi \\in \\mathcal{A}(Y)} P(\\pi|X)$\n여기서 $\\mathcal{A}(Y)$는 $Y$로 매핑되는 모든 유효한 정렬의 집합입니다.\n경로 확률은 다음과 같이 계산됩니다:\n$P(\\pi|X) = \\prod_{i=1}^{|\\pi|} P(\\pi_i|X, y_{0:u-1})$\n여기서 $y_{0:u-1}$는 현재까지 생성된 출력 시퀀스입니다.\n3.4 계산 과정 RNN-T도 Forward-Backward 알고리즘을 사용하지만, 격자(grid)에서 동작합니다:\nForward 변수 $\\alpha(t,u)$: 시간 $t$까지 $u$개의 레이블을 생성할 확률 Backward 변수 $\\beta(t,u)$: 시간 $t$부터 끝까지 나머지 레이블을 생성할 확률 각 셀에서 두 가지 전이가 가능합니다:\nblank 출력 (수평 이동) 레이블 출력 (대각선 이동) 3.5 RNN-T의 장단점 장점:\n자기회귀 특성으로 이전 출력을 고려 (언어 모델링 가능) CTC보다 일반적으로 더 나은 성능 스트리밍 인식에 적합 단점:\n계산 복잡도가 높음 훈련이 더 어려움 추론 시 더 많은 계산 필요 4. CTC와 RNN-T 비교 4.1 핵심 차이점 특성 CTC RNN-T 조건부 독립성 각 타임스텝 독립적 이전 출력에 조건부 언어 모델링 제한적 내장 언어 모델링 계산 복잡도 낮음 높음 스트리밍 가능하나 제한적 자연스럽게 지원 빈 출력 문제 발생 가능 덜 발생 4.2 구체적인 예시 “HELLO\"라는 단어를 인식하는 경우:\nCTC:\n가능한 경로: “H-EE-L-L-O”, “HH-E-LLL–O”, 등 모든 가능한 경로의 합 계산 RNN-T:\n각 스텝에서 이전 출력을 고려 “H” 다음에는 “E\"가 나올 확률이 높다는 언어 모델 정보 활용 5. 구현 예제 (PyTorch 기반) 5.1 CTC Loss 구현 사용 예제 import torch import torch.nn as nn # 로그 소프트맥스 출력을 가진 모델 (배치 크기 2, 시퀀스 길이 50, 클래스 수 28) log_probs = torch.randn(2, 50, 28).log_softmax(2).detach().requires_grad_() # 타겟 시퀀스 (배치 크기 2, 각각 다른 길이) targets = torch.tensor([[1, 3, 5], [2, 4, 6, 8]], dtype=torch.long) # 입력 길이와 타겟 길이 input_lengths = torch.tensor([50, 50], dtype=torch.long) target_lengths = torch.tensor([3, 4], dtype=torch.long) # CTC 손실 계산 ctc_loss = nn.CTCLoss() loss = ctc_loss(log_probs, targets, input_lengths, target_lengths) print(f\"CTC Loss: {loss.item()}\") 5.2 RNN-T 구현 개념 (단순화) class RNNTModel(nn.Module): def __init__(self, input_dim, hidden_dim, vocab_size): super().__init__() # 인코더 (음향 모델) self.encoder = nn.LSTM(input_dim, hidden_dim, bidirectional=True, batch_first=True) # 예측 네트워크 (언어 모델) self.prediction = nn.LSTM(hidden_dim, hidden_dim, batch_first=True) self.embedding = nn.Embedding(vocab_size, hidden_dim) # 조인트 네트워크 self.joint = nn.Sequential( nn.Linear(2*hidden_dim + hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, vocab_size) ) def forward(self, x, y_prev): # 인코더 출력 enc_out, _ = self.encoder(x) # 예측 네트워크 출력 y_embed = self.embedding(y_prev) pred_out, _ = self.prediction(y_embed) # 두 출력 확장 및 조합 enc_out = enc_out.unsqueeze(2) # [B, T, 1, H] pred_out = pred_out.unsqueeze(1) # [B, 1, U, H] # 조인트 네트워크에 피드 joint_out = self.joint( torch.cat([enc_out.expand(-1, -1, pred_out.size(2), -1), pred_out.expand(-1, enc_out.size(1), -1, -1)], dim=-1) ) # [B, T, U, V] return joint_out 6. 실제 활용 사례 Google: RNN-T를 사용하여 디바이스 상의 실시간 음성 인식 구현 Mozilla DeepSpeech: CTC 기반 오픈소스 음성 인식 시스템 Hybrid 시스템: CTC와 RNN-T의 장점을 결합한 시스템도 연구 중 두 손실 함수 모두 ASR 분야에서 중요한 발전을 이끌었으며, 각각의 특성에 따라 다양한 응용 분야에서 활용되고 있습니다.\n",
+  "wordCount" : "2227",
+  "inLanguage": "ko",
+  "datePublished": "0001-01-01T00:00:00Z",
+  "dateModified": "0001-01-01T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "macsim"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://macsim2.github.io/posts/tech/asr/ctc_loss/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://macsim2.github.io/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://macsim2.github.io/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://macsim2.github.io/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 홈</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                
+            </h1>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>0001-01-01
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>2227 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>5 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "https://macsim2.github.io/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1-asr%ec%9d%98-%ea%b8%b0%eb%b3%b8-%eb%ac%b8%ec%a0%9c%ec%99%80-%eb%8f%84%ec%a0%84-%ea%b3%bc%ec%a0%9c" aria-label="1. ASR의 기본 문제와 도전 과제">1. ASR의 기본 문제와 도전 과제</a></li>
+                <li>
+                    <a href="#2-ctc-loss-connectionist-temporal-classification" aria-label="2. CTC Loss (Connectionist Temporal Classification)">2. CTC Loss (Connectionist Temporal Classification)</a><ul>
+                        
+                <li>
+                    <a href="#21-%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90" aria-label="2.1 기본 개념">2.1 기본 개념</a></li>
+                <li>
+                    <a href="#22-%ec%88%98%ed%95%99%ec%a0%81-%ec%a0%95%ec%9d%98" aria-label="2.2 수학적 정의">2.2 수학적 정의</a></li>
+                <li>
+                    <a href="#23-%ea%b3%84%ec%82%b0-%ea%b3%bc%ec%a0%95-forward-backward-%ec%95%8c%ea%b3%a0%eb%a6%ac%ec%a6%98" aria-label="2.3 계산 과정 (Forward-Backward 알고리즘)">2.3 계산 과정 (Forward-Backward 알고리즘)</a></li>
+                <li>
+                    <a href="#24-ctc%ec%9d%98-%ec%9e%a5%eb%8b%a8%ec%a0%90" aria-label="2.4 CTC의 장단점">2.4 CTC의 장단점</a></li></ul>
+                </li>
+                <li>
+                    <a href="#3-rnn-t-loss-rnn-transducer" aria-label="3. RNN-T Loss (RNN Transducer)">3. RNN-T Loss (RNN Transducer)</a><ul>
+                        
+                <li>
+                    <a href="#31-%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90" aria-label="3.1 기본 개념">3.1 기본 개념</a></li>
+                <li>
+                    <a href="#32-%eb%aa%a8%eb%8d%b8-%ea%b5%ac%ec%a1%b0" aria-label="3.2 모델 구조">3.2 모델 구조</a></li>
+                <li>
+                    <a href="#33-%ec%88%98%ed%95%99%ec%a0%81-%ec%a0%95%ec%9d%98" aria-label="3.3 수학적 정의">3.3 수학적 정의</a></li>
+                <li>
+                    <a href="#34-%ea%b3%84%ec%82%b0-%ea%b3%bc%ec%a0%95" aria-label="3.4 계산 과정">3.4 계산 과정</a></li>
+                <li>
+                    <a href="#35-rnn-t%ec%9d%98-%ec%9e%a5%eb%8b%a8%ec%a0%90" aria-label="3.5 RNN-T의 장단점">3.5 RNN-T의 장단점</a></li></ul>
+                </li>
+                <li>
+                    <a href="#4-ctc%ec%99%80-rnn-t-%eb%b9%84%ea%b5%90" aria-label="4. CTC와 RNN-T 비교">4. CTC와 RNN-T 비교</a><ul>
+                        
+                <li>
+                    <a href="#41-%ed%95%b5%ec%8b%ac-%ec%b0%a8%ec%9d%b4%ec%a0%90" aria-label="4.1 핵심 차이점">4.1 핵심 차이점</a></li>
+                <li>
+                    <a href="#42-%ea%b5%ac%ec%b2%b4%ec%a0%81%ec%9d%b8-%ec%98%88%ec%8b%9c" aria-label="4.2 구체적인 예시">4.2 구체적인 예시</a></li></ul>
+                </li>
+                <li>
+                    <a href="#5-%ea%b5%ac%ed%98%84-%ec%98%88%ec%a0%9c-pytorch-%ea%b8%b0%eb%b0%98" aria-label="5. 구현 예제 (PyTorch 기반)">5. 구현 예제 (PyTorch 기반)</a><ul>
+                        
+                <li>
+                    <a href="#51-ctc-loss-%ea%b5%ac%ed%98%84-%ec%82%ac%ec%9a%a9-%ec%98%88%ec%a0%9c" aria-label="5.1 CTC Loss 구현 사용 예제">5.1 CTC Loss 구현 사용 예제</a></li>
+                <li>
+                    <a href="#52-rnn-t-%ea%b5%ac%ed%98%84-%ea%b0%9c%eb%85%90-%eb%8b%a8%ec%88%9c%ed%99%94" aria-label="5.2 RNN-T 구현 개념 (단순화)">5.2 RNN-T 구현 개념 (단순화)</a></li></ul>
+                </li>
+                <li>
+                    <a href="#6-%ec%8b%a4%ec%a0%9c-%ed%99%9c%ec%9a%a9-%ec%82%ac%eb%a1%80" aria-label="6. 실제 활용 사례">6. 실제 활용 사례</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p><think>요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다.</p>
+<p>계획:</p>
+<ol>
+<li>ASR 개요 및 시퀀스 모델링 문제 설명</li>
+<li>CTC Loss 설명
+<ul>
+<li>수학적 정의</li>
+<li>작동 원리</li>
+<li>장단점</li>
+<li>예제</li>
+</ul>
+</li>
+<li>RNN-T Loss 설명
+<ul>
+<li>수학적 정의</li>
+<li>작동 원리</li>
+<li>CTC와의 차이점</li>
+<li>장단점</li>
+<li>예제</li>
+</ul>
+</li>
+<li>두 손실 함수의 비교</li>
+<li>실제 구현 및 사용 사례</li>
+</ol>
+<p>이 응답에서는 두 손실 함수의 수학적 정의, 작동 원리, 장단점, 구현 방식 등을 설명하고, 가능한 경우 코드 예제와 시각적 설명을 포함하겠습니다.</think># ASR에서의 CTC Loss와 RNN-T Loss 상세 설명</p>
+<p>음성 인식(ASR)에서 가장 중요한 두 손실 함수인 CTC(Connectionist Temporal Classification)와 RNN-T(Recurrent Neural Network Transducer)에 대해 자세히 설명하겠습니다.</p>
+<h2 id="1-asr의-기본-문제와-도전-과제">1. ASR의 기본 문제와 도전 과제<a hidden class="anchor" aria-hidden="true" href="#1-asr의-기본-문제와-도전-과제">#</a></h2>
+<p>ASR의 핵심 문제:</p>
+<ul>
+<li>가변 길이 입력(음성 신호)을 가변 길이 출력(텍스트)으로 변환</li>
+<li>입력과 출력 사이의 명확한 정렬(alignment)이 없음</li>
+<li>입력이 출력보다 훨씬 더 길고 중복됨 (예: 30ms 프레임마다 특징 추출)</li>
+</ul>
+<h2 id="2-ctc-loss-connectionist-temporal-classification">2. CTC Loss (Connectionist Temporal Classification)<a hidden class="anchor" aria-hidden="true" href="#2-ctc-loss-connectionist-temporal-classification">#</a></h2>
+<h3 id="21-기본-개념">2.1 기본 개념<a hidden class="anchor" aria-hidden="true" href="#21-기본-개념">#</a></h3>
+<p>CTC는 명시적인 정렬 없이 시퀀스 데이터를 학습하기 위한 알고리즘입니다.</p>
+<ul>
+<li><strong>핵심 아이디어</strong>: 모든 가능한 정렬을 고려하고, 올바른 출력을 생성하는 모든 정렬의 확률 합을 최대화</li>
+<li><strong>특수 기호</strong> <code>blank</code>(보통 &lsquo;-&rsquo; 또는 &lsquo;ε&rsquo;로 표기)를 도입하여 반복 문자 처리와 정렬 유연성 확보</li>
+</ul>
+<h3 id="22-수학적-정의">2.2 수학적 정의<a hidden class="anchor" aria-hidden="true" href="#22-수학적-정의">#</a></h3>
+<p>입력 시퀀스 $X = (x_1, x_2, &hellip;, x_T)$와 출력 레이블 $Y = (y_1, y_2, &hellip;, y_U)$가 있을 때:</p>
+<ol>
+<li>모델은 각 타임스텝 $t$마다 모든 가능한 레이블 $k$ (레이블 집합 + blank)에 대한 확률 $P(k|t)$ 출력</li>
+<li>경로(path) $\pi = (\pi_1, \pi_2, &hellip;, \pi_T)$는 각 타임스텝마다의 레이블 예측</li>
+<li>경로에서 레이블 시퀀스로의 매핑 함수 $\mathcal{B}$를 정의: <code>blank</code> 제거 및 반복 문자 병합</li>
+</ol>
+<p>CTC Loss는 다음과 같이 정의됩니다:</p>
+<p>$L_{CTC} = -\log P(Y|X) = -\log \sum_{\pi \in \mathcal{B}^{-1}(Y)} \prod_{t=1}^{T} P(\pi_t|t)$</p>
+<p>여기서 $\mathcal{B}^{-1}(Y)$는 $Y$로 매핑되는 모든 가능한 경로의 집합입니다.</p>
+<h3 id="23-계산-과정-forward-backward-알고리즘">2.3 계산 과정 (Forward-Backward 알고리즘)<a hidden class="anchor" aria-hidden="true" href="#23-계산-과정-forward-backward-알고리즘">#</a></h3>
+<p>직접적인 계산은 조합 폭발 문제가 있어 동적 프로그래밍을 활용합니다:</p>
+<ol>
+<li><strong>Forward 변수</strong> $\alpha(t,s)$: 시간 $t$까지 레이블의 $s$번째 위치까지 생성할 확률</li>
+<li><strong>Backward 변수</strong> $\beta(t,s)$: 시간 $t$부터 끝까지 레이블의 $s$번째 위치부터 끝까지 생성할 확률</li>
+</ol>
+<p>최종 확률: $P(Y|X) = \sum_{s} \alpha(T,s) = \sum_{s} \beta(1,s)$</p>
+<h3 id="24-ctc의-장단점">2.4 CTC의 장단점<a hidden class="anchor" aria-hidden="true" href="#24-ctc의-장단점">#</a></h3>
+<p><strong>장점</strong>:</p>
+<ul>
+<li>정렬이 필요 없음 (end-to-end 학습 가능)</li>
+<li>계산 효율성이 상대적으로 높음</li>
+<li>구현이 비교적 간단함</li>
+</ul>
+<p><strong>단점</strong>:</p>
+<ul>
+<li>조건부 독립 가정: 각 타임스텝의 출력이 이전 출력과 독립적</li>
+<li>언어 모델링 능력 부족</li>
+<li>빈 출력(전체가 blank) 문제 가능성</li>
+</ul>
+<h2 id="3-rnn-t-loss-rnn-transducer">3. RNN-T Loss (RNN Transducer)<a hidden class="anchor" aria-hidden="true" href="#3-rnn-t-loss-rnn-transducer">#</a></h2>
+<h3 id="31-기본-개념">3.1 기본 개념<a hidden class="anchor" aria-hidden="true" href="#31-기본-개념">#</a></h3>
+<p>RNN-T는 CTC의 한계를 극복하기 위해 개발된 알고리즘입니다.</p>
+<ul>
+<li><strong>핵심 아이디어</strong>: 음향 모델(인코더)과 예측 네트워크(언어 모델)의 결합</li>
+<li>이전 출력에 조건부로 현재 출력을 생성 (자기회귀 특성)</li>
+</ul>
+<h3 id="32-모델-구조">3.2 모델 구조<a hidden class="anchor" aria-hidden="true" href="#32-모델-구조">#</a></h3>
+<p>RNN-T는 세 가지 주요 컴포넌트로 구성됩니다:</p>
+<ol>
+<li><strong>인코더(Encoder)</strong>: 음향 특징을 처리하는 RNN (시간 $t$에 대한 함수)</li>
+<li><strong>예측 네트워크(Prediction Network)</strong>: 이전 출력을 처리하는 RNN (출력 인덱스 $u$에 대한 함수)</li>
+<li><strong>조인트 네트워크(Joint Network)</strong>: 인코더와 예측 네트워크의 출력을 결합</li>
+</ol>
+<h3 id="33-수학적-정의">3.3 수학적 정의<a hidden class="anchor" aria-hidden="true" href="#33-수학적-정의">#</a></h3>
+<p>RNN-T는 CTC와 유사하게 모든 가능한 정렬을 고려하지만, 조건부 확률이 다릅니다:</p>
+<p>$L_{RNN-T} = -\log P(Y|X) = -\log \sum_{\pi \in \mathcal{A}(Y)} P(\pi|X)$</p>
+<p>여기서 $\mathcal{A}(Y)$는 $Y$로 매핑되는 모든 유효한 정렬의 집합입니다.</p>
+<p>경로 확률은 다음과 같이 계산됩니다:</p>
+<p>$P(\pi|X) = \prod_{i=1}^{|\pi|} P(\pi_i|X, y_{0:u-1})$</p>
+<p>여기서 $y_{0:u-1}$는 현재까지 생성된 출력 시퀀스입니다.</p>
+<h3 id="34-계산-과정">3.4 계산 과정<a hidden class="anchor" aria-hidden="true" href="#34-계산-과정">#</a></h3>
+<p>RNN-T도 Forward-Backward 알고리즘을 사용하지만, 격자(grid)에서 동작합니다:</p>
+<ol>
+<li><strong>Forward 변수</strong> $\alpha(t,u)$: 시간 $t$까지 $u$개의 레이블을 생성할 확률</li>
+<li><strong>Backward 변수</strong> $\beta(t,u)$: 시간 $t$부터 끝까지 나머지 레이블을 생성할 확률</li>
+</ol>
+<p>각 셀에서 두 가지 전이가 가능합니다:</p>
+<ul>
+<li><code>blank</code> 출력 (수평 이동)</li>
+<li>레이블 출력 (대각선 이동)</li>
+</ul>
+<h3 id="35-rnn-t의-장단점">3.5 RNN-T의 장단점<a hidden class="anchor" aria-hidden="true" href="#35-rnn-t의-장단점">#</a></h3>
+<p><strong>장점</strong>:</p>
+<ul>
+<li>자기회귀 특성으로 이전 출력을 고려 (언어 모델링 가능)</li>
+<li>CTC보다 일반적으로 더 나은 성능</li>
+<li>스트리밍 인식에 적합</li>
+</ul>
+<p><strong>단점</strong>:</p>
+<ul>
+<li>계산 복잡도가 높음</li>
+<li>훈련이 더 어려움</li>
+<li>추론 시 더 많은 계산 필요</li>
+</ul>
+<h2 id="4-ctc와-rnn-t-비교">4. CTC와 RNN-T 비교<a hidden class="anchor" aria-hidden="true" href="#4-ctc와-rnn-t-비교">#</a></h2>
+<h3 id="41-핵심-차이점">4.1 핵심 차이점<a hidden class="anchor" aria-hidden="true" href="#41-핵심-차이점">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>특성</th>
+<th>CTC</th>
+<th>RNN-T</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>조건부 독립성</td>
+<td>각 타임스텝 독립적</td>
+<td>이전 출력에 조건부</td>
+</tr>
+<tr>
+<td>언어 모델링</td>
+<td>제한적</td>
+<td>내장 언어 모델링</td>
+</tr>
+<tr>
+<td>계산 복잡도</td>
+<td>낮음</td>
+<td>높음</td>
+</tr>
+<tr>
+<td>스트리밍</td>
+<td>가능하나 제한적</td>
+<td>자연스럽게 지원</td>
+</tr>
+<tr>
+<td>빈 출력 문제</td>
+<td>발생 가능</td>
+<td>덜 발생</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-구체적인-예시">4.2 구체적인 예시<a hidden class="anchor" aria-hidden="true" href="#42-구체적인-예시">#</a></h3>
+<p>&ldquo;HELLO&quot;라는 단어를 인식하는 경우:</p>
+<p><strong>CTC</strong>:</p>
+<ul>
+<li>가능한 경로: &ldquo;H-EE-L-L-O&rdquo;, &ldquo;HH-E-LLL&ndash;O&rdquo;, 등</li>
+<li>모든 가능한 경로의 합 계산</li>
+</ul>
+<p><strong>RNN-T</strong>:</p>
+<ul>
+<li>각 스텝에서 이전 출력을 고려</li>
+<li>&ldquo;H&rdquo; 다음에는 &ldquo;E&quot;가 나올 확률이 높다는 언어 모델 정보 활용</li>
+</ul>
+<h2 id="5-구현-예제-pytorch-기반">5. 구현 예제 (PyTorch 기반)<a hidden class="anchor" aria-hidden="true" href="#5-구현-예제-pytorch-기반">#</a></h2>
+<h3 id="51-ctc-loss-구현-사용-예제">5.1 CTC Loss 구현 사용 예제<a hidden class="anchor" aria-hidden="true" href="#51-ctc-loss-구현-사용-예제">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch.nn <span style="color:#66d9ef">as</span> nn
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 로그 소프트맥스 출력을 가진 모델 (배치 크기 2, 시퀀스 길이 50, 클래스 수 28)</span>
+</span></span><span style="display:flex;"><span>log_probs <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>randn(<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">50</span>, <span style="color:#ae81ff">28</span>)<span style="color:#f92672">.</span>log_softmax(<span style="color:#ae81ff">2</span>)<span style="color:#f92672">.</span>detach()<span style="color:#f92672">.</span>requires_grad_()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 타겟 시퀀스 (배치 크기 2, 각각 다른 길이)</span>
+</span></span><span style="display:flex;"><span>targets <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([[<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">5</span>], [<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">8</span>]], dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>long)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 입력 길이와 타겟 길이</span>
+</span></span><span style="display:flex;"><span>input_lengths <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">50</span>, <span style="color:#ae81ff">50</span>], dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>long)
+</span></span><span style="display:flex;"><span>target_lengths <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>], dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>long)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># CTC 손실 계산</span>
+</span></span><span style="display:flex;"><span>ctc_loss <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>CTCLoss()
+</span></span><span style="display:flex;"><span>loss <span style="color:#f92672">=</span> ctc_loss(log_probs, targets, input_lengths, target_lengths)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;CTC Loss: </span><span style="color:#e6db74">{</span>loss<span style="color:#f92672">.</span>item()<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><h3 id="52-rnn-t-구현-개념-단순화">5.2 RNN-T 구현 개념 (단순화)<a hidden class="anchor" aria-hidden="true" href="#52-rnn-t-구현-개념-단순화">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RNNTModel</span>(nn<span style="color:#f92672">.</span>Module):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, input_dim, hidden_dim, vocab_size):
+</span></span><span style="display:flex;"><span>        super()<span style="color:#f92672">.</span>__init__()
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 인코더 (음향 모델)</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>encoder <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>LSTM(input_dim, hidden_dim, bidirectional<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, batch_first<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 예측 네트워크 (언어 모델)</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>prediction <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>LSTM(hidden_dim, hidden_dim, batch_first<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>embedding <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Embedding(vocab_size, hidden_dim)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 조인트 네트워크</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>joint <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Sequential(
+</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Linear(<span style="color:#ae81ff">2</span><span style="color:#f92672">*</span>hidden_dim <span style="color:#f92672">+</span> hidden_dim, hidden_dim),
+</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Tanh(),
+</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Linear(hidden_dim, vocab_size)
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">forward</span>(self, x, y_prev):
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 인코더 출력</span>
+</span></span><span style="display:flex;"><span>        enc_out, _ <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>encoder(x)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 예측 네트워크 출력</span>
+</span></span><span style="display:flex;"><span>        y_embed <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>embedding(y_prev)
+</span></span><span style="display:flex;"><span>        pred_out, _ <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>prediction(y_embed)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 두 출력 확장 및 조합</span>
+</span></span><span style="display:flex;"><span>        enc_out <span style="color:#f92672">=</span> enc_out<span style="color:#f92672">.</span>unsqueeze(<span style="color:#ae81ff">2</span>)  <span style="color:#75715e"># [B, T, 1, H]</span>
+</span></span><span style="display:flex;"><span>        pred_out <span style="color:#f92672">=</span> pred_out<span style="color:#f92672">.</span>unsqueeze(<span style="color:#ae81ff">1</span>)  <span style="color:#75715e"># [B, 1, U, H]</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 조인트 네트워크에 피드</span>
+</span></span><span style="display:flex;"><span>        joint_out <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>joint(
+</span></span><span style="display:flex;"><span>            torch<span style="color:#f92672">.</span>cat([enc_out<span style="color:#f92672">.</span>expand(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, pred_out<span style="color:#f92672">.</span>size(<span style="color:#ae81ff">2</span>), <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>),
+</span></span><span style="display:flex;"><span>                       pred_out<span style="color:#f92672">.</span>expand(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, enc_out<span style="color:#f92672">.</span>size(<span style="color:#ae81ff">1</span>), <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)], dim<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>        )  <span style="color:#75715e"># [B, T, U, V]</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> joint_out
+</span></span></code></pre></div><h2 id="6-실제-활용-사례">6. 실제 활용 사례<a hidden class="anchor" aria-hidden="true" href="#6-실제-활용-사례">#</a></h2>
+<ul>
+<li><strong>Google</strong>: RNN-T를 사용하여 디바이스 상의 실시간 음성 인식 구현</li>
+<li><strong>Mozilla DeepSpeech</strong>: CTC 기반 오픈소스 음성 인식 시스템</li>
+<li><strong>Hybrid 시스템</strong>: CTC와 RNN-T의 장점을 결합한 시스템도 연구 중</li>
+</ul>
+<p>두 손실 함수 모두 ASR 분야에서 중요한 발전을 이끌었으며, 각각의 특성에 따라 다양한 응용 분야에서 활용되고 있습니다.</p>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="https://macsim2.github.io/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="https://macsim2.github.io/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="https://macsim2.github.io/posts/tech/dev/web/nginx/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>Nginx와 blocking, sync</span>
+  </a>
+</nav>
+
+
+<div class="share-buttons">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share  on twitter"
+       href="https://twitter.com/intent/tweet/?text=&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f&amp;hashtags=">
+    <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-253.927,424.544c135.939,0 210.268,-112.643 210.268,-210.268c0,-3.218 0,-6.437 -0.153,-9.502c14.406,-10.421 26.973,-23.448 36.935,-38.314c-13.18,5.824 -27.433,9.809 -42.452,11.648c15.326,-9.196 26.973,-23.602 32.49,-40.92c-14.252,8.429 -30.038,14.56 -46.896,17.931c-13.487,-14.406 -32.644,-23.295 -53.946,-23.295c-40.767,0 -73.87,33.104 -73.87,73.87c0,5.824 0.613,11.494 1.992,16.858c-61.456,-3.065 -115.862,-32.49 -152.337,-77.241c-6.284,10.881 -9.962,23.601 -9.962,37.088c0,25.594 13.027,48.276 32.95,61.456c-12.107,-0.307 -23.448,-3.678 -33.41,-9.196l0,0.92c0,35.862 25.441,65.594 59.311,72.49c-6.13,1.686 -12.72,2.606 -19.464,2.606c-4.751,0 -9.348,-0.46 -13.946,-1.38c9.349,29.426 36.628,50.728 68.965,51.341c-25.287,19.771 -57.164,31.571 -91.8,31.571c-5.977,0 -11.801,-0.306 -17.625,-1.073c32.337,21.15 71.264,33.41 112.95,33.41Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share  on linkedin"
+       href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f&amp;title=&amp;summary=&amp;source=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share  on reddit"
+       href="https://reddit.com/submit?url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f&title=">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share  on facebook"
+       href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share  on whatsapp"
+       href="https://api.whatsapp.com/send?text=%20-%20https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share  on telegram"
+       href="https://telegram.me/share/url?text=&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f">
+        <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28">
+            <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+        </svg>
+    </a>
+</div>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="https://macsim2.github.io/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

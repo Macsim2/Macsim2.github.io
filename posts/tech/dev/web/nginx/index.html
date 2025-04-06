@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Nginx와 blocking, sync | macsim&#39;s Blog</title>
+<meta name="keywords" content="nginx, apache, web server, event-driven, reverse proxy, load balancer, c10k">
+<meta name="description" content="Nginx, Apache와 뭐가 다르고 왜 잘 나가는지 파헤쳐 보자.">
+<meta name="author" content="macsim">
+<link rel="canonical" href="https://macsim2.github.io/posts/tech/dev/web/nginx/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="https://macsim2.github.io/img/Q.gif">
+<link rel="apple-touch-icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="https://macsim2.github.io/posts/tech/dev/web/nginx/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="Nginx와 blocking, sync" />
+<meta property="og:description" content="Nginx, Apache와 뭐가 다르고 왜 잘 나가는지 파헤쳐 보자." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://macsim2.github.io/posts/tech/dev/web/nginx/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-11-01T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-07-26T00:00:00+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Nginx와 blocking, sync"/>
+<meta name="twitter:description" content="Nginx, Apache와 뭐가 다르고 왜 잘 나가는지 파헤쳐 보자."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "https://macsim2.github.io/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "https://macsim2.github.io/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Nginx와 blocking, sync",
+      "item": "https://macsim2.github.io/posts/tech/dev/web/nginx/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Nginx와 blocking, sync",
+  "name": "Nginx와 blocking, sync",
+  "description": "Nginx, Apache와 뭐가 다르고 왜 잘 나가는지 파헤쳐 보자.",
+  "keywords": [
+    "nginx", "apache", "web server", "event-driven", "reverse proxy", "load balancer", "c10k"
+  ],
+  "articleBody": "웹 개발 좀 해봤다 하는 사람치고 Nginx(엔진엑스라고 읽는다) 이름을 못 들어본 사람은 없을 거다. 마치 웹 서버계의 아이돌 같은 존재랄까? 근데 Nginx가 정확히 뭐 하는 친구고, 왜 이렇게 인기가 많은 걸까? 그리고 항상 같이 언급되는 Apache(아파치)와는 도대체 뭐가 다른 걸까?\n오늘은 웹 서버계의 양대 산맥, Nginx와 Apache를 비교하며 Nginx의 매력을 집중 탐구해보는 시간을 가져보려 한다.\nNginx, 넌 대체 누구니? (만능 재주꾼 소개) Nginx는 단순히 웹 서버 역할만 하는 것이 아니라, 다양한 재주를 가진 만능 엔터테이너다. 주요 역할만 해도 이 정도다:\n웹 서버 (Web Server): 기본적인 역할. HTML, CSS, Javascript, 이미지 파일 같은 정적 콘텐츠(Static Contents)를 클라이언트(웹 브라우저)에게 슝슝 보내준다. 리버스 프록시 (Reverse Proxy): 클라이언트 요청을 직접 처리하지 않고, 뒤에 숨어있는 실제 서버(WAS 등)들에게 전달해주고 응답을 받아 다시 클라이언트에게 전달하는 중간 대리인 역할. 보안 강화, 캐싱, 로드 밸런싱 등 다양한 부가 효과는 덤! 로드 밸런서 (Load Balancer): 여러 대의 서버에게 들어오는 요청(트래픽)을 골고루 나눠주는 교통정리 역할. 특정 서버에 과부하가 걸리는 것을 막아 서비스 안정성을 높인다. HTTP 캐시 (HTTP Cache): 자주 요청되는 콘텐츠를 미리 저장해두었다가 빠르게 응답해주는 똑똑한 창고 역할. 서버 부담을 줄이고 응답 속도를 높인다. 메일 프록시 (Mail Proxy): 이메일 관련 프로토콜(SMTP, POP3, IMAP)을 위한 프록시 기능도 제공한다. (이건 좀 덜 유명하지만…) 한마디로 웹 서비스를 위한 온갖 궂은일(?)을 도맡아 하는 멀티플레이어라고 할 수 있다.\nApache vs Nginx: 세기의 라이벌, 뭐가 다를까? Nginx 이야기를 할 때 절대 빼놓을 수 없는 존재가 바로 Apache다. 오랫동안 웹 서버 시장의 절대 강자였던 Apache와 신흥 강자 Nginx는 처리 방식에서 근본적인 차이를 보인다. 이게 바로 성능 차이로 이어지는 핵심 포인트다!\nApache: 전통의 강호, “한 요청엔 한 일꾼!” (프로세스/스레드 기반) Apache는 전통적으로 요청(Request) 하나당 프로세스 또는 스레드 하나를 할당하는 방식으로 동작한다. 마치 손님 한 명당 전담 직원 한 명을 붙여주는 식당 같다고 할까?\n작동 방식: 클라이언트 요청이 들어오면 새로운 프로세스나 스레드를 생성해서 처리한다. (MPM 방식에 따라 조금씩 다르지만 기본 원리는 비슷) Prefork MPM: 요청마다 프로세스를 복제. 안정적이지만 메모리 소모가 크다. Worker MPM: 여러 스레드가 요청을 나눠 처리. 메모리 효율성은 좋지만 스레드 간 동기화 문제가 있을 수 있다. Event MPM: Worker 방식에 비동기 처리 개념을 더함. (Nginx와 비슷해지려는 노력!) 장점: 오랜 역사만큼 다양한 기능과 모듈(Module)을 지원한다. 호환성이 좋다. 기능 추가나 설정 변경이 비교적 쉽다. 요청 처리가 완료될 때까지 연결을 유지하는 방식에 적합하다. 단점: 동시 접속자 수가 많아지면 성능이 급격히 저하된다. 요청마다 프로세스/스레드를 생성하는 비용(메모리, CPU)이 만만치 않기 때문이다. 소위 C10K 문제(동시 접속 1만 개 처리 문제)에 취약하다. Nginx: 떠오르는 신성, “혼자서도 열 요청 거뜬!” (이벤트 기반 비동기) Nginx는 Apache와 전혀 다른 접근 방식을 택했다. 바로 Event-Driven(이벤트 기반) 아키텍처다. 마치 혼자서 여러 테이블 손님 주문을 동시에 능숙하게 받는 베테랑 직원 같다고 할까?\n작동 방식: 미리 정해진 **적은 수의 프로세스(Worker Process)**만 생성한다. 각 프로세스는 하나의 스레드로 동작하며, **여러 개의 연결(Connection)**을 동시에 처리한다. 실제 작업(I/O 등)은 비동기 논블로킹(Asynchronous Non-blocking) 방식으로 처리한다. 즉, 작업이 완료될 때까지 마냥 기다리는 게 아니라, 작업 요청만 해놓고 바로 다른 이벤트를 처리하러 간다. 작업이 완료되면 그때 알려달라고(Callback) 하는 식이다. 장점: 매우 적은 자원(메모리, CPU)으로 높은 동시 접속 처리 성능을 보여준다. C10K 문제 해결사! 비동기 방식으로 동작하여 I/O 작업이 많은 웹 환경에 최적화되어 있다. 정적 파일 처리 속도가 매우 빠르다. 단점: Apache만큼 다양한 모듈을 지원하지는 않는다. (물론 핵심 기능은 충분!) 동적으로 기능을 추가하거나 설정을 변경하는 것이 Apache보다 조금 더 복잡할 수 있다. 비동기 논블로킹 I/O, 그게 뭔데? Nginx 성능의 핵심인 Event-Driven과 비동기 논블로킹 I/O를 좀 더 쉽게 이해해보자. Node.js도 이 방식을 사용해서 유명해졌다.\n이벤트 발생 (Event Emit): 클라이언트 요청(Request), 파일 읽기 완료 등 다양한 이벤트가 발생한다. 마치 식당에 손님이 들어오거나, 주방에서 요리가 완성되는 것과 같다.\n이벤트 루프 (Event Loop) 출동: 이벤트 루프는 끊임없이 “뭔 일 없나?” 하고 지켜보다가 이벤트가 발생하면 재빨리 감지한다. 그리고 이 이벤트를 처리할 담당자(Handler)에게 작업을 넘긴다.\n논블로킹 (Non-blocking) 방식의 작업 요청: 만약 처리해야 할 작업이 시간이 오래 걸리는 I/O 작업(파일 읽기/쓰기, 네트워크 통신, 데이터베이스 조회 등)이라면 더욱 Nginx의 진가가 드러날 거다.\n기다리지 않는다! (Non-blocking): Nginx(담당 Handler)는 운영체제에게 “이 파일 좀 읽어줘!” 또는 “저 서버에 데이터 좀 보내줘!” 라고 요청만 하고, 그 작업이 끝날 때까지 기다리지 않는다. 마치 주방에 “파스타 하나요!” 라고 주문만 넣고 바로 다른 테이블 주문 받으러 가는 웨이터처럼 이것이 바로 논블로킹이다. 즉, 함수(작업 요청)를 호출했을 때, 작업 완료 여부와 상관없이 즉시 반환되어 다음 코드를 실행할 수 있게 된다. (vs 블로킹 (Blocking)): 만약 블로킹 방식이었다면, 파일 읽기가 다 끝나거나 데이터 전송이 완료될 때까지 그 자리에서 하염없이 기다려야 한다. 그동안 다른 손님(요청)은 아무도 못 받는 거다. 제어권 반환 \u0026 다른 이벤트 처리: 논블로킹 방식으로 I/O 작업을 요청한 Nginx(담당 Handler)는 프로그램의 실행 흐름(Control, 제어권)을 즉시 이벤트 루프에게 돌려준다. “나는 요청했으니, 이제 다른 일 할게!” 라는 뜻이다.\n제어권이란? 프로그램 코드가 순차적으로 실행되는 ‘흐름’을 의미한다. 싱글 스레드 환경에서는 이 실행 흐름이 하나뿐이다. 블로킹 작업은 이 실행 흐름을 멈추고 기다리게 만들지만, 논블로킹 작업은 실행 흐름을 멈추지 않고 계속 이어갈 수 있게 해준다. 제어권을 돌려받은 이벤트 루프는 쉬지 않고 다음 대기 중인 다른 이벤트가 있는지 확인하고 처리한다. 덕분에 하나의 스레드만으로도 여러 요청을 동시에 처리하는 것처럼 보이는 것이 가능하다. 비동기 (Asynchronous) 방식의 결과 처리: 아까 요청했던 I/O 작업이 드디어 완료되면 어떻게 될까?\n알아서 알려준다! (Asynchronous): 운영체제가 “아까 시킨 파일 다 읽었어!” 라고 이벤트 루프에게 알려준다. Nginx가 계속 “다 됐니?” 하고 물어볼 필요가 없다. 이것이 바로 비동기 방식이다. 작업 완료 시점을 Nginx가 신경 쓰지 않고, 완료되면 나중에 통보받는 구조다. 콜백 실행 (Callback): 작업 완료 알림을 받은 이벤트 루프는 해당 작업과 연결된 콜백 함수를 실행 대기열(Task Queue)에 넣는다. 그리고 이벤트 루프는 적절한 시점에 이 콜백 함수를 실행시켜 작업 결과를 처리하거나 다음 작업을 진행한다. “파스타 나왔습니다~” 하고 알려주면, 웨이터가 서빙하는 것과 같다. 결론: 논블로킹은 작업을 기다리지 않고 바로 다음 일을 할 수 있게 해주고, 비동기는 작업 완료를 나중에 통보받아 처리하는 방식이다. 이 둘의 조합 덕분에 Nginx는 CPU가 직접 일하지 않는 I/O 대기 시간 동안 다른 요청들을 효율적으로 처리할 수 있고, 적은 스레드로도 수많은 동시 요청을 감당할 수 있게 되는 것이다. Apache처럼 요청마다 일꾼(프로세스/스레드)을 늘릴 필요가 없으니 자원도 아끼고 성능도 좋아진다.\n(참고로 CPU 자원을 많이 사용하는 계산 위주의 작업(CPU-bound)은 이런 비동기 방식의 이점을 크게 누리기 어렵다. Nginx는 웹 서버 특성상 네트워크 I/O가 대부분이므로 이 방식이 매우 효과적이다.)\n블로킹? 논블로킹? 동기? 비동기? 헷갈리는 개념 정리! 앞서 논블로킹-비동기 조합이 Nginx의 핵심이라고 했는데, 여기서 잠깐! 블로킹이니 동기니 하는 용어들이 머릿속을 뒤죽박죽 만들 수 있다. 특히 논블로킹과 비동기가 찰떡궁합처럼 같이 쓰이다 보니 더더욱 비슷하게 느껴지기도 한다.\n하지만 이 용어들은 서로 다른 관점에서 나온 개념이다. 이 기회에 네 가지 조합이 어떻게 다른지, 그리고 왜 특정 조합이 잘 안 쓰이는지 식당 웨이터 비유를 통해 확실히 정리하고 가자!\n블로킹 (Blocking) vs 논블로킹 (Non-blocking): 이 둘은 함수(작업)를 호출한 쪽(호출자, Caller)의 관점이다.\n블로킹: 호출한 함수가 작업을 끝낼 때까지 호출자가 그 자리에서 기다리는 것 (실행 흐름 멈춤). 논블로킹: 호출한 함수가 작업 완료 여부와 관계없이 일단 바로 리턴되는 것 (실행 흐름 안 멈춤). “접수 완료!“하고 바로 다음 일 하러 감. 동기 (Synchronous) vs 비동기 (Asynchronous): 이 둘은 호출된 함수(작업)의 결과나 완료를 어떻게 신경 쓰고 통지받는지에 대한 관점이다.\n동기: 호출자가 스스로 작업 완료 여부를 계속 확인하거나, 작업이 끝나면 그 순서에 맞춰 결과가 바로 리턴되는 방식. 나가 직접 챙겨야 함. 비동기: 호출자는 작업 완료를 신경 끄고, 작업이 끝나면 다른 누군가(OS, 이벤트 루프 등)가 알아서 콜백이나 이벤트로 알려주는 방식. 나중에 통보받음. 자, 이제 웨이터 등판! 네 가지 조합을 살펴보자.\n1. 블로킹 (Blocking) - 동기 (Synchronous): (가장 흔하고 직관적)\n동작: 웨이터가 주문(함수 호출)을 받고 주방(호출된 함수)에 전달. 웨이터는 주방 앞에서 요리 나올 때까지 멍때리며 기다림 (블로킹). 요리 완성! 웨이터가 직접 받아서(동기적 결과 반환) 서빙. 설명: 함수 호출하면 그 함수 작업(특히 I/O) 끝날 때까지 스레드가 멈춘다. 작업 끝나면 결과 리턴되고 멈췄던 흐름이 다시 이어진다. 장단점: 코드 짜기 쉽고 이해도 쉽다. 하지만 스레드가 노는 시간이 많아 비효율적 (특히 손님 많을 때). 2. 논블로킹 (Non-blocking) - 동기 (Synchronous):\n동작: 웨이터가 주문 전달. 주방에 “다 됐어요?” 바로 물어봄 (논블로킹 호출). 아직이면 일단 다른 테이블 잠깐 봄. 근데 요리 나올 때까지 계속 주방 가서 “다 됐어요??” 들락날락 확인해야 함 (동기적 확인). 요리 완성! 그때 받아옴. 설명: 함수 호출하면 일단 바로 리턴 (예: “아직이요~”). 근데 호출자가 결과 받으려면 계속 함수 다시 호출해서 “다 됐니?” 물어봐야 함 (Polling). 실행 흐름이 멈추진 않지만 계속 물어보느라 바쁨. 장단점: 스레드가 멈추진 않지만, 계속 상태 확인(Polling)하느라 CPU 자원 낭비. 코드도 복잡해짐. 3. 비동기 (Asynchronous) - 블로킹 (Blocking): (이론상으론 가능…?)\n동작: 웨이터가 주문 넣고 “다 되면 알려주세요 (비동기 알림 요청)”. 근데 다른 일 안 하고 식당 입구에서 알림 벨만 뚫어져라 쳐다보며 기다림 (블로킹). 사람의 일로 비유하니 이게 뭐지 싶다.. 설명: 일반적으론 잘 없다. 함수 호출(이벤트 등록)은 바로 리턴될 수 있는데, 그 결과(이벤트 통지)를 기다리는 다른 특정 지점에서 블로킹될 수 있다 (select, poll 등). 작업 완료는 비동기로 통지되지만, 그걸 기다리는 과정에서 블로킹이 끼어드는 애매한 상황. ‘비동기’의 장점인 ‘기다리지 않음’을 활용 못 함. 장단점: 비동기 장점 상실. 복잡한데 효율은 별로라 거의 안 씀. 4. 논블로킹 (Non-blocking) - 비동기 (Asynchronous): (Nginx, Node.js 최애 방식)\n동작: 웨이터가 주문 넣고 “다 되면 알려주세요 (비동기 알림 요청)”. 그리고 바로 다른 테이블 주문받으러 감 (논블로킹). 나중에 주방에서 “딩동! 요리 완료!” 알림(콜백) 오면, 그때 가서 요리 받아 서빙. 설명: 함수 호출하면 일단 바로 리턴 (논블로킹). 호출자는 작업 완료 신경 끄고 다른 일 함. 작업 완료되면 나중에 OS나 이벤트 루프가 알아서 콜백 함수 호출 등을 통해 알려줌 (비동기). 장단점: 스레드 대기 시간 최소화! 자원 효율 끝판왕. 동시 요청 처리에 최적. 단점은 콜백 지옥 가능성 (Promise, async/await 등으로 극복 시도 중). 이제 논블로킹-비동기 조합이 왜 Nginx의 빠른 성능 비결인지 감이 좀 더 올 것이다!\n그래서 뭘 써야 할까? (정답은 없다!) “와, Nginx 짱인데? 그럼 무조건 Nginx 쓰면 되는 거 아냐?” 라고 생각할 수 있지만, 세상만사 그렇듯 정답은 없다.\nNginx가 빛을 발하는 경우:\n높은 동시 접속 처리가 필요한 서비스 (대규모 트래픽 예상) 정적 파일 서빙이 많은 경우 (이미지, CSS, JS 등) 리버스 프록시, 로드 밸런서 역할이 중요한 경우 제한된 서버 자원으로 최대한의 성능을 뽑아내야 할 때 Apache가 여전히 매력적인 경우:\n다양한 서드파티 모듈을 활용해야 하는 복잡한 기능 구현 .htaccess 파일을 통한 유연한 설정 변경이 필요한 경우 (웹 호스팅 등) 개발 편의성이나 기존 시스템과의 호환성이 더 중요할 때 동시 접속자 수가 많지 않고 안정성이 더 중요할 때 물론 요즘 대세는 Nginx를 리버스 프록시로 앞단에 두고, 실제 애플리케이션 로직은 Apache나 다른 WAS(Tomcat, Node.js 등)가 처리하는 조합이다. 각자의 장점을 살리는 현명한 방법이다.\n대세는 Nginx? (점유율 변화) 예전에는 Apache가 웹 서버 시장을 압도했지만, Netcraft 같은 웹 서버 조사 기관 자료를 보면 최근 몇 년간 Nginx의 점유율이 가파르게 상승하여 Apache를 앞지르거나 팽팽한 경쟁을 벌이고 있다. (2020년 데이터는 조금 오래되었으니 최신 자료를 찾아보는 것도 좋다!) 이는 대규모 트래픽 처리 능력과 효율성이 중요한 현대 웹 환경의 요구와 Nginx의 특징이 잘 맞아떨어졌기 때문으로 보인다.\n결론: 상황에 맞는 현명한 선택이 중요! Nginx는 Event-Driven 비동기 방식으로 동작하여 적은 자원으로 높은 동시 접속 처리 성능을 내는 매력적인 웹 서버다. 특히 리버스 프록시, 로드 밸런서 등으로 활약하며 현대 웹 서비스 아키텍처의 핵심 요소로 자리 잡았다.\n하지만 Apache 역시 오랜 역사와 풍부한 기능, 높은 호환성이라는 장점을 가지고 있다. 결국 어떤 기술이든 만능은 없다(No silver bullet!). 내가 만들려는 서비스의 특징, 예상되는 트래픽 규모, 서버 자원, 개발 편의성 등을 종합적으로 고려하여 상황에 맞는 최적의 도구를 선택하는 것이 중요하다 하겠다.\nReferences [1] Nginx 공식 사이트: https://nginx.org/ [2] Apache HTTP Server Project: https://httpd.apache.org/ [3] Apache vs Nginx (DigitalOcean): https://www.digitalocean.com/community/tutorials/apache-vs-nginx-practical-considerations [4] C10k problem (Wikipedia): https://en.wikipedia.org/wiki/C10k_problem [5] (기존 참고) 네이버 블로그 - Node.js 이벤트 기반 비동기 처리 방식: https://blog.naver.com/jhc9639/221108496101 (개념 이해에 도움) ",
+  "wordCount" : "5713",
+  "inLanguage": "ko",
+  "datePublished": "2020-11-01T00:00:00Z",
+  "dateModified": "2024-07-26T00:00:00+09:00",
+  "author":{
+    "@type": "Person",
+    "name": "macsim"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://macsim2.github.io/posts/tech/dev/web/nginx/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://macsim2.github.io/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://macsim2.github.io/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://macsim2.github.io/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 홈</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                Nginx와 blocking, sync
+            </h1>
+            <div class="post-description">
+                Nginx, Apache와 뭐가 다르고 왜 잘 나가는지 파헤쳐 보자.
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2020-11-01
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>5713 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>12 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="https://macsim2.github.io/tags/nginx/" style="color: var(--secondary)!important;">Nginx</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/apache/" style="color: var(--secondary)!important;">Apache</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/web-server/" style="color: var(--secondary)!important;">Web Server</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/event-driven/" style="color: var(--secondary)!important;">Event-Driven</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/reverse-proxy/" style="color: var(--secondary)!important;">Reverse Proxy</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/load-balancer/" style="color: var(--secondary)!important;">Load Balancer</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/c10k/" style="color: var(--secondary)!important;">C10k</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "https://macsim2.github.io/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul><ul>
+                <li>
+                    <a href="#nginx-%eb%84%8c-%eb%8c%80%ec%b2%b4-%eb%88%84%ea%b5%ac%eb%8b%88-%eb%a7%8c%eb%8a%a5-%ec%9e%ac%ec%a3%bc%ea%be%bc-%ec%86%8c%ea%b0%9c" aria-label="Nginx, 넌 대체 누구니? (만능 재주꾼 소개)">Nginx, 넌 대체 누구니? (만능 재주꾼 소개)</a></li>
+                <li>
+                    <a href="#apache-vs-nginx-%ec%84%b8%ea%b8%b0%ec%9d%98-%eb%9d%bc%ec%9d%b4%eb%b2%8c-%eb%ad%90%ea%b0%80-%eb%8b%a4%eb%a5%bc%ea%b9%8c" aria-label="Apache vs Nginx: 세기의 라이벌, 뭐가 다를까?">Apache vs Nginx: 세기의 라이벌, 뭐가 다를까?</a><ul>
+                        
+                <li>
+                    <a href="#apache-%ec%a0%84%ed%86%b5%ec%9d%98-%ea%b0%95%ed%98%b8-%ed%95%9c-%ec%9a%94%ec%b2%ad%ec%97%94-%ed%95%9c-%ec%9d%bc%ea%be%bc-%ed%94%84%eb%a1%9c%ec%84%b8%ec%8a%a4%ec%8a%a4%eb%a0%88%eb%93%9c-%ea%b8%b0%eb%b0%98" aria-label="Apache: 전통의 강호, &amp;ldquo;한 요청엔 한 일꾼!&amp;rdquo; (프로세스/스레드 기반)">Apache: 전통의 강호, &ldquo;한 요청엔 한 일꾼!&rdquo; (프로세스/스레드 기반)</a></li>
+                <li>
+                    <a href="#nginx-%eb%96%a0%ec%98%a4%eb%a5%b4%eb%8a%94-%ec%8b%a0%ec%84%b1-%ed%98%bc%ec%9e%90%ec%84%9c%eb%8f%84-%ec%97%b4-%ec%9a%94%ec%b2%ad-%ea%b1%b0%eb%9c%ac-%ec%9d%b4%eb%b2%a4%ed%8a%b8-%ea%b8%b0%eb%b0%98-%eb%b9%84%eb%8f%99%ea%b8%b0" aria-label="Nginx: 떠오르는 신성, &amp;ldquo;혼자서도 열 요청 거뜬!&amp;rdquo; (이벤트 기반 비동기)">Nginx: 떠오르는 신성, &ldquo;혼자서도 열 요청 거뜬!&rdquo; (이벤트 기반 비동기)</a></li>
+                <li>
+                    <a href="#%eb%b9%84%eb%8f%99%ea%b8%b0-%eb%85%bc%eb%b8%94%eb%a1%9c%ed%82%b9-io-%ea%b7%b8%ea%b2%8c-%eb%ad%94%eb%8d%b0" aria-label="비동기 논블로킹 I/O, 그게 뭔데?">비동기 논블로킹 I/O, 그게 뭔데?</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%eb%b8%94%eb%a1%9c%ed%82%b9-%eb%85%bc%eb%b8%94%eb%a1%9c%ed%82%b9-%eb%8f%99%ea%b8%b0-%eb%b9%84%eb%8f%99%ea%b8%b0-%ed%97%b7%ea%b0%88%eb%a6%ac%eb%8a%94-%ea%b0%9c%eb%85%90-%ec%a0%95%eb%a6%ac" aria-label="블로킹? 논블로킹? 동기? 비동기? 헷갈리는 개념 정리!">블로킹? 논블로킹? 동기? 비동기? 헷갈리는 개념 정리!</a></li>
+                <li>
+                    <a href="#%ea%b7%b8%eb%9e%98%ec%84%9c-%eb%ad%98-%ec%8d%a8%ec%95%bc-%ed%95%a0%ea%b9%8c-%ec%a0%95%eb%8b%b5%ec%9d%80-%ec%97%86%eb%8b%a4" aria-label="그래서 뭘 써야 할까? (정답은 없다!)">그래서 뭘 써야 할까? (정답은 없다!)</a></li>
+                <li>
+                    <a href="#%eb%8c%80%ec%84%b8%eb%8a%94-nginx-%ec%a0%90%ec%9c%a0%ec%9c%a8-%eb%b3%80%ed%99%94" aria-label="대세는 Nginx? (점유율 변화)">대세는 Nginx? (점유율 변화)</a></li>
+                <li>
+                    <a href="#%ea%b2%b0%eb%a1%a0-%ec%83%81%ed%99%a9%ec%97%90-%eb%a7%9e%eb%8a%94-%ed%98%84%eb%aa%85%ed%95%9c-%ec%84%a0%ed%83%9d%ec%9d%b4-%ec%a4%91%ec%9a%94" aria-label="결론: 상황에 맞는 현명한 선택이 중요!">결론: 상황에 맞는 현명한 선택이 중요!</a></li></ul>
+                    
+                <li>
+                    <a href="#references" aria-label="References">References</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>웹 개발 좀 해봤다 하는 사람치고 <code>Nginx</code>(엔진엑스라고 읽는다) 이름을 못 들어본 사람은 없을 거다. 마치 웹 서버계의 아이돌 같은 존재랄까? 근데 Nginx가 정확히 뭐 하는 친구고, 왜 이렇게 인기가 많은 걸까? 그리고 항상 같이 언급되는 <code>Apache</code>(아파치)와는 도대체 뭐가 다른 걸까?</p>
+<p>오늘은 웹 서버계의 양대 산맥, Nginx와 Apache를 비교하며 Nginx의 매력을 집중 탐구해보는 시간을 가져보려 한다.</p>
+<h2 id="nginx-넌-대체-누구니-만능-재주꾼-소개">Nginx, 넌 대체 누구니? (만능 재주꾼 소개)<a hidden class="anchor" aria-hidden="true" href="#nginx-넌-대체-누구니-만능-재주꾼-소개">#</a></h2>
+<p><code>Nginx</code>는 단순히 웹 서버 역할만 하는 것이 아니라, 다양한 재주를 가진 만능 엔터테이너다. 주요 역할만 해도 이 정도다:</p>
+<ul>
+<li><strong>웹 서버 (Web Server):</strong> 기본적인 역할. HTML, CSS, Javascript, 이미지 파일 같은 정적 콘텐츠(Static Contents)를 클라이언트(웹 브라우저)에게 슝슝 보내준다.</li>
+<li><strong>리버스 프록시 (Reverse Proxy):</strong> 클라이언트 요청을 직접 처리하지 않고, 뒤에 숨어있는 실제 서버(WAS 등)들에게 전달해주고 응답을 받아 다시 클라이언트에게 전달하는 중간 대리인 역할. 보안 강화, 캐싱, 로드 밸런싱 등 다양한 부가 효과는 덤!</li>
+<li><strong>로드 밸런서 (Load Balancer):</strong> 여러 대의 서버에게 들어오는 요청(트래픽)을 골고루 나눠주는 교통정리 역할. 특정 서버에 과부하가 걸리는 것을 막아 서비스 안정성을 높인다.</li>
+<li><strong>HTTP 캐시 (HTTP Cache):</strong> 자주 요청되는 콘텐츠를 미리 저장해두었다가 빠르게 응답해주는 똑똑한 창고 역할. 서버 부담을 줄이고 응답 속도를 높인다.</li>
+<li><strong>메일 프록시 (Mail Proxy):</strong> 이메일 관련 프로토콜(SMTP, POP3, IMAP)을 위한 프록시 기능도 제공한다. (이건 좀 덜 유명하지만&hellip;)</li>
+</ul>
+<p>한마디로 웹 서비스를 위한 온갖 궂은일(?)을 도맡아 하는 멀티플레이어라고 할 수 있다.</p>
+<h2 id="apache-vs-nginx-세기의-라이벌-뭐가-다를까">Apache vs Nginx: 세기의 라이벌, 뭐가 다를까?<a hidden class="anchor" aria-hidden="true" href="#apache-vs-nginx-세기의-라이벌-뭐가-다를까">#</a></h2>
+<p>Nginx 이야기를 할 때 절대 빼놓을 수 없는 존재가 바로 <code>Apache</code>다. 오랫동안 웹 서버 시장의 절대 강자였던 Apache와 신흥 강자 Nginx는 처리 방식에서 근본적인 차이를 보인다. 이게 바로 성능 차이로 이어지는 핵심 포인트다!</p>
+<h3 id="apache-전통의-강호-한-요청엔-한-일꾼-프로세스스레드-기반">Apache: 전통의 강호, &ldquo;한 요청엔 한 일꾼!&rdquo; (프로세스/스레드 기반)<a hidden class="anchor" aria-hidden="true" href="#apache-전통의-강호-한-요청엔-한-일꾼-프로세스스레드-기반">#</a></h3>
+<p>Apache는 전통적으로 <strong>요청(Request) 하나당 프로세스 또는 스레드 하나를 할당</strong>하는 방식으로 동작한다. 마치 손님 한 명당 전담 직원 한 명을 붙여주는 식당 같다고 할까?</p>
+<ul>
+<li><strong>작동 방식:</strong>
+<ul>
+<li>클라이언트 요청이 들어오면 새로운 프로세스나 스레드를 생성해서 처리한다. (MPM 방식에 따라 조금씩 다르지만 기본 원리는 비슷)</li>
+<li><code>Prefork MPM</code>: 요청마다 프로세스를 복제. 안정적이지만 메모리 소모가 크다.</li>
+<li><code>Worker MPM</code>: 여러 스레드가 요청을 나눠 처리. 메모리 효율성은 좋지만 스레드 간 동기화 문제가 있을 수 있다.</li>
+<li><code>Event MPM</code>: Worker 방식에 비동기 처리 개념을 더함. (Nginx와 비슷해지려는 노력!)</li>
+</ul>
+</li>
+<li><strong>장점:</strong>
+<ul>
+<li>오랜 역사만큼 다양한 기능과 모듈(Module)을 지원한다. 호환성이 좋다.</li>
+<li>기능 추가나 설정 변경이 비교적 쉽다.</li>
+<li>요청 처리가 완료될 때까지 연결을 유지하는 방식에 적합하다.</li>
+</ul>
+</li>
+<li><strong>단점:</strong>
+<ul>
+<li><strong>동시 접속자 수가 많아지면 성능이 급격히 저하</strong>된다. 요청마다 프로세스/스레드를 생성하는 비용(메모리, CPU)이 만만치 않기 때문이다.</li>
+<li>소위 <strong><code>C10K</code> 문제</strong>(동시 접속 1만 개 처리 문제)에 취약하다.</li>
+</ul>
+</li>
+</ul>
+<!-- Apache vs Nginx 처리 방식 비교 그림 추천 -->
+<!-- 검색 키워드: "apache vs nginx architecture", "process based vs event driven web server" -->
+<!-- 추천 그림 형태: Apache는 요청마다 프로세스/스레드가 생성되는 모습, Nginx는 적은 수의 프로세스/스레드가 여러 요청을 비동기적으로 처리하는 모습 비교 -->
+<p><img loading="lazy" src="/images/nginx/apache.png" alt="Apache 처리 방식 예시"  />
+ <!-- 기존 이미지 유지 또는 추천 이미지로 교체 --></p>
+<h3 id="nginx-떠오르는-신성-혼자서도-열-요청-거뜬-이벤트-기반-비동기">Nginx: 떠오르는 신성, &ldquo;혼자서도 열 요청 거뜬!&rdquo; (이벤트 기반 비동기)<a hidden class="anchor" aria-hidden="true" href="#nginx-떠오르는-신성-혼자서도-열-요청-거뜬-이벤트-기반-비동기">#</a></h3>
+<p>Nginx는 Apache와 전혀 다른 접근 방식을 택했다. 바로 <strong><code>Event-Driven</code>(이벤트 기반) 아키텍처</strong>다. 마치 혼자서 여러 테이블 손님 주문을 동시에 능숙하게 받는 베테랑 직원 같다고 할까?</p>
+<ul>
+<li><strong>작동 방식:</strong>
+<ul>
+<li>미리 정해진 **적은 수의 프로세스(Worker Process)**만 생성한다.</li>
+<li>각 프로세스는 <strong>하나의 스레드</strong>로 동작하며, **여러 개의 연결(Connection)**을 동시에 처리한다.</li>
+<li>실제 작업(I/O 등)은 <strong>비동기 논블로킹(Asynchronous Non-blocking) 방식</strong>으로 처리한다. 즉, 작업이 완료될 때까지 마냥 기다리는 게 아니라, 작업 요청만 해놓고 바로 다른 이벤트를 처리하러 간다. 작업이 완료되면 그때 알려달라고(Callback) 하는 식이다.</li>
+</ul>
+</li>
+<li><strong>장점:</strong>
+<ul>
+<li><strong>매우 적은 자원(메모리, CPU)으로 높은 동시 접속 처리 성능</strong>을 보여준다. <code>C10K</code> 문제 해결사!</li>
+<li>비동기 방식으로 동작하여 I/O 작업이 많은 웹 환경에 최적화되어 있다.</li>
+<li>정적 파일 처리 속도가 매우 빠르다.</li>
+</ul>
+</li>
+<li><strong>단점:</strong>
+<ul>
+<li>Apache만큼 다양한 모듈을 지원하지는 않는다. (물론 핵심 기능은 충분!)</li>
+<li>동적으로 기능을 추가하거나 설정을 변경하는 것이 Apache보다 조금 더 복잡할 수 있다.</li>
+</ul>
+</li>
+</ul>
+<p><img loading="lazy" src="/images/nginx/event-driven.png" alt="Nginx 이벤트 기반 처리 방식 예시"  />
+ <!-- 기존 이미지 유지 또는 추천 이미지로 교체 --></p>
+<h3 id="비동기-논블로킹-io-그게-뭔데">비동기 논블로킹 I/O, 그게 뭔데?<a hidden class="anchor" aria-hidden="true" href="#비동기-논블로킹-io-그게-뭔데">#</a></h3>
+<p>Nginx 성능의 핵심인 <code>Event-Driven</code>과 <code>비동기 논블로킹 I/O</code>를 좀 더 쉽게 이해해보자. <code>Node.js</code>도 이 방식을 사용해서 유명해졌다.</p>
+<ol>
+<li>
+<p><strong>이벤트 발생 (<code>Event Emit</code>):</strong> 클라이언트 요청(<code>Request</code>), 파일 읽기 완료 등 다양한 이벤트가 발생한다. 마치 식당에 손님이 들어오거나, 주방에서 요리가 완성되는 것과 같다.</p>
+</li>
+<li>
+<p><strong>이벤트 루프 (<code>Event Loop</code>) 출동:</strong> <code>이벤트 루프</code>는 끊임없이 &ldquo;뭔 일 없나?&rdquo; 하고 지켜보다가 이벤트가 발생하면 재빨리 감지한다. 그리고 이 이벤트를 처리할 담당자(<code>Handler</code>)에게 작업을 넘긴다.</p>
+</li>
+<li>
+<p><strong><code>논블로킹 (Non-blocking)</code> 방식의 작업 요청:</strong> 만약 처리해야 할 작업이 시간이 오래 걸리는 <code>I/O 작업</code>(파일 읽기/쓰기, 네트워크 통신, 데이터베이스 조회 등)이라면 더욱 Nginx의 진가가 드러날 거다.</p>
+<ul>
+<li><strong>기다리지 않는다! (<code>Non-blocking</code>):</strong> Nginx(담당 Handler)는 운영체제에게 &ldquo;이 파일 좀 읽어줘!&rdquo; 또는 &ldquo;저 서버에 데이터 좀 보내줘!&rdquo; 라고 <strong>요청만 하고, 그 작업이 끝날 때까지 기다리지 않는다.</strong> 마치 주방에 &ldquo;파스타 하나요!&rdquo; 라고 주문만 넣고 바로 다른 테이블 주문 받으러 가는 웨이터처럼 이것이 바로 <code>논블로킹</code>이다. 즉, 함수(작업 요청)를 호출했을 때, 작업 완료 여부와 상관없이 즉시 반환되어 다음 코드를 실행할 수 있게 된다.</li>
+<li><strong>(vs <code>블로킹 (Blocking)</code>):</strong> 만약 <code>블로킹</code> 방식이었다면, 파일 읽기가 다 끝나거나 데이터 전송이 완료될 때까지 그 자리에서 하염없이 기다려야 한다. 그동안 다른 손님(요청)은 아무도 못 받는 거다.</li>
+</ul>
+</li>
+<li>
+<p><strong>제어권 반환 &amp; 다른 이벤트 처리:</strong> <code>논블로킹</code> 방식으로 I/O 작업을 요청한 Nginx(담당 Handler)는 프로그램의 <code>실행 흐름</code>(Control, 제어권)을 즉시 <code>이벤트 루프</code>에게 돌려준다. &ldquo;나는 요청했으니, 이제 다른 일 할게!&rdquo; 라는 뜻이다.</p>
+<ul>
+<li><strong>제어권이란?</strong> 프로그램 코드가 순차적으로 실행되는 &lsquo;흐름&rsquo;을 의미한다. 싱글 스레드 환경에서는 이 실행 흐름이 하나뿐이다. <code>블로킹</code> 작업은 이 실행 흐름을 멈추고 기다리게 만들지만, <code>논블로킹</code> 작업은 실행 흐름을 멈추지 않고 계속 이어갈 수 있게 해준다.</li>
+<li>제어권을 돌려받은 <code>이벤트 루프</code>는 쉬지 않고 다음 대기 중인 다른 이벤트가 있는지 확인하고 처리한다. 덕분에 하나의 스레드만으로도 여러 요청을 동시에 처리하는 것처럼 보이는 것이 가능하다.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>비동기 (Asynchronous)</code> 방식의 결과 처리:</strong> 아까 요청했던 <code>I/O 작업</code>이 드디어 완료되면 어떻게 될까?</p>
+<ul>
+<li><strong>알아서 알려준다! (<code>Asynchronous</code>):</strong> 운영체제가 &ldquo;아까 시킨 파일 다 읽었어!&rdquo; 라고 <code>이벤트 루프</code>에게 <strong>알려준다.</strong> Nginx가 계속 &ldquo;다 됐니?&rdquo; 하고 물어볼 필요가 없다. 이것이 바로 <code>비동기</code> 방식이다. 작업 완료 시점을 Nginx가 신경 쓰지 않고, 완료되면 <strong>나중에 통보</strong>받는 구조다.</li>
+<li><strong>콜백 실행 (<code>Callback</code>):</strong> 작업 완료 알림을 받은 <code>이벤트 루프</code>는 해당 작업과 연결된 <code>콜백 함수</code>를 실행 대기열(Task Queue)에 넣는다. 그리고 이벤트 루프는 적절한 시점에 이 콜백 함수를 실행시켜 작업 결과를 처리하거나 다음 작업을 진행한다. &ldquo;파스타 나왔습니다~&rdquo; 하고 알려주면, 웨이터가 서빙하는 것과 같다.</li>
+</ul>
+</li>
+</ol>
+<p><strong>결론:</strong> <code>논블로킹</code>은 <strong>작업을 기다리지 않고 바로 다음 일을 할 수 있게</strong> 해주고, <code>비동기</code>는 <strong>작업 완료를 나중에 통보받아 처리</strong>하는 방식이다. 이 둘의 조합 덕분에 Nginx는 CPU가 직접 일하지 않는 <code>I/O 대기 시간</code> 동안 다른 요청들을 효율적으로 처리할 수 있고, 적은 스레드로도 수많은 동시 요청을 감당할 수 있게 되는 것이다. Apache처럼 요청마다 일꾼(프로세스/스레드)을 늘릴 필요가 없으니 자원도 아끼고 성능도 좋아진다.</p>
+<p>(참고로 CPU 자원을 많이 사용하는 계산 위주의 작업(<code>CPU-bound</code>)은 이런 비동기 방식의 이점을 크게 누리기 어렵다. Nginx는 웹 서버 특성상 네트워크 <code>I/O</code>가 대부분이므로 이 방식이 매우 효과적이다.)</p>
+<h2 id="블로킹-논블로킹-동기-비동기-헷갈리는-개념-정리">블로킹? 논블로킹? 동기? 비동기? 헷갈리는 개념 정리!<a hidden class="anchor" aria-hidden="true" href="#블로킹-논블로킹-동기-비동기-헷갈리는-개념-정리">#</a></h2>
+<p>앞서 <code>논블로킹-비동기</code> 조합이 Nginx의 핵심이라고 했는데, 여기서 잠깐! <code>블로킹</code>이니 <code>동기</code>니 하는 용어들이 머릿속을 뒤죽박죽 만들 수 있다. 특히 <code>논블로킹</code>과 <code>비동기</code>가 찰떡궁합처럼 같이 쓰이다 보니 더더욱 비슷하게 느껴지기도 한다.</p>
+<p>하지만 이 용어들은 <strong>서로 다른 관점</strong>에서 나온 개념이다. 이 기회에 네 가지 조합이 어떻게 다른지, 그리고 왜 특정 조합이 잘 안 쓰이는지 식당 웨이터 비유를 통해 확실히 정리하고 가자!</p>
+<ul>
+<li>
+<p><strong><code>블로킹 (Blocking)</code> vs <code>논블로킹 (Non-blocking)</code>:</strong> 이 둘은 함수(작업)를 <strong>호출한 쪽(<code>호출자</code>, Caller)의 관점</strong>이다.</p>
+<ul>
+<li><code>블로킹</code>: 호출한 함수가 <strong>작업을 끝낼 때까지 호출자가 그 자리에서 기다리는 것</strong> (실행 흐름 멈춤).</li>
+<li><code>논블로킹</code>: 호출한 함수가 <strong>작업 완료 여부와 관계없이 일단 바로 리턴</strong>되는 것 (실행 흐름 안 멈춤). &ldquo;접수 완료!&ldquo;하고 바로 다음 일 하러 감.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>동기 (Synchronous)</code> vs <code>비동기 (Asynchronous)</code>:</strong> 이 둘은 호출된 함수(작업)의 <strong>결과나 완료를 어떻게 신경 쓰고 통지받는지에 대한 관점</strong>이다.</p>
+<ul>
+<li><code>동기</code>: 호출자가 <strong>스스로 작업 완료 여부를 계속 확인</strong>하거나, <strong>작업이 끝나면 그 순서에 맞춰 결과가 바로 리턴</strong>되는 방식. 나가 직접 챙겨야 함.</li>
+<li><code>비동기</code>: 호출자는 작업 완료를 신경 끄고, <strong>작업이 끝나면 다른 누군가(OS, 이벤트 루프 등)가 알아서 콜백이나 이벤트로 알려주는 방식</strong>. 나중에 통보받음.</li>
+</ul>
+</li>
+</ul>
+<p>자, 이제 웨이터 등판! 네 가지 조합을 살펴보자.</p>
+<p><strong>1. <code>블로킹 (Blocking) - 동기 (Synchronous)</code>:</strong> (가장 흔하고 직관적)</p>
+<ul>
+<li><strong>동작:</strong> 웨이터가 주문(<code>함수 호출</code>)을 받고 주방(<code>호출된 함수</code>)에 전달. 웨이터는 <strong>주방 앞에서 요리 나올 때까지 멍때리며 기다림 (<code>블로킹</code>)</strong>. 요리 완성! 웨이터가 직접 받아서(<code>동기적 결과 반환</code>) 서빙.</li>
+<li><strong>설명:</strong> 함수 호출하면 그 함수 작업(특히 I/O) 끝날 때까지 스레드가 멈춘다. 작업 끝나면 결과 리턴되고 멈췄던 흐름이 다시 이어진다.</li>
+<li><strong>장단점:</strong> 코드 짜기 쉽고 이해도 쉽다. 하지만 스레드가 노는 시간이 많아 비효율적 (특히 손님 많을 때).</li>
+</ul>
+<p><strong>2. <code>논블로킹 (Non-blocking) - 동기 (Synchronous)</code>:</strong></p>
+<ul>
+<li><strong>동작:</strong> 웨이터가 주문 전달. 주방에 &ldquo;다 됐어요?&rdquo; <strong>바로 물어봄 (<code>논블로킹</code> 호출)</strong>. 아직이면 일단 다른 테이블 잠깐 봄. 근데 <strong>요리 나올 때까지 계속 주방 가서 &ldquo;다 됐어요??&rdquo; 들락날락 확인해야 함 (<code>동기적 확인</code>)</strong>. 요리 완성! 그때 받아옴.</li>
+<li><strong>설명:</strong> 함수 호출하면 일단 바로 리턴 (예: &ldquo;아직이요~&rdquo;). 근데 호출자가 <strong>결과 받으려면 계속 함수 다시 호출해서 &ldquo;다 됐니?&rdquo; 물어봐야 함 (<code>Polling</code>)</strong>. 실행 흐름이 멈추진 않지만 계속 물어보느라 바쁨.</li>
+<li><strong>장단점:</strong> 스레드가 멈추진 않지만, 계속 상태 확인(<code>Polling</code>)하느라 CPU 자원 낭비. 코드도 복잡해짐.</li>
+</ul>
+<p><strong>3. <code>비동기 (Asynchronous) - 블로킹 (Blocking)</code>:</strong> (이론상으론 가능&hellip;?)</p>
+<ul>
+<li><strong>동작:</strong> 웨이터가 주문 넣고 &ldquo;다 되면 알려주세요 (<code>비동기</code> 알림 요청)&rdquo;. 근데 <strong>다른 일 안 하고 식당 입구에서 알림 벨만 뚫어져라 쳐다보며 기다림 (<code>블로킹</code>)</strong>. 사람의 일로 비유하니 이게 뭐지 싶다..</li>
+<li><strong>설명:</strong> 일반적으론 잘 없다. 함수 호출(이벤트 등록)은 바로 리턴될 수 있는데, 그 <strong>결과(이벤트 통지)를 기다리는 다른 특정 지점에서 블로킹</strong>될 수 있다 (<code>select</code>, <code>poll</code> 등). 작업 완료는 비동기로 통지되지만, 그걸 기다리는 과정에서 블로킹이 끼어드는 애매한 상황. &lsquo;비동기&rsquo;의 장점인 &lsquo;기다리지 않음&rsquo;을 활용 못 함.</li>
+<li><strong>장단점:</strong> 비동기 장점 상실. 복잡한데 효율은 별로라 거의 안 씀.</li>
+</ul>
+<p><strong>4. <code>논블로킹 (Non-blocking) - 비동기 (Asynchronous)</code>:</strong> (Nginx, Node.js 최애 방식)</p>
+<ul>
+<li><strong>동작:</strong> 웨이터가 주문 넣고 &ldquo;다 되면 알려주세요 (<code>비동기</code> 알림 요청)&rdquo;. 그리고 <strong>바로 다른 테이블 주문받으러 감 (<code>논블로킹</code>)</strong>. 나중에 주방에서 &ldquo;딩동! 요리 완료!&rdquo; 알림(콜백) 오면, 그때 가서 요리 받아 서빙.</li>
+<li><strong>설명:</strong> 함수 호출하면 일단 바로 리턴 (<code>논블로킹</code>). 호출자는 작업 완료 신경 끄고 다른 일 함. 작업 완료되면 <strong>나중에 OS나 이벤트 루프가 알아서 콜백 함수 호출 등을 통해 알려줌 (<code>비동기</code>)</strong>.</li>
+<li><strong>장단점:</strong> 스레드 대기 시간 최소화! 자원 효율 끝판왕. 동시 요청 처리에 최적. 단점은 콜백 지옥 가능성 (Promise, async/await 등으로 극복 시도 중).</li>
+</ul>
+<p>이제 <code>논블로킹-비동기</code> 조합이 왜 Nginx의 빠른 성능 비결인지 감이 좀 더 올 것이다!</p>
+<h2 id="그래서-뭘-써야-할까-정답은-없다">그래서 뭘 써야 할까? (정답은 없다!)<a hidden class="anchor" aria-hidden="true" href="#그래서-뭘-써야-할까-정답은-없다">#</a></h2>
+<p>&ldquo;와, Nginx 짱인데? 그럼 무조건 Nginx 쓰면 되는 거 아냐?&rdquo; 라고 생각할 수 있지만, 세상만사 그렇듯 정답은 없다.</p>
+<ul>
+<li>
+<p><strong>Nginx가 빛을 발하는 경우:</strong></p>
+<ul>
+<li><strong>높은 동시 접속 처리</strong>가 필요한 서비스 (대규모 트래픽 예상)</li>
+<li><strong>정적 파일 서빙</strong>이 많은 경우 (이미지, CSS, JS 등)</li>
+<li>리버스 프록시, 로드 밸런서 역할이 중요한 경우</li>
+<li><strong>제한된 서버 자원</strong>으로 최대한의 성능을 뽑아내야 할 때</li>
+</ul>
+</li>
+<li>
+<p><strong>Apache가 여전히 매력적인 경우:</strong></p>
+<ul>
+<li>다양한 <strong>서드파티 모듈</strong>을 활용해야 하는 복잡한 기능 구현</li>
+<li><code>.htaccess</code> 파일을 통한 유연한 설정 변경이 필요한 경우 (웹 호스팅 등)</li>
+<li>개발 편의성이나 기존 시스템과의 호환성이 더 중요할 때</li>
+<li>동시 접속자 수가 많지 않고 안정성이 더 중요할 때</li>
+</ul>
+</li>
+</ul>
+<p>물론 요즘 대세는 <strong>Nginx를 리버스 프록시로 앞단에 두고, 실제 애플리케이션 로직은 Apache나 다른 WAS(Tomcat, Node.js 등)가 처리</strong>하는 조합이다. 각자의 장점을 살리는 현명한 방법이다.</p>
+<h2 id="대세는-nginx-점유율-변화">대세는 Nginx? (점유율 변화)<a hidden class="anchor" aria-hidden="true" href="#대세는-nginx-점유율-변화">#</a></h2>
+<p>예전에는 Apache가 웹 서버 시장을 압도했지만, <code>Netcraft</code> 같은 웹 서버 조사 기관 자료를 보면 최근 몇 년간 Nginx의 점유율이 가파르게 상승하여 Apache를 앞지르거나 팽팽한 경쟁을 벌이고 있다. (2020년 데이터는 조금 오래되었으니 최신 자료를 찾아보는 것도 좋다!) 이는 대규모 트래픽 처리 능력과 효율성이 중요한 현대 웹 환경의 요구와 Nginx의 특징이 잘 맞아떨어졌기 때문으로 보인다.</p>
+<h2 id="결론-상황에-맞는-현명한-선택이-중요">결론: 상황에 맞는 현명한 선택이 중요!<a hidden class="anchor" aria-hidden="true" href="#결론-상황에-맞는-현명한-선택이-중요">#</a></h2>
+<p>Nginx는 <code>Event-Driven</code> 비동기 방식으로 동작하여 적은 자원으로 높은 동시 접속 처리 성능을 내는 매력적인 웹 서버다. 특히 리버스 프록시, 로드 밸런서 등으로 활약하며 현대 웹 서비스 아키텍처의 핵심 요소로 자리 잡았다.</p>
+<p>하지만 Apache 역시 오랜 역사와 풍부한 기능, 높은 호환성이라는 장점을 가지고 있다. 결국 어떤 기술이든 만능은 없다(No silver bullet!). 내가 만들려는 서비스의 특징, 예상되는 트래픽 규모, 서버 자원, 개발 편의성 등을 종합적으로 고려하여 <strong>상황에 맞는 최적의 도구를 선택하는 것</strong>이 중요하다 하겠다.</p>
+<h1 id="references">References<a hidden class="anchor" aria-hidden="true" href="#references">#</a></h1>
+<ul>
+<li>[1] Nginx 공식 사이트: <a href="https://nginx.org/">https://nginx.org/</a></li>
+<li>[2] Apache HTTP Server Project: <a href="https://httpd.apache.org/">https://httpd.apache.org/</a></li>
+<li>[3] Apache vs Nginx (DigitalOcean): <a href="https://www.digitalocean.com/community/tutorials/apache-vs-nginx-practical-considerations">https://www.digitalocean.com/community/tutorials/apache-vs-nginx-practical-considerations</a></li>
+<li>[4] C10k problem (Wikipedia): <a href="https://en.wikipedia.org/wiki/C10k_problem">https://en.wikipedia.org/wiki/C10k_problem</a></li>
+<li>[5] (기존 참고) 네이버 블로그 - Node.js 이벤트 기반 비동기 처리 방식: <a href="https://blog.naver.com/jhc9639/221108496101">https://blog.naver.com/jhc9639/221108496101</a> (개념 이해에 도움)</li>
+</ul>
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="https://macsim2.github.io/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="https://macsim2.github.io/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="https://macsim2.github.io/posts/read/read/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>Read</span>
+  </a>
+  <a class="next" href="https://macsim2.github.io/posts/tech/asr/ctc_loss/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span></span>
+  </a>
+</nav>
+
+
+<div class="share-buttons">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share Nginx와 blocking, sync on twitter"
+       href="https://twitter.com/intent/tweet/?text=Nginx%ec%99%80%20blocking%2c%20sync&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdev%2fweb%2fnginx%2f&amp;hashtags=nginx%2capache%2cwebserver%2cevent-driven%2creverseproxy%2cloadbalancer%2cc10k">
+    <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-253.927,424.544c135.939,0 210.268,-112.643 210.268,-210.268c0,-3.218 0,-6.437 -0.153,-9.502c14.406,-10.421 26.973,-23.448 36.935,-38.314c-13.18,5.824 -27.433,9.809 -42.452,11.648c15.326,-9.196 26.973,-23.602 32.49,-40.92c-14.252,8.429 -30.038,14.56 -46.896,17.931c-13.487,-14.406 -32.644,-23.295 -53.946,-23.295c-40.767,0 -73.87,33.104 -73.87,73.87c0,5.824 0.613,11.494 1.992,16.858c-61.456,-3.065 -115.862,-32.49 -152.337,-77.241c-6.284,10.881 -9.962,23.601 -9.962,37.088c0,25.594 13.027,48.276 32.95,61.456c-12.107,-0.307 -23.448,-3.678 -33.41,-9.196l0,0.92c0,35.862 25.441,65.594 59.311,72.49c-6.13,1.686 -12.72,2.606 -19.464,2.606c-4.751,0 -9.348,-0.46 -13.946,-1.38c9.349,29.426 36.628,50.728 68.965,51.341c-25.287,19.771 -57.164,31.571 -91.8,31.571c-5.977,0 -11.801,-0.306 -17.625,-1.073c32.337,21.15 71.264,33.41 112.95,33.41Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share Nginx와 blocking, sync on linkedin"
+       href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdev%2fweb%2fnginx%2f&amp;title=Nginx%ec%99%80%20blocking%2c%20sync&amp;summary=Nginx%ec%99%80%20blocking%2c%20sync&amp;source=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdev%2fweb%2fnginx%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share Nginx와 blocking, sync on reddit"
+       href="https://reddit.com/submit?url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdev%2fweb%2fnginx%2f&title=Nginx%ec%99%80%20blocking%2c%20sync">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share Nginx와 blocking, sync on facebook"
+       href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdev%2fweb%2fnginx%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share Nginx와 blocking, sync on whatsapp"
+       href="https://api.whatsapp.com/send?text=Nginx%ec%99%80%20blocking%2c%20sync%20-%20https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdev%2fweb%2fnginx%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share Nginx와 blocking, sync on telegram"
+       href="https://telegram.me/share/url?text=Nginx%ec%99%80%20blocking%2c%20sync&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdev%2fweb%2fnginx%2f">
+        <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28">
+            <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+        </svg>
+    </a>
+</div>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="https://macsim2.github.io/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

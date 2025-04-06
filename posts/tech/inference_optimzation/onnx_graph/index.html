@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>ONNX Graph의 내부 구조와 최적화 여정 | macsim&#39;s Blog</title>
+<meta name="keywords" content="deeplearning, onnx, model optimization, inference, computational graph, model deployment">
+<meta name="description" content="ONNX Graph의 내부 구조를 파헤치고 실전 최적화 경험을 공유합니다">
+<meta name="author" content="macsim">
+<link rel="canonical" href="https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="https://macsim2.github.io/img/Q.gif">
+<link rel="apple-touch-icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="ONNX Graph의 내부 구조와 최적화 여정" />
+<meta property="og:description" content="ONNX Graph의 내부 구조를 파헤치고 실전 최적화 경험을 공유합니다" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-07-28T15:30:00+09:00" />
+<meta property="article:modified_time" content="2024-07-28T15:30:00+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="ONNX Graph의 내부 구조와 최적화 여정"/>
+<meta name="twitter:description" content="ONNX Graph의 내부 구조를 파헤치고 실전 최적화 경험을 공유합니다"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "https://macsim2.github.io/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "https://macsim2.github.io/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "ONNX Graph의 내부 구조와 최적화 여정",
+      "item": "https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ONNX Graph의 내부 구조와 최적화 여정",
+  "name": "ONNX Graph의 내부 구조와 최적화 여정",
+  "description": "ONNX Graph의 내부 구조를 파헤치고 실전 최적화 경험을 공유합니다",
+  "keywords": [
+    "deeplearning", "onnx", "model optimization", "inference", "computational graph", "model deployment"
+  ],
+  "articleBody": "딥러닝 모델을 프로덕션에 배포해본 개발자라면 누구나 이런 의문을 품어봤을 것이다. “내 모델이 ONNX로 변환되면 내부적으로 어떻게 표현되고 실행될까?” 🤔 모델 최적화와 프로덕션 배포의 세계에서 ONNX(Open Neural Network Exchange)(오닉스라고 읽더라)는 대중적인 도구가 되었지만, 그 내부 구조와 최적화 메커니즘에 대해 깊이 이해하는 것은 어렵기도 하고, 그런 개발자가 많지도 않아보인다.\n이 글에서는 단순히 “ONNX 변환 방법\"이 아닌, ONNX Graph의 내부 구조, 최적화 과정, 그리고 실제 프로젝트에서 마주친 도전과 해결책에 대해 파헤쳐보려 한다.\nONNX란? ONNX(Open Neural Network Exchange)는 2017년 Facebook과 Microsoft가 공동으로 발표한 오픈 포맷으로, 다양한 머신러닝 프레임워크 간의 모델 교환을 가능하게 하는 표준이다. 하지만 ONNX는 단순한 “파일 포맷” 이상의 의미를 가진다.\n여러분이 PyTorch나 TensorFlow에서 모델을 만들 때, 그 모델은 해당 프레임워크의 특정 추상화와 인터페이스를 통해 표현된다. 그러나 프로덕션 환경에서는 최적의 성능과 호환성을 위해 이 모델을 “중립적인” 형태로 표현할 필요가 있다. 여기서 ONNX가 등장한다.\n“중립적\"이라는 표현도 좀 추상적이긴 하다. 나중에 설명할테니 여기선 “표준적\"인 의미로 알고 넘어가도 괜찮을거 같다.\nONNX의 핵심은 계산 그래프(Computational Graph) 이다. 이 그래프는 모델의 연산과 데이터 흐름을 노드와 엣지로 표현한다. 각 노드는 특정 연산(Conv, MatMul, Add 등)을 나타내며, 엣지는 텐서 데이터의 흐름을 나타낸다.\nONNX Graph의 해부학 ONNX 모델 파일을 열어보면, 그 내부에는 복잡한 계산 그래프가 Proto 버퍼 형식으로 저장되어 있다. 이 그래프의 기본 구성 요소를 살펴보자:\n1. 노드(Node)와 연산자(Operator) ONNX 그래프의 핵심 구성 요소는 노드다. 각 노드는 다음과 같은 속성을 가진다:\nop_type: 노드가 수행하는 연산의 유형 (예: Conv, MatMul, Relu) inputs: 입력 텐서의 이름 목록 outputs: 출력 텐서의 이름 목록 attributes: 연산에 필요한 매개변수 (예: 커널 크기, 스트라이드 등) # 간단한 ONNX 노드 예시 node { input: [\"X\", \"W\"] output: [\"Y\"] name: \"conv1\" op_type: \"Conv\" attribute { name: \"kernel_shape\" ints: 3, 3 type: INTS } attribute { name: \"strides\" ints: 1, 1 type: INTS } } ONNX를 사용하며 내가 마주한 사실중에 하나는, 동일한 PyTorch 모델도 ONNX로 변환하는 방식과 옵션에 따라 생성되는 노드의 종류와 수가 크게 달라질 수 있다는 점이었다. 특히 torch.onnx.export() 함수의 opset_version 매개변수는 그래프 구조에 상당한 영향을 미친다.\n2. 텐서(Tensor)와 값(Value) ONNX 그래프에서 노드 간에 흐르는 데이터는 텐서로 표현된다. 이 텐서들은 다음과 같은 속성을 가진다:\n이름: 텐서의 고유 식별자 데이터 타입: 텐서의 요소 타입 (float32, int64 등) 형상(Shape): 텐서의 차원과 크기 특히 주목할 점은 ONNX에서 모델 가중치도 그래프의 일부로 직접 저장된다는 것이다. 이는 PyTorch의 state_dict나 TensorFlow의 체크포인트와는 다른 접근 방식이다.\n# ONNX 모델에서 가중치 텐서 예시 initializer { dims: 64 dims: 3 dims: 3 dims: 3 data_type: FLOAT name: \"conv1.weight\" raw_data: \"...\" # 실제 바이너리 데이터는 여기에 저장 } 3. 그래프 입력과 출력 ONNX 그래프는 명시적인 입력과 출력 정의를 가진다:\n# 그래프 입력 예시 input { name: \"input\" type { tensor_type { elem_type: FLOAT shape { dim { dim_value: 1 # 배치 크기 } dim { dim_value: 3 # 채널 } dim { dim_value: 224 # 높이 } dim { dim_value: 224 # 너비 } } } } } 이 명시적인 입출력 정의는 모델 배포 시 큰 장점이 된다. 모델이 어떤 형태의 입력을 기대하고 어떤 형태의 출력을 생성할지 명확히 알 수 있기 때문이다.\nONNX Graph 생성의 비밀 PyTorch나 TensorFlow 모델을 ONNX로 변환할 때, 단순히 “내보내기” 버튼을 누르는 것처럼 보일 수 있지만, 내부적으로는 복잡한 변환 과정이 일어난다.\n1. 추적(Tracing)과 스크립팅(Scripting) PyTorch에서 ONNX 변환은 주로 두 가지 방식으로 이루어진다:\n추적(Tracing): 모델에 실제 입력 데이터를 통과시키면서 실행되는 연산을 기록 스크립팅(Scripting): 모델 코드를 분석하여 정적 그래프를 생성 이 두 방식은 각각 장단점이 있는데, 내 경험상 동적 제어 흐름(if문, 루프 등)이 포함된 모델에서는 trace 방식이 문제를 일으키는 경우가 많았다. 특히 입력 크기에 따라 동작이 달라지는 모델에서는 스크립팅 방식이 더 안정적인 결과를 제공했다.\n# 추적 방식 예시 dummy_input = torch.randn(1, 3, 224, 224) torch.onnx.export(model, dummy_input, \"model.onnx\", export_params=True, opset_version=12, do_constant_folding=True) # 스크립팅 방식 예시 (TorchScript 이용) scripted_model = torch.jit.script(model) torch.onnx.export(scripted_model, dummy_input, \"model_scripted.onnx\") 2. 연산자 매핑의 함정 PyTorch나 TensorFlow의 연산자가 ONNX로 매핑되는 과정에서 많은 함정이 있다. 특히 커스텀 연산자나 최신 연산자의 경우 직접적인 ONNX 대응이 없을 수 있다.\n내가 경험한 가장 까다로운 사례는 attention 메커니즘이 포함된 트랜스포머 모델의 변환이었다. PyTorch의 MultiheadAttention 모듈이 ONNX로 변환될 때, 단일 노드가 아닌 여러 기본 연산자(MatMul, Add, Softmax 등)의 복잡한 조합으로 분해되었다. 이로 인해 그래프가 매우 복잡해지고 최적화 기회가 제한되었다.\n# PyTorch의 MultiheadAttention이 ONNX로 변환되면 # 아래와 같은 여러 노드로 분해된다 (간략화된 버전) node { op_type: \"MatMul\" input: [\"queries\", \"key_weights\"] output: [\"QK\"] } node { op_type: \"Transpose\" input: [\"QK\"] output: [\"QK_transposed\"] } node { op_type: \"Div\" input: [\"QK_transposed\", \"scaling_factor\"] output: [\"scaled_QK\"] } node { op_type: \"Softmax\" input: [\"scaled_QK\"] output: [\"attention_weights\"] } # ... 등등 ONNX opset 버전에 따라 이러한 패턴이 크게 달라질 수 있으며, 최신 opset에서는 더 효율적인 변환이 이루어지는 경우가 많다. 이는 ONNX 생태계가 지속적으로 발전하고 있음을 보여준다.\nONNX Graph 최적화의 기술 ONNX 모델을 얻은 후에는 추가적인 최적화를 통해 더 나은 성능을 얻을 수 있다. 여기서 ONNX Runtime과 같은 추론 엔진이 핵심 역할을 한다.\n1. 그래프 변환 최적화 ONNX Runtime은 그래프에 다양한 변환을 적용하여 최적화한다:\n상수 폴딩(Constant Folding): 상수 입력만 가지는 노드의 결과를 미리 계산 노드 융합(Node Fusion): 특정 패턴의 노드들을 단일 최적화된 노드로 결합 불필요한 노드 제거: 출력에 영향을 미치지 않는 연산 제거 이중 노드 융합은 가장 큰 성능 향상을 가져오는 최적화 중 하나이다. 예를 들어, Conv+BatchNorm+ReLU 패턴은 단일 융합 노드로 대체될 수 있어 메모리 접근과 연산을 크게 줄일 수 있다.\n# ONNX Runtime의 그래프 최적화 예시 import onnxruntime as ort # 기본 세션 vs 최적화된 세션 sess_options = ort.SessionOptions() sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL optimized_session = ort.InferenceSession(\"model.onnx\", sess_options) # 최적화 전후 그래프 비교 baseline_session = ort.InferenceSession(\"model.onnx\", ort.SessionOptions()) print(f\"원본 그래프 노드 수: {len(baseline_session._model_meta.custom_metadata_map)}\") print(f\"최적화 그래프 노드 수: {len(optimized_session._model_meta.custom_metadata_map)}\") 2. 양자화(Quantization)의 비밀 ONNX 모델의 또 다른 강력한 최적화는 양자화이다. FP32 정밀도의 모델을 INT8이나 심지어 INT4로 변환하여 메모리 사용량과 계산 비용을 크게 줄일 수 있다.\n그러나 양자화에는 함정이 있다. 내 경험에서, 단순히 “양자화 버튼\"을 누르는 것 같은 사후 훈련 양자화(Post-Training Quantization, PTQ)는 때때로 정확도를 크게 저하시킬 수 있다. 특히 작은 모델이나 희소한 활성화 함수를 가진 모델에서 이 문제가 두드러졌다.\n이런 경우, 양자화 인식 훈련(Quantization-Aware Training, QAT)이나 보정 데이터를 사용한 세심한 PTQ가 더 나은 결과를 제공했다.\n# ONNX 모델의 양자화 예시 (간략화됨) from onnxruntime.quantization import quantize_dynamic # 동적 양자화 quantize_dynamic(\"model.onnx\", \"model_quantized.onnx\", weight_type=QuantType.QInt8) # 보정 데이터를 사용한 정적 양자화 from onnxruntime.quantization import quantize_static, CalibrationDataReader calibration_data = CalibrationDataReader(...) # 보정 데이터 로더 quantize_static(\"model.onnx\", \"model_quantized.onnx\", calibration_data) 3. 하드웨어 특화 최적화 ONNX의 또 다른 강점은 다양한 하드웨어 백엔드에 대한 최적화가 가능하다는 점이다. 특히 ONNX Runtime은 CPU, GPU, EdgeTPU, DSP 등 다양한 하드웨어에 대한 실행 제공자(Execution Provider)를 지원한다.\n내 프로젝트에서는 동일한 ONNX 모델을 CPU, CUDA, TensorRT 제공자로 실행했을 때 성능 차이가 극적이었다:\n| 실행 환경 | 추론 시간 (ms) | |--------------------------|---------------| | CPU (OpenMP) | 85.2 | | CUDA | 27.3 | | TensorRT (FP16) | 12.1 | | TensorRT (INT8 양자화) | 5.8 | 특히 TensorRT 제공자는 그래프를 더욱 최적화하고 텐서 코어와 같은 하드웨어 가속기를 활용하여 놀라운 성능 향상을 제공했다.\n실전 ONNX Graph 디버깅과 해결책 ONNX 모델을 프로덕션에 배포하면서 몇 가지 까다로운 문제를 마주쳤다. 이러한 경험은 ONNX Graph의 내부 구조를 더 깊이 이해하는 데 도움이 되었다.\n1. 동적 입력 크기의 함정 CNN 기반 모델에서는 입력 크기가 고정되어 있는 경우가 많지만, NLP나 시계열 모델에서는 가변 길이 입력을 처리해야 하는 경우가 많다. ONNX에서 이를 처리하기 위해 **동적 축(Dynamic Axes)**을 지정할 수 있지만, 이로 인해 특정 최적화가 불가능해지는 부작용이 있었다.\n예를 들어, TensorRT 변환 시 동적 축을 가진 모델은 일부 최적화를 적용할 수 없었고, 특정 차원에 대해 최적화된 프로필을 명시적으로 제공해야 했다.\n# 동적 축을 가진 ONNX 모델 내보내기 dynamic_axes = { 'input': {0: 'batch_size', 2: 'seq_length'}, 'output': {0: 'batch_size', 1: 'seq_length'} } torch.onnx.export(model, dummy_input, \"dynamic_model.onnx\", dynamic_axes=dynamic_axes) # TensorRT에서는 최적화 프로필 지정이 필요 import tensorrt as trt profile = builder.create_optimization_profile() profile.set_shape(\"input\", (1, 3, 16), (8, 3, 64), (16, 3, 128)) config.add_optimization_profile(profile) 2. 커스텀 연산자의 도전 표준 연산자만으로는 구현하기 어려운 특별한 로직이 필요한 경우 혹은 성능 최적화가 필수적인 경우 커스텀 ONNX 연산자를 구현할 수 있다. 이는 복잡한 과정이지만, ONNX의 확장성을 보여주는 사례다.\n특수한 비디오 처리 연산이 필요했다고 하면, 이를 위해 C++로 커스텀 ONNX 연산자를 구현하고 ONNX Runtime에 등록할 수 있다.\n// 커스텀 ONNX 연산자 구현 (C++) struct CustomOp { static constexpr const char* OpName = \"CustomVideoProcessor\"; static Status Compute(OpKernelContext* context) { // 구현 로직 return Status::OK(); } static ONNX_NAMESPACE::OpSchema GetOpSchema() { ONNX_NAMESPACE::OpSchema schema; schema.SetName(OpName); schema.SetDomain(\"MyDomain\"); schema.SetDoc(\"Custom video processing operation\"); schema.Input(0, \"X\", \"Input tensor\", \"T\"); schema.Output(0, \"Y\", \"Output tensor\", \"T\"); schema.TypeConstraint(\"T\", {\"tensor(float)\"}, \"Supported types\"); return schema; } }; // 연산자 등록 ORT_REGISTER_CUSTOM_OP(CustomOp); 이 접근 방식의 장점은 특수 로직을 효율적으로 구현할 수 있다는 것이지만, 단점은 이식성이 떨어진다는 점이다. 커스텀 연산자를 사용하는 ONNX 모델은 해당 연산자가 등록된 환경에서만 실행할 수 있다.\n3. 메모리 최적화의 미학 메모리 패턴 최적화: 동일한 형상의 텐서를 재사용 외부 메모리 사용: 모델 가중치를 외부 파일로 분리 실행 계획 최적화: 최소 메모리 사용량으로 연산 순서 재배열 특히 엣지 디바이스에 배포할 때, 이러한 최적화가 모델 실행 가능성을 결정짓는 중요한 요소였다.\n# 메모리 최적화된 ONNX Runtime 세션 sess_options = ort.SessionOptions() sess_options.enable_mem_pattern = True sess_options.enable_mem_reuse = True sess_options.add_session_config_entry(\"session.save_model_format\", \"ORT\") sess_options.optimized_model_filepath = \"optimized_model.ort\" session = ort.InferenceSession(\"model.onnx\", sess_options) ONNX Graph 분석 도구의 세계 ONNX 모델을 더 깊이 이해하고 최적화하기 위한 다양한 도구가 있다:\n1. Netron: 그래프 시각화의 황금 표준 Netron은 ONNX 그래프를 시각적으로 탐색할 수 있는 강력한 도구다. 각 노드의 속성, 입출력 텐서 형상, 가중치 분포까지 확인할 수 있어 디버깅에 큰 도움이 된다.\n2. ONNX Runtime 프로파일링 ONNX Runtime은 각 노드의 실행 시간과 메모리 사용량을 세밀하게 프로파일링할 수 있는 도구를 제공한다:\n# ONNX Runtime 프로파일링 예시 sess_options = ort.SessionOptions() sess_options.enable_profiling = True session = ort.InferenceSession(\"model.onnx\", sess_options) # 모델 실행 session.run(None, {\"input\": input_data}) # 프로파일 정보 수집 profile_file = session.end_profiling() with open(profile_file, \"r\") as f: profile_data = json.load(f) # 가장 시간이 많이 소요된 노드 출력 sorted_nodes = sorted(profile_data, key=lambda x: x.get(\"dur\", 0) if isinstance(x, dict) else 0, reverse=True) for node in sorted_nodes[:10]: if isinstance(node, dict): print(f\"Node: {node.get('name')}, Type: {node.get('args', {}).get('op_name')}, Duration: {node.get('dur')}us\") 이 프로파일링 정보는 병목 현상을 식별하고 최적화 노력을 집중해야 할 부분을 파악하는 데 필수적이다.\n3. ONNX 모델 검증과 비교 모델 변환과 최적화 과정에서 정확도 손실이 없는지 확인하는 것이 중요하다. ONNX에서는 이를 위한 유틸리티를 제공한다:\n# 원본 모델과 ONNX 모델의 출력 비교 import onnx from onnx import numpy_helper import numpy as np # 원본 PyTorch 모델 실행 with torch.no_grad(): torch_output = model(torch_input).numpy() # ONNX 모델 실행 ort_session = ort.InferenceSession(\"model.onnx\") ort_inputs = {ort_session.get_inputs()[0].name: torch_input.numpy()} ort_output = ort_session.run(None, ort_inputs)[0] # 출력 비교 np.testing.assert_allclose(torch_output, ort_output, rtol=1e-3, atol=1e-3) print(\"출력이 일치합니다!\") 이러한 검증은 특히 양자화나 그래프 최적화를 적용한 후 확인하는 것이 바람직하다.\n마지막으로 내가 ONNX를 사용하며 얻은 교훈은, ONNX 변환을 단순한 “마지막 버튼\"이라고 생각하지 않게 됐다는 것이다.\n결국 우리에게 가져다 주는 성능의 이점은 쉽게 생기는 것이 아니고, ONNX graph의 세계에 대해서 감탄하게 되었다.\nONNX Graph의 세계는 깊고 풍부하다. 더 효율적이고 이식성 높은 딥러닝 모델을 향한 여정에서, ONNX를 공부해두면 좋을 것 같다.\nReferences [1] ONNX GitHub Repository: https://github.com/onnx/onnx [2] ONNX Runtime Documentation: https://onnxruntime.ai/ [3] PyTorch to ONNX Tutorial: https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html [4] ONNX Operator Specifications: https://github.com/onnx/onnx/blob/master/docs/Operators.md ",
+  "wordCount" : "4545",
+  "inLanguage": "ko",
+  "datePublished": "2024-07-28T15:30:00+09:00",
+  "dateModified": "2024-07-28T15:30:00+09:00",
+  "author":{
+    "@type": "Person",
+    "name": "macsim"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://macsim2.github.io/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://macsim2.github.io/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://macsim2.github.io/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 홈</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                ONNX Graph의 내부 구조와 최적화 여정
+            </h1>
+            <div class="post-description">
+                ONNX Graph의 내부 구조를 파헤치고 실전 최적화 경험을 공유합니다
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2024-07-28
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>4545 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>10 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="https://macsim2.github.io/tags/deeplearning/" style="color: var(--secondary)!important;">Deeplearning</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/onnx/" style="color: var(--secondary)!important;">Onnx</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/model-optimization/" style="color: var(--secondary)!important;">Model Optimization</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/inference/" style="color: var(--secondary)!important;">Inference</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/computational-graph/" style="color: var(--secondary)!important;">Computational Graph</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/model-deployment/" style="color: var(--secondary)!important;">Model Deployment</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "https://macsim2.github.io/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#onnx%eb%9e%80" aria-label="ONNX란?">ONNX란?</a></li>
+                <li>
+                    <a href="#onnx-graph%ec%9d%98-%ed%95%b4%eb%b6%80%ed%95%99" aria-label="ONNX Graph의 해부학">ONNX Graph의 해부학</a><ul>
+                        
+                <li>
+                    <a href="#1-%eb%85%b8%eb%93%9cnode%ec%99%80-%ec%97%b0%ec%82%b0%ec%9e%90operator" aria-label="1. 노드(Node)와 연산자(Operator)">1. 노드(Node)와 연산자(Operator)</a></li>
+                <li>
+                    <a href="#2-%ed%85%90%ec%84%9ctensor%ec%99%80-%ea%b0%92value" aria-label="2. 텐서(Tensor)와 값(Value)">2. 텐서(Tensor)와 값(Value)</a></li>
+                <li>
+                    <a href="#3-%ea%b7%b8%eb%9e%98%ed%94%84-%ec%9e%85%eb%a0%a5%ea%b3%bc-%ec%b6%9c%eb%a0%a5" aria-label="3. 그래프 입력과 출력">3. 그래프 입력과 출력</a></li></ul>
+                </li>
+                <li>
+                    <a href="#onnx-graph-%ec%83%9d%ec%84%b1%ec%9d%98-%eb%b9%84%eb%b0%80" aria-label="ONNX Graph 생성의 비밀">ONNX Graph 생성의 비밀</a><ul>
+                        
+                <li>
+                    <a href="#1-%ec%b6%94%ec%a0%81tracing%ea%b3%bc-%ec%8a%a4%ed%81%ac%eb%a6%bd%ed%8c%85scripting" aria-label="1. 추적(Tracing)과 스크립팅(Scripting)">1. 추적(Tracing)과 스크립팅(Scripting)</a></li>
+                <li>
+                    <a href="#2-%ec%97%b0%ec%82%b0%ec%9e%90-%eb%a7%a4%ed%95%91%ec%9d%98-%ed%95%a8%ec%a0%95" aria-label="2. 연산자 매핑의 함정">2. 연산자 매핑의 함정</a></li></ul>
+                </li>
+                <li>
+                    <a href="#onnx-graph-%ec%b5%9c%ec%a0%81%ed%99%94%ec%9d%98-%ea%b8%b0%ec%88%a0" aria-label="ONNX Graph 최적화의 기술">ONNX Graph 최적화의 기술</a><ul>
+                        
+                <li>
+                    <a href="#1-%ea%b7%b8%eb%9e%98%ed%94%84-%eb%b3%80%ed%99%98-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="1. 그래프 변환 최적화">1. 그래프 변환 최적화</a></li>
+                <li>
+                    <a href="#2-%ec%96%91%ec%9e%90%ed%99%94quantization%ec%9d%98-%eb%b9%84%eb%b0%80" aria-label="2. 양자화(Quantization)의 비밀">2. 양자화(Quantization)의 비밀</a></li>
+                <li>
+                    <a href="#3-%ed%95%98%eb%93%9c%ec%9b%a8%ec%96%b4-%ed%8a%b9%ed%99%94-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="3. 하드웨어 특화 최적화">3. 하드웨어 특화 최적화</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ec%8b%a4%ec%a0%84-onnx-graph-%eb%94%94%eb%b2%84%ea%b9%85%ea%b3%bc-%ed%95%b4%ea%b2%b0%ec%b1%85" aria-label="실전 ONNX Graph 디버깅과 해결책">실전 ONNX Graph 디버깅과 해결책</a><ul>
+                        
+                <li>
+                    <a href="#1-%eb%8f%99%ec%a0%81-%ec%9e%85%eb%a0%a5-%ed%81%ac%ea%b8%b0%ec%9d%98-%ed%95%a8%ec%a0%95" aria-label="1. 동적 입력 크기의 함정">1. 동적 입력 크기의 함정</a></li>
+                <li>
+                    <a href="#2-%ec%bb%a4%ec%8a%a4%ed%85%80-%ec%97%b0%ec%82%b0%ec%9e%90%ec%9d%98-%eb%8f%84%ec%a0%84" aria-label="2. 커스텀 연산자의 도전">2. 커스텀 연산자의 도전</a></li>
+                <li>
+                    <a href="#3-%eb%a9%94%eb%aa%a8%eb%a6%ac-%ec%b5%9c%ec%a0%81%ed%99%94%ec%9d%98-%eb%af%b8%ed%95%99" aria-label="3. 메모리 최적화의 미학">3. 메모리 최적화의 미학</a></li></ul>
+                </li>
+                <li>
+                    <a href="#onnx-graph-%eb%b6%84%ec%84%9d-%eb%8f%84%ea%b5%ac%ec%9d%98-%ec%84%b8%ea%b3%84" aria-label="ONNX Graph 분석 도구의 세계">ONNX Graph 분석 도구의 세계</a><ul>
+                        
+                <li>
+                    <a href="#1-netron-%ea%b7%b8%eb%9e%98%ed%94%84-%ec%8b%9c%ea%b0%81%ed%99%94%ec%9d%98-%ed%99%a9%ea%b8%88-%ed%91%9c%ec%a4%80" aria-label="1. Netron: 그래프 시각화의 황금 표준">1. Netron: 그래프 시각화의 황금 표준</a></li>
+                <li>
+                    <a href="#2-onnx-runtime-%ed%94%84%eb%a1%9c%ed%8c%8c%ec%9d%bc%eb%a7%81" aria-label="2. ONNX Runtime 프로파일링">2. ONNX Runtime 프로파일링</a></li>
+                <li>
+                    <a href="#3-onnx-%eb%aa%a8%eb%8d%b8-%ea%b2%80%ec%a6%9d%ea%b3%bc-%eb%b9%84%ea%b5%90" aria-label="3. ONNX 모델 검증과 비교">3. ONNX 모델 검증과 비교</a></li></ul>
+                </li>
+                <li>
+                    <a href="#references" aria-label="References">References</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>딥러닝 모델을 프로덕션에 배포해본 개발자라면 누구나 이런 의문을 품어봤을 것이다. <strong>&ldquo;내 모델이 ONNX로 변환되면 내부적으로 어떻게 표현되고 실행될까?&rdquo;</strong> 🤔 <br>
+모델 최적화와 프로덕션 배포의 세계에서 ONNX(Open Neural Network Exchange)(오닉스라고 읽더라)는 대중적인 도구가 되었지만, 그 내부 구조와 최적화 메커니즘에 대해 깊이 이해하는 것은 어렵기도 하고, 그런 개발자가 많지도 않아보인다.</p>
+<p>이 글에서는 단순히 &ldquo;ONNX 변환 방법&quot;이 아닌, ONNX Graph의 내부 구조, 최적화 과정, 그리고 실제 프로젝트에서 마주친 도전과 해결책에 대해 파헤쳐보려 한다.</p>
+<h2 id="onnx란">ONNX란?<a hidden class="anchor" aria-hidden="true" href="#onnx란">#</a></h2>
+<p>ONNX(Open Neural Network Exchange)는 2017년 Facebook과 Microsoft가 공동으로 발표한 오픈 포맷으로, 다양한 머신러닝 프레임워크 간의 모델 교환을 가능하게 하는 표준이다. 하지만 ONNX는 단순한 &ldquo;파일 포맷&rdquo; 이상의 의미를 가진다.</p>
+<p>여러분이 PyTorch나 TensorFlow에서 모델을 만들 때, 그 모델은 해당 프레임워크의 특정 추상화와 인터페이스를 통해 표현된다. 그러나 프로덕션 환경에서는 최적의 성능과 호환성을 위해 이 모델을 &ldquo;중립적인&rdquo; 형태로 표현할 필요가 있다. 여기서 ONNX가 등장한다.<br>
+&ldquo;중립적&quot;이라는 표현도 좀 추상적이긴 하다. 나중에 설명할테니 여기선 &ldquo;표준적&quot;인 의미로 알고 넘어가도 괜찮을거 같다.</p>
+<p>ONNX의 핵심은 <strong>계산 그래프(Computational Graph)</strong> 이다. 이 그래프는 모델의 연산과 데이터 흐름을 노드와 엣지로 표현한다. 각 노드는 특정 연산(Conv, MatMul, Add 등)을 나타내며, 엣지는 텐서 데이터의 흐름을 나타낸다.</p>
+<p><img loading="lazy" src="/images/dl/onnx_graph_concept.png" alt="ONNX Graph의 개념적 표현"  />
+</p>
+<h2 id="onnx-graph의-해부학">ONNX Graph의 해부학<a hidden class="anchor" aria-hidden="true" href="#onnx-graph의-해부학">#</a></h2>
+<p>ONNX 모델 파일을 열어보면, 그 내부에는 복잡한 계산 그래프가 Proto 버퍼 형식으로 저장되어 있다. 이 그래프의 기본 구성 요소를 살펴보자:</p>
+<h3 id="1-노드node와-연산자operator">1. 노드(Node)와 연산자(Operator)<a hidden class="anchor" aria-hidden="true" href="#1-노드node와-연산자operator">#</a></h3>
+<p>ONNX 그래프의 핵심 구성 요소는 <strong>노드</strong>다. 각 노드는 다음과 같은 속성을 가진다:</p>
+<ul>
+<li><strong>op_type</strong>: 노드가 수행하는 연산의 유형 (예: Conv, MatMul, Relu)</li>
+<li><strong>inputs</strong>: 입력 텐서의 이름 목록</li>
+<li><strong>outputs</strong>: 출력 텐서의 이름 목록</li>
+<li><strong>attributes</strong>: 연산에 필요한 매개변수 (예: 커널 크기, 스트라이드 등)</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 간단한 ONNX 노드 예시</span>
+</span></span><span style="display:flex;"><span>node {
+</span></span><span style="display:flex;"><span>  input: [<span style="color:#e6db74">&#34;X&#34;</span>, <span style="color:#e6db74">&#34;W&#34;</span>]
+</span></span><span style="display:flex;"><span>  output: [<span style="color:#e6db74">&#34;Y&#34;</span>]
+</span></span><span style="display:flex;"><span>  name: <span style="color:#e6db74">&#34;conv1&#34;</span>
+</span></span><span style="display:flex;"><span>  op_type: <span style="color:#e6db74">&#34;Conv&#34;</span>
+</span></span><span style="display:flex;"><span>  attribute {
+</span></span><span style="display:flex;"><span>    name: <span style="color:#e6db74">&#34;kernel_shape&#34;</span>
+</span></span><span style="display:flex;"><span>    ints: <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>    type: INTS
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  attribute {
+</span></span><span style="display:flex;"><span>    name: <span style="color:#e6db74">&#34;strides&#34;</span>
+</span></span><span style="display:flex;"><span>    ints: <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    type: INTS
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>ONNX를 사용하며 내가 마주한 사실중에 하나는, 동일한 PyTorch 모델도 ONNX로 변환하는 방식과 옵션에 따라 생성되는 노드의 종류와 수가 크게 달라질 수 있다는 점이었다. 특히 <code>torch.onnx.export()</code> 함수의 <code>opset_version</code> 매개변수는 그래프 구조에 상당한 영향을 미친다.</p>
+<h3 id="2-텐서tensor와-값value">2. 텐서(Tensor)와 값(Value)<a hidden class="anchor" aria-hidden="true" href="#2-텐서tensor와-값value">#</a></h3>
+<p>ONNX 그래프에서 노드 간에 흐르는 데이터는 <strong>텐서</strong>로 표현된다. 이 텐서들은 다음과 같은 속성을 가진다:</p>
+<ul>
+<li><strong>이름</strong>: 텐서의 고유 식별자</li>
+<li><strong>데이터 타입</strong>: 텐서의 요소 타입 (float32, int64 등)</li>
+<li><strong>형상(Shape)</strong>: 텐서의 차원과 크기</li>
+</ul>
+<p>특히 주목할 점은 ONNX에서 모델 가중치도 그래프의 일부로 직접 저장된다는 것이다. 이는 PyTorch의 <code>state_dict</code>나 TensorFlow의 체크포인트와는 다른 접근 방식이다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># ONNX 모델에서 가중치 텐서 예시</span>
+</span></span><span style="display:flex;"><span>initializer {
+</span></span><span style="display:flex;"><span>  dims: <span style="color:#ae81ff">64</span>
+</span></span><span style="display:flex;"><span>  dims: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>  dims: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>  dims: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>  data_type: FLOAT
+</span></span><span style="display:flex;"><span>  name: <span style="color:#e6db74">&#34;conv1.weight&#34;</span>
+</span></span><span style="display:flex;"><span>  raw_data: <span style="color:#e6db74">&#34;...&#34;</span> <span style="color:#75715e"># 실제 바이너리 데이터는 여기에 저장</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="3-그래프-입력과-출력">3. 그래프 입력과 출력<a hidden class="anchor" aria-hidden="true" href="#3-그래프-입력과-출력">#</a></h3>
+<p>ONNX 그래프는 명시적인 <strong>입력</strong>과 <strong>출력</strong> 정의를 가진다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 그래프 입력 예시</span>
+</span></span><span style="display:flex;"><span>input {
+</span></span><span style="display:flex;"><span>  name: <span style="color:#e6db74">&#34;input&#34;</span>
+</span></span><span style="display:flex;"><span>  type {
+</span></span><span style="display:flex;"><span>    tensor_type {
+</span></span><span style="display:flex;"><span>      elem_type: FLOAT
+</span></span><span style="display:flex;"><span>      shape {
+</span></span><span style="display:flex;"><span>        dim {
+</span></span><span style="display:flex;"><span>          dim_value: <span style="color:#ae81ff">1</span>  <span style="color:#75715e"># 배치 크기</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        dim {
+</span></span><span style="display:flex;"><span>          dim_value: <span style="color:#ae81ff">3</span>  <span style="color:#75715e"># 채널</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        dim {
+</span></span><span style="display:flex;"><span>          dim_value: <span style="color:#ae81ff">224</span>  <span style="color:#75715e"># 높이</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        dim {
+</span></span><span style="display:flex;"><span>          dim_value: <span style="color:#ae81ff">224</span>  <span style="color:#75715e"># 너비</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>이 명시적인 입출력 정의는 모델 배포 시 큰 장점이 된다. 모델이 어떤 형태의 입력을 기대하고 어떤 형태의 출력을 생성할지 명확히 알 수 있기 때문이다.</p>
+<h2 id="onnx-graph-생성의-비밀">ONNX Graph 생성의 비밀<a hidden class="anchor" aria-hidden="true" href="#onnx-graph-생성의-비밀">#</a></h2>
+<p>PyTorch나 TensorFlow 모델을 ONNX로 변환할 때, 단순히 &ldquo;내보내기&rdquo; 버튼을 누르는 것처럼 보일 수 있지만, 내부적으로는 복잡한 변환 과정이 일어난다.</p>
+<h3 id="1-추적tracing과-스크립팅scripting">1. 추적(Tracing)과 스크립팅(Scripting)<a hidden class="anchor" aria-hidden="true" href="#1-추적tracing과-스크립팅scripting">#</a></h3>
+<p>PyTorch에서 ONNX 변환은 주로 두 가지 방식으로 이루어진다:</p>
+<ul>
+<li><strong>추적(Tracing)</strong>: 모델에 실제 입력 데이터를 통과시키면서 실행되는 연산을 기록</li>
+<li><strong>스크립팅(Scripting)</strong>: 모델 코드를 분석하여 정적 그래프를 생성</li>
+</ul>
+<p>이 두 방식은 각각 장단점이 있는데, 내 경험상 <strong>동적 제어 흐름(if문, 루프 등)이 포함된 모델에서는 trace 방식이 문제를 일으키는 경우가 많았다</strong>. 특히 입력 크기에 따라 동작이 달라지는 모델에서는 스크립팅 방식이 더 안정적인 결과를 제공했다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 추적 방식 예시</span>
+</span></span><span style="display:flex;"><span>dummy_input <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>randn(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">224</span>, <span style="color:#ae81ff">224</span>)
+</span></span><span style="display:flex;"><span>torch<span style="color:#f92672">.</span>onnx<span style="color:#f92672">.</span>export(model, dummy_input, <span style="color:#e6db74">&#34;model.onnx&#34;</span>, 
+</span></span><span style="display:flex;"><span>                 export_params<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>                 opset_version<span style="color:#f92672">=</span><span style="color:#ae81ff">12</span>,
+</span></span><span style="display:flex;"><span>                 do_constant_folding<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 스크립팅 방식 예시 (TorchScript 이용)</span>
+</span></span><span style="display:flex;"><span>scripted_model <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>jit<span style="color:#f92672">.</span>script(model)
+</span></span><span style="display:flex;"><span>torch<span style="color:#f92672">.</span>onnx<span style="color:#f92672">.</span>export(scripted_model, dummy_input, <span style="color:#e6db74">&#34;model_scripted.onnx&#34;</span>)
+</span></span></code></pre></div><h3 id="2-연산자-매핑의-함정">2. 연산자 매핑의 함정<a hidden class="anchor" aria-hidden="true" href="#2-연산자-매핑의-함정">#</a></h3>
+<p>PyTorch나 TensorFlow의 연산자가 ONNX로 매핑되는 과정에서 많은 함정이 있다. 특히 커스텀 연산자나 최신 연산자의 경우 직접적인 ONNX 대응이 없을 수 있다.</p>
+<p>내가 경험한 가장 까다로운 사례는 <strong>attention 메커니즘</strong>이 포함된 트랜스포머 모델의 변환이었다. <br>
+PyTorch의 <code>MultiheadAttention</code> 모듈이 ONNX로 변환될 때, 단일 노드가 아닌 여러 기본 연산자(MatMul, Add, Softmax 등)의 복잡한 조합으로 분해되었다. 이로 인해 그래프가 매우 복잡해지고 최적화 기회가 제한되었다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch의 MultiheadAttention이 ONNX로 변환되면</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 아래와 같은 여러 노드로 분해된다 (간략화된 버전)</span>
+</span></span><span style="display:flex;"><span>node {
+</span></span><span style="display:flex;"><span>  op_type: <span style="color:#e6db74">&#34;MatMul&#34;</span>
+</span></span><span style="display:flex;"><span>  input: [<span style="color:#e6db74">&#34;queries&#34;</span>, <span style="color:#e6db74">&#34;key_weights&#34;</span>]
+</span></span><span style="display:flex;"><span>  output: [<span style="color:#e6db74">&#34;QK&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>node {
+</span></span><span style="display:flex;"><span>  op_type: <span style="color:#e6db74">&#34;Transpose&#34;</span>
+</span></span><span style="display:flex;"><span>  input: [<span style="color:#e6db74">&#34;QK&#34;</span>]
+</span></span><span style="display:flex;"><span>  output: [<span style="color:#e6db74">&#34;QK_transposed&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>node {
+</span></span><span style="display:flex;"><span>  op_type: <span style="color:#e6db74">&#34;Div&#34;</span>
+</span></span><span style="display:flex;"><span>  input: [<span style="color:#e6db74">&#34;QK_transposed&#34;</span>, <span style="color:#e6db74">&#34;scaling_factor&#34;</span>]
+</span></span><span style="display:flex;"><span>  output: [<span style="color:#e6db74">&#34;scaled_QK&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>node {
+</span></span><span style="display:flex;"><span>  op_type: <span style="color:#e6db74">&#34;Softmax&#34;</span>
+</span></span><span style="display:flex;"><span>  input: [<span style="color:#e6db74">&#34;scaled_QK&#34;</span>]
+</span></span><span style="display:flex;"><span>  output: [<span style="color:#e6db74">&#34;attention_weights&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># ... 등등</span>
+</span></span></code></pre></div><p>ONNX opset 버전에 따라 이러한 패턴이 크게 달라질 수 있으며, 최신 opset에서는 더 효율적인 변환이 이루어지는 경우가 많다. 이는 ONNX 생태계가 지속적으로 발전하고 있음을 보여준다.</p>
+<h2 id="onnx-graph-최적화의-기술">ONNX Graph 최적화의 기술<a hidden class="anchor" aria-hidden="true" href="#onnx-graph-최적화의-기술">#</a></h2>
+<p>ONNX 모델을 얻은 후에는 추가적인 최적화를 통해 더 나은 성능을 얻을 수 있다. 여기서 ONNX Runtime과 같은 추론 엔진이 핵심 역할을 한다.</p>
+<h3 id="1-그래프-변환-최적화">1. 그래프 변환 최적화<a hidden class="anchor" aria-hidden="true" href="#1-그래프-변환-최적화">#</a></h3>
+<p>ONNX Runtime은 그래프에 다양한 변환을 적용하여 최적화한다:</p>
+<ul>
+<li><strong>상수 폴딩(Constant Folding)</strong>: 상수 입력만 가지는 노드의 결과를 미리 계산</li>
+<li><strong>노드 융합(Node Fusion)</strong>: 특정 패턴의 노드들을 단일 최적화된 노드로 결합</li>
+<li><strong>불필요한 노드 제거</strong>: 출력에 영향을 미치지 않는 연산 제거</li>
+</ul>
+<p>이중 <strong>노드 융합</strong>은 가장 큰 성능 향상을 가져오는 최적화 중 하나이다. 예를 들어, Conv+BatchNorm+ReLU 패턴은 단일 융합 노드로 대체될 수 있어 메모리 접근과 연산을 크게 줄일 수 있다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># ONNX Runtime의 그래프 최적화 예시</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> onnxruntime <span style="color:#66d9ef">as</span> ort
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 기본 세션 vs 최적화된 세션</span>
+</span></span><span style="display:flex;"><span>sess_options <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>SessionOptions()
+</span></span><span style="display:flex;"><span>sess_options<span style="color:#f92672">.</span>graph_optimization_level <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>GraphOptimizationLevel<span style="color:#f92672">.</span>ORT_ENABLE_ALL
+</span></span><span style="display:flex;"><span>optimized_session <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>InferenceSession(<span style="color:#e6db74">&#34;model.onnx&#34;</span>, sess_options)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 최적화 전후 그래프 비교</span>
+</span></span><span style="display:flex;"><span>baseline_session <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>InferenceSession(<span style="color:#e6db74">&#34;model.onnx&#34;</span>, 
+</span></span><span style="display:flex;"><span>                                      ort<span style="color:#f92672">.</span>SessionOptions())
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;원본 그래프 노드 수: </span><span style="color:#e6db74">{</span>len(baseline_session<span style="color:#f92672">.</span>_model_meta<span style="color:#f92672">.</span>custom_metadata_map)<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;최적화 그래프 노드 수: </span><span style="color:#e6db74">{</span>len(optimized_session<span style="color:#f92672">.</span>_model_meta<span style="color:#f92672">.</span>custom_metadata_map)<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><h3 id="2-양자화quantization의-비밀">2. 양자화(Quantization)의 비밀<a hidden class="anchor" aria-hidden="true" href="#2-양자화quantization의-비밀">#</a></h3>
+<p>ONNX 모델의 또 다른 강력한 최적화는 <strong>양자화</strong>이다. FP32 정밀도의 모델을 INT8이나 심지어 INT4로 변환하여 메모리 사용량과 계산 비용을 크게 줄일 수 있다.</p>
+<p>그러나 양자화에는 함정이 있다. 내 경험에서, 단순히 &ldquo;양자화 버튼&quot;을 누르는 것 같은 사후 훈련 양자화(Post-Training Quantization, PTQ)는 때때로 정확도를 크게 저하시킬 수 있다. 특히 <strong>작은 모델이나 희소한 활성화 함수를 가진 모델</strong>에서 이 문제가 두드러졌다.</p>
+<p>이런 경우, 양자화 인식 훈련(Quantization-Aware Training, QAT)이나 보정 데이터를 사용한 세심한 PTQ가 더 나은 결과를 제공했다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># ONNX 모델의 양자화 예시 (간략화됨)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> onnxruntime.quantization <span style="color:#f92672">import</span> quantize_dynamic
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 동적 양자화</span>
+</span></span><span style="display:flex;"><span>quantize_dynamic(<span style="color:#e6db74">&#34;model.onnx&#34;</span>, <span style="color:#e6db74">&#34;model_quantized.onnx&#34;</span>,
+</span></span><span style="display:flex;"><span>                weight_type<span style="color:#f92672">=</span>QuantType<span style="color:#f92672">.</span>QInt8)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 보정 데이터를 사용한 정적 양자화</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> onnxruntime.quantization <span style="color:#f92672">import</span> quantize_static, CalibrationDataReader
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>calibration_data <span style="color:#f92672">=</span> CalibrationDataReader(<span style="color:#f92672">...</span>)  <span style="color:#75715e"># 보정 데이터 로더</span>
+</span></span><span style="display:flex;"><span>quantize_static(<span style="color:#e6db74">&#34;model.onnx&#34;</span>, <span style="color:#e6db74">&#34;model_quantized.onnx&#34;</span>,
+</span></span><span style="display:flex;"><span>               calibration_data)
+</span></span></code></pre></div><h3 id="3-하드웨어-특화-최적화">3. 하드웨어 특화 최적화<a hidden class="anchor" aria-hidden="true" href="#3-하드웨어-특화-최적화">#</a></h3>
+<p>ONNX의 또 다른 강점은 다양한 하드웨어 백엔드에 대한 최적화가 가능하다는 점이다. 특히 ONNX Runtime은 CPU, GPU, EdgeTPU, DSP 등 다양한 하드웨어에 대한 실행 제공자(Execution Provider)를 지원한다.</p>
+<p>내 프로젝트에서는 동일한 ONNX 모델을 CPU, CUDA, TensorRT 제공자로 실행했을 때 성능 차이가 극적이었다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>| 실행 환경                  |  추론 시간 (ms) |
+</span></span><span style="display:flex;"><span>|--------------------------|---------------|
+</span></span><span style="display:flex;"><span>| CPU (OpenMP)             | 85.2          |
+</span></span><span style="display:flex;"><span>| CUDA                     | 27.3          |
+</span></span><span style="display:flex;"><span>| TensorRT (FP16)          | 12.1          |
+</span></span><span style="display:flex;"><span>| TensorRT (INT8 양자화)     | 5.8           |
+</span></span></code></pre></div><p>특히 TensorRT 제공자는 그래프를 더욱 최적화하고 텐서 코어와 같은 하드웨어 가속기를 활용하여 놀라운 성능 향상을 제공했다.</p>
+<h2 id="실전-onnx-graph-디버깅과-해결책">실전 ONNX Graph 디버깅과 해결책<a hidden class="anchor" aria-hidden="true" href="#실전-onnx-graph-디버깅과-해결책">#</a></h2>
+<p>ONNX 모델을 프로덕션에 배포하면서 몇 가지 까다로운 문제를 마주쳤다. 이러한 경험은 ONNX Graph의 내부 구조를 더 깊이 이해하는 데 도움이 되었다.</p>
+<h3 id="1-동적-입력-크기의-함정">1. 동적 입력 크기의 함정<a hidden class="anchor" aria-hidden="true" href="#1-동적-입력-크기의-함정">#</a></h3>
+<p>CNN 기반 모델에서는 입력 크기가 고정되어 있는 경우가 많지만, NLP나 시계열 모델에서는 <strong>가변 길이 입력</strong>을 처리해야 하는 경우가 많다. ONNX에서 이를 처리하기 위해 **동적 축(Dynamic Axes)**을 지정할 수 있지만, 이로 인해 특정 최적화가 불가능해지는 부작용이 있었다.</p>
+<p>예를 들어, TensorRT 변환 시 동적 축을 가진 모델은 일부 최적화를 적용할 수 없었고, 특정 차원에 대해 최적화된 프로필을 명시적으로 제공해야 했다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 동적 축을 가진 ONNX 모델 내보내기</span>
+</span></span><span style="display:flex;"><span>dynamic_axes <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;input&#39;</span>: {<span style="color:#ae81ff">0</span>: <span style="color:#e6db74">&#39;batch_size&#39;</span>, <span style="color:#ae81ff">2</span>: <span style="color:#e6db74">&#39;seq_length&#39;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;output&#39;</span>: {<span style="color:#ae81ff">0</span>: <span style="color:#e6db74">&#39;batch_size&#39;</span>, <span style="color:#ae81ff">1</span>: <span style="color:#e6db74">&#39;seq_length&#39;</span>}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>torch<span style="color:#f92672">.</span>onnx<span style="color:#f92672">.</span>export(model, dummy_input, <span style="color:#e6db74">&#34;dynamic_model.onnx&#34;</span>,
+</span></span><span style="display:flex;"><span>                 dynamic_axes<span style="color:#f92672">=</span>dynamic_axes)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># TensorRT에서는 최적화 프로필 지정이 필요</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> tensorrt <span style="color:#66d9ef">as</span> trt
+</span></span><span style="display:flex;"><span>profile <span style="color:#f92672">=</span> builder<span style="color:#f92672">.</span>create_optimization_profile()
+</span></span><span style="display:flex;"><span>profile<span style="color:#f92672">.</span>set_shape(<span style="color:#e6db74">&#34;input&#34;</span>, (<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">16</span>), (<span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">64</span>), (<span style="color:#ae81ff">16</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">128</span>))
+</span></span><span style="display:flex;"><span>config<span style="color:#f92672">.</span>add_optimization_profile(profile)
+</span></span></code></pre></div><h3 id="2-커스텀-연산자의-도전">2. 커스텀 연산자의 도전<a hidden class="anchor" aria-hidden="true" href="#2-커스텀-연산자의-도전">#</a></h3>
+<p>표준 연산자만으로는 구현하기 어려운 특별한 로직이 필요한 경우 혹은 성능 최적화가 필수적인 경우 <strong>커스텀 ONNX 연산자</strong>를 구현할 수 있다. 이는 복잡한 과정이지만, ONNX의 확장성을 보여주는 사례다.</p>
+<p>특수한 비디오 처리 연산이 필요했다고 하면, 이를 위해 C++로 커스텀 ONNX 연산자를 구현하고 ONNX Runtime에 등록할 수 있다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#75715e">// 커스텀 ONNX 연산자 구현 (C++)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">CustomOp</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> OpName <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;CustomVideoProcessor&#34;</span>;
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> Status <span style="color:#a6e22e">Compute</span>(OpKernelContext<span style="color:#f92672">*</span> context) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 구현 로직
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> Status<span style="color:#f92672">::</span>OK();
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> ONNX_NAMESPACE<span style="color:#f92672">::</span>OpSchema GetOpSchema() {
+</span></span><span style="display:flex;"><span>    ONNX_NAMESPACE<span style="color:#f92672">::</span>OpSchema schema;
+</span></span><span style="display:flex;"><span>    schema.SetName(OpName);
+</span></span><span style="display:flex;"><span>    schema.SetDomain(<span style="color:#e6db74">&#34;MyDomain&#34;</span>);
+</span></span><span style="display:flex;"><span>    schema.SetDoc(<span style="color:#e6db74">&#34;Custom video processing operation&#34;</span>);
+</span></span><span style="display:flex;"><span>    schema.Input(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#34;X&#34;</span>, <span style="color:#e6db74">&#34;Input tensor&#34;</span>, <span style="color:#e6db74">&#34;T&#34;</span>);
+</span></span><span style="display:flex;"><span>    schema.Output(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#34;Y&#34;</span>, <span style="color:#e6db74">&#34;Output tensor&#34;</span>, <span style="color:#e6db74">&#34;T&#34;</span>);
+</span></span><span style="display:flex;"><span>    schema.TypeConstraint(<span style="color:#e6db74">&#34;T&#34;</span>, {<span style="color:#e6db74">&#34;tensor(float)&#34;</span>}, <span style="color:#e6db74">&#34;Supported types&#34;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> schema;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 연산자 등록
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>ORT_REGISTER_CUSTOM_OP(CustomOp);
+</span></span></code></pre></div><p>이 접근 방식의 장점은 특수 로직을 효율적으로 구현할 수 있다는 것이지만, 단점은 <strong>이식성이 떨어진다</strong>는 점이다. 커스텀 연산자를 사용하는 ONNX 모델은 해당 연산자가 등록된 환경에서만 실행할 수 있다.</p>
+<h3 id="3-메모리-최적화의-미학">3. 메모리 최적화의 미학<a hidden class="anchor" aria-hidden="true" href="#3-메모리-최적화의-미학">#</a></h3>
+<ul>
+<li><strong>메모리 패턴 최적화</strong>: 동일한 형상의 텐서를 재사용</li>
+<li><strong>외부 메모리 사용</strong>: 모델 가중치를 외부 파일로 분리</li>
+<li><strong>실행 계획 최적화</strong>: 최소 메모리 사용량으로 연산 순서 재배열</li>
+</ul>
+<p>특히 엣지 디바이스에 배포할 때, 이러한 최적화가 모델 실행 가능성을 결정짓는 중요한 요소였다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 메모리 최적화된 ONNX Runtime 세션</span>
+</span></span><span style="display:flex;"><span>sess_options <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>SessionOptions()
+</span></span><span style="display:flex;"><span>sess_options<span style="color:#f92672">.</span>enable_mem_pattern <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>sess_options<span style="color:#f92672">.</span>enable_mem_reuse <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>sess_options<span style="color:#f92672">.</span>add_session_config_entry(<span style="color:#e6db74">&#34;session.save_model_format&#34;</span>, <span style="color:#e6db74">&#34;ORT&#34;</span>)
+</span></span><span style="display:flex;"><span>sess_options<span style="color:#f92672">.</span>optimized_model_filepath <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;optimized_model.ort&#34;</span>
+</span></span><span style="display:flex;"><span>session <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>InferenceSession(<span style="color:#e6db74">&#34;model.onnx&#34;</span>, sess_options)
+</span></span></code></pre></div><h2 id="onnx-graph-분석-도구의-세계">ONNX Graph 분석 도구의 세계<a hidden class="anchor" aria-hidden="true" href="#onnx-graph-분석-도구의-세계">#</a></h2>
+<p>ONNX 모델을 더 깊이 이해하고 최적화하기 위한 다양한 도구가 있다:</p>
+<h3 id="1-netron-그래프-시각화의-황금-표준">1. Netron: 그래프 시각화의 황금 표준<a hidden class="anchor" aria-hidden="true" href="#1-netron-그래프-시각화의-황금-표준">#</a></h3>
+<p><a href="https://github.com/lutzroeder/netron">Netron</a>은 ONNX 그래프를 시각적으로 탐색할 수 있는 강력한 도구다. 각 노드의 속성, 입출력 텐서 형상, 가중치 분포까지 확인할 수 있어 디버깅에 큰 도움이 된다.</p>
+<h3 id="2-onnx-runtime-프로파일링">2. ONNX Runtime 프로파일링<a hidden class="anchor" aria-hidden="true" href="#2-onnx-runtime-프로파일링">#</a></h3>
+<p>ONNX Runtime은 각 노드의 실행 시간과 메모리 사용량을 세밀하게 프로파일링할 수 있는 도구를 제공한다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># ONNX Runtime 프로파일링 예시</span>
+</span></span><span style="display:flex;"><span>sess_options <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>SessionOptions()
+</span></span><span style="display:flex;"><span>sess_options<span style="color:#f92672">.</span>enable_profiling <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>session <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>InferenceSession(<span style="color:#e6db74">&#34;model.onnx&#34;</span>, sess_options)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 모델 실행</span>
+</span></span><span style="display:flex;"><span>session<span style="color:#f92672">.</span>run(<span style="color:#66d9ef">None</span>, {<span style="color:#e6db74">&#34;input&#34;</span>: input_data})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 프로파일 정보 수집</span>
+</span></span><span style="display:flex;"><span>profile_file <span style="color:#f92672">=</span> session<span style="color:#f92672">.</span>end_profiling()
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> open(profile_file, <span style="color:#e6db74">&#34;r&#34;</span>) <span style="color:#66d9ef">as</span> f:
+</span></span><span style="display:flex;"><span>    profile_data <span style="color:#f92672">=</span> json<span style="color:#f92672">.</span>load(f)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 가장 시간이 많이 소요된 노드 출력</span>
+</span></span><span style="display:flex;"><span>sorted_nodes <span style="color:#f92672">=</span> sorted(profile_data, 
+</span></span><span style="display:flex;"><span>                     key<span style="color:#f92672">=</span><span style="color:#66d9ef">lambda</span> x: x<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;dur&#34;</span>, <span style="color:#ae81ff">0</span>) <span style="color:#66d9ef">if</span> isinstance(x, dict) <span style="color:#66d9ef">else</span> <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>                     reverse<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> node <span style="color:#f92672">in</span> sorted_nodes[:<span style="color:#ae81ff">10</span>]:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> isinstance(node, dict):
+</span></span><span style="display:flex;"><span>        print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Node: </span><span style="color:#e6db74">{</span>node<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;name&#39;</span>)<span style="color:#e6db74">}</span><span style="color:#e6db74">, Type: </span><span style="color:#e6db74">{</span>node<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;args&#39;</span>, {})<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;op_name&#39;</span>)<span style="color:#e6db74">}</span><span style="color:#e6db74">, Duration: </span><span style="color:#e6db74">{</span>node<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;dur&#39;</span>)<span style="color:#e6db74">}</span><span style="color:#e6db74">us&#34;</span>)
+</span></span></code></pre></div><p>이 프로파일링 정보는 병목 현상을 식별하고 최적화 노력을 집중해야 할 부분을 파악하는 데 필수적이다.</p>
+<h3 id="3-onnx-모델-검증과-비교">3. ONNX 모델 검증과 비교<a hidden class="anchor" aria-hidden="true" href="#3-onnx-모델-검증과-비교">#</a></h3>
+<p>모델 변환과 최적화 과정에서 정확도 손실이 없는지 확인하는 것이 중요하다. ONNX에서는 이를 위한 유틸리티를 제공한다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 원본 모델과 ONNX 모델의 출력 비교</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> onnx
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> onnx <span style="color:#f92672">import</span> numpy_helper
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 원본 PyTorch 모델 실행</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> torch<span style="color:#f92672">.</span>no_grad():
+</span></span><span style="display:flex;"><span>    torch_output <span style="color:#f92672">=</span> model(torch_input)<span style="color:#f92672">.</span>numpy()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># ONNX 모델 실행</span>
+</span></span><span style="display:flex;"><span>ort_session <span style="color:#f92672">=</span> ort<span style="color:#f92672">.</span>InferenceSession(<span style="color:#e6db74">&#34;model.onnx&#34;</span>)
+</span></span><span style="display:flex;"><span>ort_inputs <span style="color:#f92672">=</span> {ort_session<span style="color:#f92672">.</span>get_inputs()[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>name: torch_input<span style="color:#f92672">.</span>numpy()}
+</span></span><span style="display:flex;"><span>ort_output <span style="color:#f92672">=</span> ort_session<span style="color:#f92672">.</span>run(<span style="color:#66d9ef">None</span>, ort_inputs)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 출력 비교</span>
+</span></span><span style="display:flex;"><span>np<span style="color:#f92672">.</span>testing<span style="color:#f92672">.</span>assert_allclose(torch_output, ort_output, rtol<span style="color:#f92672">=</span><span style="color:#ae81ff">1e-3</span>, atol<span style="color:#f92672">=</span><span style="color:#ae81ff">1e-3</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;출력이 일치합니다!&#34;</span>)
+</span></span></code></pre></div><p>이러한 검증은 특히 양자화나 그래프 최적화를 적용한 후 확인하는 것이 바람직하다.</p>
+<p>마지막으로 내가 ONNX를 사용하며 얻은 교훈은, ONNX 변환을 단순한 &ldquo;마지막 버튼&quot;이라고 생각하지 않게 됐다는 것이다.<br>
+결국 우리에게 가져다 주는 성능의 이점은 쉽게 생기는 것이 아니고, ONNX graph의 세계에 대해서 감탄하게 되었다.</p>
+<p>ONNX Graph의 세계는 깊고 풍부하다. 더 효율적이고 이식성 높은 딥러닝 모델을 향한 여정에서, ONNX를 공부해두면 좋을 것 같다.</p>
+<h2 id="references">References<a hidden class="anchor" aria-hidden="true" href="#references">#</a></h2>
+<ul>
+<li>[1] ONNX GitHub Repository: <a href="https://github.com/onnx/onnx">https://github.com/onnx/onnx</a></li>
+<li>[2] ONNX Runtime Documentation: <a href="https://onnxruntime.ai/">https://onnxruntime.ai/</a></li>
+<li>[3] PyTorch to ONNX Tutorial: <a href="https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html">https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html</a></li>
+<li>[4] ONNX Operator Specifications: <a href="https://github.com/onnx/onnx/blob/master/docs/Operators.md">https://github.com/onnx/onnx/blob/master/docs/Operators.md</a></li>
+</ul>
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="https://macsim2.github.io/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="https://macsim2.github.io/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>TensorRT와 Triton: 딥러닝 추론 최적화의 강력한 조합</span>
+  </a>
+  <a class="next" href="https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>가중치 업데이트에 관해서 with wav2vec 2.0</span>
+  </a>
+</nav>
+
+
+<div class="share-buttons">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share ONNX Graph의 내부 구조와 최적화 여정 on twitter"
+       href="https://twitter.com/intent/tweet/?text=ONNX%20Graph%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%ec%b5%9c%ec%a0%81%ed%99%94%20%ec%97%ac%ec%a0%95&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2finference_optimzation%2fonnx_graph%2f&amp;hashtags=deeplearning%2connx%2cmodeloptimization%2cinference%2ccomputationalgraph%2cmodeldeployment">
+    <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-253.927,424.544c135.939,0 210.268,-112.643 210.268,-210.268c0,-3.218 0,-6.437 -0.153,-9.502c14.406,-10.421 26.973,-23.448 36.935,-38.314c-13.18,5.824 -27.433,9.809 -42.452,11.648c15.326,-9.196 26.973,-23.602 32.49,-40.92c-14.252,8.429 -30.038,14.56 -46.896,17.931c-13.487,-14.406 -32.644,-23.295 -53.946,-23.295c-40.767,0 -73.87,33.104 -73.87,73.87c0,5.824 0.613,11.494 1.992,16.858c-61.456,-3.065 -115.862,-32.49 -152.337,-77.241c-6.284,10.881 -9.962,23.601 -9.962,37.088c0,25.594 13.027,48.276 32.95,61.456c-12.107,-0.307 -23.448,-3.678 -33.41,-9.196l0,0.92c0,35.862 25.441,65.594 59.311,72.49c-6.13,1.686 -12.72,2.606 -19.464,2.606c-4.751,0 -9.348,-0.46 -13.946,-1.38c9.349,29.426 36.628,50.728 68.965,51.341c-25.287,19.771 -57.164,31.571 -91.8,31.571c-5.977,0 -11.801,-0.306 -17.625,-1.073c32.337,21.15 71.264,33.41 112.95,33.41Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share ONNX Graph의 내부 구조와 최적화 여정 on linkedin"
+       href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2finference_optimzation%2fonnx_graph%2f&amp;title=ONNX%20Graph%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%ec%b5%9c%ec%a0%81%ed%99%94%20%ec%97%ac%ec%a0%95&amp;summary=ONNX%20Graph%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%ec%b5%9c%ec%a0%81%ed%99%94%20%ec%97%ac%ec%a0%95&amp;source=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2finference_optimzation%2fonnx_graph%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share ONNX Graph의 내부 구조와 최적화 여정 on reddit"
+       href="https://reddit.com/submit?url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2finference_optimzation%2fonnx_graph%2f&title=ONNX%20Graph%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%ec%b5%9c%ec%a0%81%ed%99%94%20%ec%97%ac%ec%a0%95">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share ONNX Graph의 내부 구조와 최적화 여정 on facebook"
+       href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2finference_optimzation%2fonnx_graph%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share ONNX Graph의 내부 구조와 최적화 여정 on whatsapp"
+       href="https://api.whatsapp.com/send?text=ONNX%20Graph%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%ec%b5%9c%ec%a0%81%ed%99%94%20%ec%97%ac%ec%a0%95%20-%20https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2finference_optimzation%2fonnx_graph%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share ONNX Graph의 내부 구조와 최적화 여정 on telegram"
+       href="https://telegram.me/share/url?text=ONNX%20Graph%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%ec%b5%9c%ec%a0%81%ed%99%94%20%ec%97%ac%ec%a0%95&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2finference_optimzation%2fonnx_graph%2f">
+        <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28">
+            <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+        </svg>
+    </a>
+</div>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="https://macsim2.github.io/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

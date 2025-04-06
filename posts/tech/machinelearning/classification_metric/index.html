@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1) | macsim&#39;s Blog</title>
+<meta name="keywords" content="machine_learning, classification, binary classification, metric, accuracy, precision, recall, f1-score">
+<meta name="description" content="Accuracy의 함정과 Precision, Recall, F1-score가 왜 필요한지 알아보자.">
+<meta name="author" content="macsim">
+<link rel="canonical" href="https://macsim2.github.io/posts/tech/machinelearning/classification_metric/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="https://macsim2.github.io/img/Q.gif">
+<link rel="apple-touch-icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="https://macsim2.github.io/posts/tech/machinelearning/classification_metric/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1)" />
+<meta property="og:description" content="Accuracy의 함정과 Precision, Recall, F1-score가 왜 필요한지 알아보자." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://macsim2.github.io/posts/tech/machinelearning/classification_metric/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-02-21T21:10:51+09:00" />
+<meta property="article:modified_time" content="2024-07-26T00:00:00+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1)"/>
+<meta name="twitter:description" content="Accuracy의 함정과 Precision, Recall, F1-score가 왜 필요한지 알아보자."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "https://macsim2.github.io/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "https://macsim2.github.io/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1)",
+      "item": "https://macsim2.github.io/posts/tech/machinelearning/classification_metric/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1)",
+  "name": "분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1)",
+  "description": "Accuracy의 함정과 Precision, Recall, F1-score가 왜 필요한지 알아보자.",
+  "keywords": [
+    "machine_learning", "classification", "binary classification", "metric", "accuracy", "precision", "recall", "f1-score"
+  ],
+  "articleBody": "ASR(Automatic Speech Recognition) 분야에서 모델 성능을 평가할 때 WER(Word Error Rate), CER(Character Error Rate) 같은 지표를 쓴다. Edit Distance 알고리즘을 이용해서 모델이 내놓은 결과(hypothesis)가 실제 정답과 얼마나 비슷한지 점수를 매기는 방식이다.\n그런데 인식(Recognition), 분류(Classification), 탐지(Detection) 같은 다른 머신러닝 task에서는 Accuracy, Precision, Recall 같은 또 다른 지표들이 자주 등장한다. 얘네들은 이름도 비슷비슷해서 헷갈리기 딱 좋다. 특히 Precision이랑 Recall은 뭐가 다른 건지, TP, FP, FN, TN은 또 뭔지… @_@\n오늘은 이 용어들의 의미를 명확히 하고, 특히 Binary Classification(이진 분류) 상황에서 얘네들을 어떻게 써먹고 해석해야 하는지, 데이터 분석가의 마음(?)으로 한번 정리해보려 한다.\n혼동 행렬 (Confusion Matrix): 모든 것은 여기서 시작된다 분류 모델의 성능을 이야기할 때 빼놓을 수 없는 것이 바로 Confusion Matrix(혼동 행렬)이다. 이름 한번 거창하지만, 알고 보면 그냥 모델의 예측 결과랑 실제 정답을 표로 정리한 거다. 이 표 하나로 모델이 뭘 잘하고 뭘 못하는지 한눈에 파악할 수 있다.\nBinary Classification에서는 보통 Positive(긍정, 1) / Negative(부정, 0) 두 클래스로 나눈다. 예를 들어 ‘스팸 메일 분류’라면 스팸 메일이 Positive, 정상 메일이 Negative가 될 수 있다. 이걸 기준으로 혼동 행렬은 다음과 같이 4가지 경우의 수를 보여준다.\nTP (True Positive): 실제 Positive인 것을 Positive라고 정확히 예측한 경우. (정답!) - “이건 스팸이야!” 라고 했는데 진짜 스팸. TN (True Negative): 실제 Negative인 것을 Negative라고 정확히 예측한 경우. (정답!) - “이건 스팸 아니야!” 라고 했는데 진짜 정상 메일. FP (False Positive): 실제 Negative인 것을 Positive라고 잘못 예측한 경우. (1종 오류, Type I Error) - “이건 스팸이야!” 라고 했는데… 억울한 정상 메일. FN (False Negative): 실제 Positive인 것을 Negative라고 잘못 예측한 경우. (2종 오류, Type II Error) - “이건 스팸 아니야!” 라고 했는데… 놓쳐버린 스팸. 이 네 가지 값(TP, TN, FP, FN)만 알면 지금부터 설명할 모든 지표를 계산할 수 있다. 그야말로 분류 모델 성능 평가의 알파이자 오메가!\nAccuracy (정확도): 가장 직관적, 하지만 함정이? 자, 이제 본격적으로 성능 지표들을 살펴보자. 가장 먼저 만나볼 친구는 Accuracy(정확도)다.\n$$ ACCURACY = \\frac{TP+TN}{TP + TN + FP + FN} = \\frac{맞춘 것}{전체} $$\n수식을 보면 알겠지만, 그냥 전체 예측 건수 중에서 정답을 맞춘 비율이다. TP와 TN을 더해서 전체(TP+TN+FP+FN)로 나눈 값. 100문제 중에 90문제 맞히면 정확도 90%인 것처럼 아주 직관적이다. 뭔가 시험 성적표 받는 느낌이랄까?\nAccuracy = (잘 맞춘 스팸 개수 + 잘 맞춘 정상 메일 개수) / (전체 메일 개수) 여기까지만 보면 Accuracy가 무난하고 괜찮아 보인다. 높으면 무조건 좋은 모델 아닌가? 하지만 세상은 그렇게 단순하지 않다. Accuracy에는 치명적인 단점이 숨어있다. 바로 데이터가 불균형(imbalanced)할 때 성능을 제대로 반영하지 못한다는 점이다.\n예를 들어, 1000개의 메일 중 스팸 메일(Positive)이 단 10개뿐이고 나머지 990개가 정상 메일(Negative)인 데이터셋이 있다고 치자. 이때 모델이 모든 메일을 그냥 “정상 메일이야!\"(Negative)라고 예측해버리면 어떻게 될까?\nTP = 0 (스팸을 스팸이라 예측 못함) TN = 990 (정상 메일을 정상이라 예측함) FP = 0 (정상 메일을 스팸이라 예측 안함) FN = 10 (스팸을 정상이라 예측함) 이 모델의 Accuracy를 계산해보면?\n$$ Accuracy = \\frac{0 + 990}{0 + 990 + 0 + 10} = \\frac{990}{1000} = 99% $$\n무려 99%의 정확도! 와, 엄청난 모델이다..! 최강의 모델인가 보다! 라고 생각하면 큰일 난다. 이 모델은 스팸 메일을 단 하나도 걸러내지 못하는, 사실상 쓸모없는 모델이다.\n이처럼 데이터 클래스 비율이 한쪽으로 크게 치우쳐 있으면, 다수 클래스만 잘 맞춰도 Accuracy는 높게 나올 수 있다. 그래서 Accuracy만 보고 모델 성능을 판단하는 것은 매우 위험하다.\nPrecision (정밀도) \u0026 Recall (재현율): Accuracy의 빈틈을 메우다 Accuracy의 함정을 피하기 위해 등장한 구원투수들이 바로 Precision(정밀도)과 Recall(재현율)이다. 이 둘은 모델의 예측 결과를 좀 더 다른 관점에서 바라본다.\nPrecision (정밀도): “내가 Positive라고 한 것 중에 진짜는?” $$ PRECISION = \\frac{TP}{TP + FP} = \\frac{진짜 Positive}{Positive라고 예측한 것들} $$\nPrecision은 모델이 Positive라고 예측한 것들 중에서, 실제로 Positive인 것의 비율이다. 즉, 모델의 Positive 예측이 얼마나 정확한지를 나타낸다.\nPrecision = (잘 맞춘 스팸 개수) / (모델이 스팸이라고 예측한 전체 메일 개수) Precision이 높다는 것은 모델이 “이건 Positive야!“라고 했을 때, 그 예측을 믿을 만하다는 뜻이다. 스팸 메일 분류 예시에서는, 모델이 스팸이라고 분류한 메일들 중 실제 스팸일 확률이 높다는 의미다. FP(정상 메일을 스팸으로 잘못 예측)가 낮을수록 Precision은 높아진다. 괜히 억울하게 스팸함으로 가는 정상 메일을 줄이고 싶을 때 중요한 지표다.\nRecall (재현율): “실제 Positive 중에 내가 얼마나 찾아냈지?” $$ RECALL = \\frac{TP}{TP + FN} = \\frac{진짜 Positive}{실제 Positive인 것들} $$\nRecall은 실제 Positive인 것들 중에서, 모델이 Positive라고 예측한 것의 비율이다. 즉, 모델이 실제 Positive 샘플을 얼마나 놓치지 않고 잘 찾아내는 지를 나타낸다. Sensitivity(민감도)라고도 불린다.\nRecall = (잘 맞춘 스팸 개수) / (실제 스팸 메일 전체 개수) Recall이 높다는 것은 모델이 실제 Positive 샘플들을 놓치지 않고 잘 잡아낸다는 뜻이다. 스팸 메일 분류 예시에서는, 실제 스팸 메일들을 빠짐없이 잘 걸러내는 능력을 의미한다. FN(스팸을 정상 메일로 잘못 예측)이 낮을수록 Recall은 높아진다. 단 하나의 스팸 메일도 놓치고 싶지 않을 때 중요한 지표다.\n그래서 뭘 써야 하냐고? Task 나름! Accuracy가 항상 능사는 아니라는 것, Precision과 Recall의 계산법과 의미가 다르다는 것은 이제 알겠다. 그래서 어쩌라는 건가..? 어디서 주워듣기로 통계는 해석의 학문이라고 한다. 여기서도 비슷하다. 어떤 지표를 중요하게 볼지는 풀고자 하는 문제(Task)의 특성에 따라 달라진다. 왜냐하면 FP와 FN 중 어떤 실수가 더 치명적인가가 Task마다 다르기 때문이다.\n다시 한번 두 가지 Task를 예로 들어보자.\n스팸 메일 필터링:\nFP (정상 메일을 스팸으로): 중요한 메일을 놓칠 수 있다. (짜증 유발) FN (스팸 메일을 정상으로): 귀찮은 스팸 메일을 받게 된다. (귀찮음 유발) 상대적으로 FP가 더 치명적일 수 있다. 중요한 메일을 놓치는 것보다는 스팸 몇 개 더 받는 게 나을 수도? 이 경우 Precision이 중요해진다. 암 진단 모델:\nFP (정상인을 암 환자로): 환자는 불필요한 검사와 스트레스를 받는다. (비용, 심리적 부담) FN (암 환자를 정상인으로): 치료 시기를 놓쳐 생명이 위험해질 수 있다! (매우 치명적!) 이 경우, FN을 줄이는 것이 압도적으로 중요하다. 즉, 실제 암 환자를 한 명이라도 놓치지 않아야 하므로 Recall이 매우 중요해진다. 차라리 정상인을 암 환자로 오진(FP)하더라도, 실제 환자를 놓치는(FN) 것보다는 낫다고 판단할 수 있다. 이처럼 Task의 맥락에서 어떤 오류(FP or FN)를 더 피하고 싶은지에 따라 Precision과 Recall의 중요도가 달라진다. 모델을 평가할 때는 내가 풀려는 문제가 무엇인지, 어떤 실수가 더 큰 문제를 일으키는지 먼저 고민해야 한다. 데이터가 주어졌을 때, 이 상황을 잘 분석해서 어떤 지표를 중점적으로 볼지 결정하는 것이 중요하다.\nF1-Score: Precision과 Recall, 둘 다 놓치지 않을 거예요! “아니, Precision이랑 Recall 둘 다 중요하면 어떡하라고? 하나만 고르기 너무 어려운데?” 라는 생각이 들 수 있다. 실제로 많은 경우 Precision과 Recall은 서로 반비례(Trade-off) 관계에 있다. 하나를 높이려고 하면 다른 하나가 낮아지는 경향이 있다. (모델의 예측 임계값(threshold)을 조정해보면 이 관계를 확인할 수 있다.)\n그래서 등장한 것이 F1-Score다. F1-Score는 Precision과 Recall의 조화 평균(Harmonic Mean)을 계산하여, 두 지표를 균형 있게 고려하려는 지표다.\n$$ F1 = 2 \\times \\frac{PRECISION \\times RECALL}{PRECISION + RECALL} $$\n왜 그냥 산술 평균((Precision + Recall) / 2)이 아니라 조화 평균을 쓸까? 조화 평균은 두 값 중 낮은 쪽에 더 큰 가중치를 주는 특징이 있다. 따라서 Precision과 Recall 어느 한쪽이라도 값이 매우 낮으면, F1-Score 역시 낮게 나온다. 즉, F1-Score가 높다는 것은 Precision과 Recall이 모두 어느 정도 높은 수준을 유지하고 있다는 의미로 해석할 수 있다. 둘 중 하나만 극단적으로 높고 다른 하나는 매우 낮은 경우, F1-Score는 낮게 평가하여 불균형을 잡아준다.\nF1-Score는 특히 클래스 불균형이 심하거나, Precision과 Recall 모두 중요한 Task에서 유용하게 사용된다.\n(참고: F-measure는 F1-Score를 일반화한 것으로, β 값을 조절하여 Precision 또는 Recall에 더 가중치를 줄 수 있다. F1-Score는 β=1인 경우로, Precision과 Recall을 동일한 비중으로 고려한다.)\n결론: 상황에 맞는 지표 선택과 종합적인 판단이 핵심 정리해보자.\nAccuracy: 가장 직관적이지만, 데이터 불균형에 취약하다. Precision: Positive 예측의 정확성. FP를 줄이는 것이 중요할 때. (예: 스팸 필터) Recall: 실제 Positive를 놓치지 않는 능력. FN을 줄이는 것이 중요할 때. (예: 암 진단) F1-Score: Precision과 Recall의 조화 평균. 둘 다 중요할 때 균형 있게 평가. 어떤 지표가 절대적으로 좋다고 말할 수는 없다. 가장 중요한 것은 Task의 특성과 목적을 이해하고, 어떤 종류의 오류가 더 치명적인지 판단하여 적절한 평가지표를 선택하거나 여러 지표를 종합적으로 고려하는 것이다. 모델의 성능 숫자에만 매몰되지 말고, 그 숫자가 실제 상황에서 어떤 의미를 가지는지 해석하는 능력이 중요하다 하겠다.\nReferences [1] Wikipedia - Precision and recall: https://en.wikipedia.org/wiki/Precision_and_recall [2] Google Developers - Classification: Accuracy: https://developers.google.com/machine-learning/crash-course/classification/accuracy [3] Scikit-learn Documentation - Precision, recall and F-measures: https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-f-measure-metrics ",
+  "wordCount" : "4150",
+  "inLanguage": "ko",
+  "datePublished": "2023-02-21T21:10:51+09:00",
+  "dateModified": "2024-07-26T00:00:00+09:00",
+  "author":{
+    "@type": "Person",
+    "name": "macsim"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://macsim2.github.io/posts/tech/machinelearning/classification_metric/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://macsim2.github.io/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://macsim2.github.io/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://macsim2.github.io/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 홈</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1)
+            </h1>
+            <div class="post-description">
+                Accuracy의 함정과 Precision, Recall, F1-score가 왜 필요한지 알아보자.
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2023-02-21
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>4150 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>9 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="https://macsim2.github.io/tags/machine_learning/" style="color: var(--secondary)!important;">Machine_learning</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/classification/" style="color: var(--secondary)!important;">Classification</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/binary-classification/" style="color: var(--secondary)!important;">Binary Classification</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/metric/" style="color: var(--secondary)!important;">Metric</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/accuracy/" style="color: var(--secondary)!important;">Accuracy</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/precision/" style="color: var(--secondary)!important;">Precision</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/recall/" style="color: var(--secondary)!important;">Recall</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/f1-score/" style="color: var(--secondary)!important;">F1-Score</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "https://macsim2.github.io/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul><ul>
+                <li>
+                    <a href="#%ed%98%bc%eb%8f%99-%ed%96%89%eb%a0%ac-confusion-matrix-%eb%aa%a8%eb%93%a0-%ea%b2%83%ec%9d%80-%ec%97%ac%ea%b8%b0%ec%84%9c-%ec%8b%9c%ec%9e%91%eb%90%9c%eb%8b%a4" aria-label="혼동 행렬 (Confusion Matrix): 모든 것은 여기서 시작된다">혼동 행렬 (Confusion Matrix): 모든 것은 여기서 시작된다</a></li>
+                <li>
+                    <a href="#accuracy-%ec%a0%95%ed%99%95%eb%8f%84-%ea%b0%80%ec%9e%a5-%ec%a7%81%ea%b4%80%ec%a0%81-%ed%95%98%ec%a7%80%eb%a7%8c-%ed%95%a8%ec%a0%95%ec%9d%b4" aria-label="Accuracy (정확도): 가장 직관적, 하지만 함정이?">Accuracy (정확도): 가장 직관적, 하지만 함정이?</a></li>
+                <li>
+                    <a href="#precision-%ec%a0%95%eb%b0%80%eb%8f%84--recall-%ec%9e%ac%ed%98%84%ec%9c%a8-accuracy%ec%9d%98-%eb%b9%88%ed%8b%88%ec%9d%84-%eb%a9%94%ec%9a%b0%eb%8b%a4" aria-label="Precision (정밀도) &amp;amp; Recall (재현율): Accuracy의 빈틈을 메우다">Precision (정밀도) &amp; Recall (재현율): Accuracy의 빈틈을 메우다</a><ul>
+                        
+                <li>
+                    <a href="#precision-%ec%a0%95%eb%b0%80%eb%8f%84-%eb%82%b4%ea%b0%80-positive%eb%9d%bc%ea%b3%a0-%ed%95%9c-%ea%b2%83-%ec%a4%91%ec%97%90-%ec%a7%84%ec%a7%9c%eb%8a%94" aria-label="Precision (정밀도): &amp;ldquo;내가 Positive라고 한 것 중에 진짜는?&amp;rdquo;">Precision (정밀도): &ldquo;내가 Positive라고 한 것 중에 진짜는?&rdquo;</a></li>
+                <li>
+                    <a href="#recall-%ec%9e%ac%ed%98%84%ec%9c%a8-%ec%8b%a4%ec%a0%9c-positive-%ec%a4%91%ec%97%90-%eb%82%b4%ea%b0%80-%ec%96%bc%eb%a7%88%eb%82%98-%ec%b0%be%ec%95%84%eb%83%88%ec%a7%80" aria-label="Recall (재현율): &amp;ldquo;실제 Positive 중에 내가 얼마나 찾아냈지?&amp;rdquo;">Recall (재현율): &ldquo;실제 Positive 중에 내가 얼마나 찾아냈지?&rdquo;</a></li>
+                <li>
+                    <a href="#%ea%b7%b8%eb%9e%98%ec%84%9c-%eb%ad%98-%ec%8d%a8%ec%95%bc-%ed%95%98%eb%83%90%ea%b3%a0-task-%eb%82%98%eb%a6%84" aria-label="그래서 뭘 써야 하냐고? Task 나름!">그래서 뭘 써야 하냐고? Task 나름!</a></li></ul>
+                </li>
+                <li>
+                    <a href="#f1-score-precision%ea%b3%bc-recall-%eb%91%98-%eb%8b%a4-%eb%86%93%ec%b9%98%ec%a7%80-%ec%95%8a%ec%9d%84-%ea%b1%b0%ec%98%88%ec%9a%94" aria-label="F1-Score: Precision과 Recall, 둘 다 놓치지 않을 거예요!">F1-Score: Precision과 Recall, 둘 다 놓치지 않을 거예요!</a></li>
+                <li>
+                    <a href="#%ea%b2%b0%eb%a1%a0-%ec%83%81%ed%99%a9%ec%97%90-%eb%a7%9e%eb%8a%94-%ec%a7%80%ed%91%9c-%ec%84%a0%ed%83%9d%ea%b3%bc-%ec%a2%85%ed%95%a9%ec%a0%81%ec%9d%b8-%ed%8c%90%eb%8b%a8%ec%9d%b4-%ed%95%b5%ec%8b%ac" aria-label="결론: 상황에 맞는 지표 선택과 종합적인 판단이 핵심">결론: 상황에 맞는 지표 선택과 종합적인 판단이 핵심</a></li></ul>
+                    
+                <li>
+                    <a href="#references" aria-label="References">References</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>ASR(Automatic Speech Recognition) 분야에서 모델 성능을 평가할 때 WER(Word Error Rate), CER(Character Error Rate) 같은 지표를 쓴다. Edit Distance 알고리즘을 이용해서 모델이 내놓은 결과(hypothesis)가 실제 정답과 얼마나 비슷한지 점수를 매기는 방식이다.</p>
+<p>그런데 인식(Recognition), 분류(Classification), 탐지(Detection) 같은 다른 머신러닝 task에서는 Accuracy, Precision, Recall 같은 또 다른 지표들이 자주 등장한다. 얘네들은 이름도 비슷비슷해서 헷갈리기 딱 좋다. 특히 Precision이랑 Recall은 뭐가 다른 건지, TP, FP, FN, TN은 또 뭔지&hellip; @_@</p>
+<p>오늘은 이 용어들의 의미를 명확히 하고, 특히 <code>Binary Classification</code>(이진 분류) 상황에서 얘네들을 어떻게 써먹고 해석해야 하는지, 데이터 분석가의 마음(?)으로 한번 정리해보려 한다.</p>
+<h2 id="혼동-행렬-confusion-matrix-모든-것은-여기서-시작된다">혼동 행렬 (Confusion Matrix): 모든 것은 여기서 시작된다<a hidden class="anchor" aria-hidden="true" href="#혼동-행렬-confusion-matrix-모든-것은-여기서-시작된다">#</a></h2>
+<p>분류 모델의 성능을 이야기할 때 빼놓을 수 없는 것이 바로 <code>Confusion Matrix</code>(혼동 행렬)이다. 이름 한번 거창하지만, 알고 보면 그냥 모델의 예측 결과랑 실제 정답을 표로 정리한 거다. 이 표 하나로 모델이 뭘 잘하고 뭘 못하는지 한눈에 파악할 수 있다.</p>
+<p>Binary Classification에서는 보통 Positive(긍정, 1) / Negative(부정, 0) 두 클래스로 나눈다. 예를 들어 &lsquo;스팸 메일 분류&rsquo;라면 스팸 메일이 Positive, 정상 메일이 Negative가 될 수 있다. 이걸 기준으로 혼동 행렬은 다음과 같이 4가지 경우의 수를 보여준다.</p>
+<!-- Confusion Matrix 그림 추천 -->
+<!-- 검색 키워드: "confusion matrix explained", "TP TN FP FN diagram" -->
+<!-- 추천 그림 형태: 실제값(True/False)과 예측값(Positive/Negative)을 축으로 하는 2x2 테이블 형태. 각 셀에 TP, FP, FN, TN을 명시하고 간략한 설명 포함 -->
+<p><img loading="lazy" src="/tech/machinelearning/biclassification_map.png" alt="Confusion Matrix 예시"  />
+  <!-- 기존 이미지 유지 또는 추천 이미지로 교체 --></p>
+<ul>
+<li><code>TP (True Positive):</code> 실제 Positive인 것을 Positive라고 <code>정확히 예측</code>한 경우. (정답!) - &ldquo;이건 스팸이야!&rdquo; 라고 했는데 진짜 스팸.</li>
+<li><code>TN (True Negative):</code> 실제 Negative인 것을 Negative라고 <code>정확히 예측</code>한 경우. (정답!) - &ldquo;이건 스팸 아니야!&rdquo; 라고 했는데 진짜 정상 메일.</li>
+<li><code>FP (False Positive):</code> 실제 Negative인 것을 Positive라고 <code>잘못 예측</code>한 경우. (1종 오류, Type I Error) - &ldquo;이건 스팸이야!&rdquo; 라고 했는데&hellip; 억울한 정상 메일.</li>
+<li><code>FN (False Negative):</code> 실제 Positive인 것을 Negative라고 <code>잘못 예측</code>한 경우. (2종 오류, Type II Error) - &ldquo;이건 스팸 아니야!&rdquo; 라고 했는데&hellip; 놓쳐버린 스팸.</li>
+</ul>
+<p>이 네 가지 값(<code>TP</code>, <code>TN</code>, <code>FP</code>, <code>FN</code>)만 알면 지금부터 설명할 모든 지표를 계산할 수 있다. 그야말로 분류 모델 성능 평가의 알파이자 오메가!</p>
+<h2 id="accuracy-정확도-가장-직관적-하지만-함정이">Accuracy (정확도): 가장 직관적, 하지만 함정이?<a hidden class="anchor" aria-hidden="true" href="#accuracy-정확도-가장-직관적-하지만-함정이">#</a></h2>
+<p>자, 이제 본격적으로 성능 지표들을 살펴보자. 가장 먼저 만나볼 친구는 <code>Accuracy</code>(정확도)다.</p>
+<p>$$ ACCURACY = \frac{TP+TN}{TP + TN + FP + FN} = \frac{맞춘 것}{전체} $$</p>
+<p>수식을 보면 알겠지만, 그냥 전체 예측 건수 중에서 <code>정답을 맞춘 비율</code>이다. <code>TP</code>와 <code>TN</code>을 더해서 전체(<code>TP</code>+<code>TN</code>+<code>FP</code>+<code>FN</code>)로 나눈 값. 100문제 중에 90문제 맞히면 정확도 90%인 것처럼 아주 직관적이다. 뭔가 시험 성적표 받는 느낌이랄까?</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>Accuracy = (잘 맞춘 스팸 개수 + 잘 맞춘 정상 메일 개수) / (전체 메일 개수)
+</span></span></code></pre></div><p>여기까지만 보면 Accuracy가 무난하고 괜찮아 보인다. 높으면 무조건 좋은 모델 아닌가? 하지만 세상은 그렇게 단순하지 않다. Accuracy에는 치명적인 단점이 숨어있다. 바로 데이터가 <code>불균형(imbalanced)</code>할 때 성능을 제대로 반영하지 못한다는 점이다.</p>
+<p>예를 들어, 1000개의 메일 중 스팸 메일(Positive)이 단 10개뿐이고 나머지 990개가 정상 메일(Negative)인 데이터셋이 있다고 치자. 이때 모델이 모든 메일을 그냥 &ldquo;정상 메일이야!&quot;(Negative)라고 예측해버리면 어떻게 될까?</p>
+<ul>
+<li>TP = 0 (스팸을 스팸이라 예측 못함)</li>
+<li>TN = 990 (정상 메일을 정상이라 예측함)</li>
+<li>FP = 0 (정상 메일을 스팸이라 예측 안함)</li>
+<li>FN = 10 (스팸을 정상이라 예측함)</li>
+</ul>
+<p>이 모델의 Accuracy를 계산해보면?</p>
+<p>$$ Accuracy = \frac{0 + 990}{0 + 990 + 0 + 10} = \frac{990}{1000} = 99% $$</p>
+<p>무려 99%의 정확도! 와, 엄청난 모델이다..! 최강의 모델인가 보다! 라고 생각하면 큰일 난다. 이 모델은 스팸 메일을 <code>단 하나도</code> 걸러내지 못하는, 사실상 쓸모없는 모델이다.</p>
+<p>이처럼 데이터 클래스 비율이 한쪽으로 크게 치우쳐 있으면, 다수 클래스만 잘 맞춰도 Accuracy는 높게 나올 수 있다. 그래서 Accuracy만 보고 모델 성능을 판단하는 것은 매우 위험하다.</p>
+<h2 id="precision-정밀도--recall-재현율-accuracy의-빈틈을-메우다">Precision (정밀도) &amp; Recall (재현율): Accuracy의 빈틈을 메우다<a hidden class="anchor" aria-hidden="true" href="#precision-정밀도--recall-재현율-accuracy의-빈틈을-메우다">#</a></h2>
+<p>Accuracy의 함정을 피하기 위해 등장한 구원투수들이 바로 <code>Precision</code>(정밀도)과 <code>Recall</code>(재현율)이다. 이 둘은 모델의 예측 결과를 좀 더 다른 관점에서 바라본다.</p>
+<h3 id="precision-정밀도-내가-positive라고-한-것-중에-진짜는">Precision (정밀도): &ldquo;내가 Positive라고 한 것 중에 진짜는?&rdquo;<a hidden class="anchor" aria-hidden="true" href="#precision-정밀도-내가-positive라고-한-것-중에-진짜는">#</a></h3>
+<p>$$ PRECISION = \frac{TP}{TP + FP} = \frac{진짜 Positive}{Positive라고 예측한 것들} $$</p>
+<p>Precision은 모델이 <code>Positive</code>라고 예측한 것들 중에서, 실제로 Positive인 것의 비율이다. 즉, 모델의 <code>Positive</code> 예측이 얼마나 정확한지를 나타낸다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>Precision = (잘 맞춘 스팸 개수) / (모델이 스팸이라고 예측한 전체 메일 개수)
+</span></span></code></pre></div><p>Precision이 높다는 것은 모델이 &ldquo;이건 <code>Positive</code>야!&ldquo;라고 했을 때, 그 예측을 믿을 만하다는 뜻이다. 스팸 메일 분류 예시에서는, 모델이 스팸이라고 분류한 메일들 중 실제 스팸일 확률이 높다는 의미다. <code>FP</code>(정상 메일을 스팸으로 잘못 예측)가 낮을수록 Precision은 높아진다. 괜히 억울하게 스팸함으로 가는 정상 메일을 줄이고 싶을 때 중요한 지표다.</p>
+<h3 id="recall-재현율-실제-positive-중에-내가-얼마나-찾아냈지">Recall (재현율): &ldquo;실제 Positive 중에 내가 얼마나 찾아냈지?&rdquo;<a hidden class="anchor" aria-hidden="true" href="#recall-재현율-실제-positive-중에-내가-얼마나-찾아냈지">#</a></h3>
+<p>$$ RECALL = \frac{TP}{TP + FN} = \frac{진짜 Positive}{실제 Positive인 것들} $$</p>
+<p>Recall은 실제 <code>Positive</code>인 것들 중에서, 모델이 <code>Positive</code>라고 예측한 것의 비율이다. 즉, 모델이 실제 <code>Positive</code> 샘플을 얼마나 놓치지 않고 잘 찾아내는 지를 나타낸다. <code>Sensitivity</code>(민감도)라고도 불린다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>Recall = (잘 맞춘 스팸 개수) / (실제 스팸 메일 전체 개수)
+</span></span></code></pre></div><p>Recall이 높다는 것은 모델이 실제 <code>Positive</code> 샘플들을 놓치지 않고 잘 잡아낸다는 뜻이다. 스팸 메일 분류 예시에서는, 실제 스팸 메일들을 빠짐없이 잘 걸러내는 능력을 의미한다. <code>FN</code>(스팸을 정상 메일로 잘못 예측)이 낮을수록 Recall은 높아진다. 단 하나의 스팸 메일도 놓치고 싶지 않을 때 중요한 지표다.</p>
+<h3 id="그래서-뭘-써야-하냐고-task-나름">그래서 뭘 써야 하냐고? Task 나름!<a hidden class="anchor" aria-hidden="true" href="#그래서-뭘-써야-하냐고-task-나름">#</a></h3>
+<p>Accuracy가 항상 능사는 아니라는 것, Precision과 Recall의 계산법과 의미가 다르다는 것은 이제 알겠다. <del>그래서 어쩌라는 건가..?</del> 어디서 주워듣기로 통계는 해석의 학문이라고 한다. 여기서도 비슷하다. 어떤 지표를 중요하게 볼지는 풀고자 하는 <code>문제(Task)</code>의 특성에 따라 달라진다. 왜냐하면 <code>FP</code>와 <code>FN</code> 중 어떤 실수가 더 치명적인가가 Task마다 다르기 때문이다.</p>
+<p>다시 한번 두 가지 Task를 예로 들어보자.</p>
+<ol>
+<li>
+<p><strong>스팸 메일 필터링:</strong></p>
+<ul>
+<li>FP (정상 메일을 스팸으로): 중요한 메일을 놓칠 수 있다. (짜증 유발)</li>
+<li>FN (스팸 메일을 정상으로): 귀찮은 스팸 메일을 받게 된다. (귀찮음 유발)</li>
+<li>상대적으로 <code>FP</code>가 더 치명적일 수 있다. 중요한 메일을 놓치는 것보다는 스팸 몇 개 더 받는 게 나을 수도? 이 경우 <code>Precision</code>이 중요해진다.</li>
+</ul>
+</li>
+<li>
+<p><strong>암 진단 모델:</strong></p>
+<ul>
+<li>FP (정상인을 암 환자로): 환자는 불필요한 검사와 스트레스를 받는다. (비용, 심리적 부담)</li>
+<li>FN (암 환자를 정상인으로): 치료 시기를 놓쳐 생명이 위험해질 수 있다! (매우 치명적!)</li>
+<li>이 경우, <code>FN</code>을 줄이는 것이 압도적으로 중요하다. 즉, 실제 암 환자를 한 명이라도 놓치지 않아야 하므로 <code>Recall</code>이 매우 중요해진다. 차라리 정상인을 암 환자로 오진(<code>FP</code>)하더라도, 실제 환자를 놓치는(<code>FN</code>) 것보다는 낫다고 판단할 수 있다.</li>
+</ul>
+</li>
+</ol>
+<!-- Precision-Recall Trade-off 그림 추천 -->
+<!-- 검색 키워드: "precision recall trade-off curve", "precision recall curve example" -->
+<!-- 추천 그림 형태: x축을 Recall, y축을 Precision으로 하는 곡선 그래프. 일반적으로 Recall이 높아지면 Precision이 낮아지는 경향을 보여줌. -->
+<p>이처럼 <code>Task</code>의 맥락에서 어떤 <code>오류(FP or FN)</code>를 더 피하고 싶은지에 따라 <code>Precision</code>과 <code>Recall</code>의 중요도가 달라진다. 모델을 평가할 때는 내가 풀려는 문제가 무엇인지, 어떤 실수가 더 큰 문제를 일으키는지 먼저 고민해야 한다. 데이터가 주어졌을 때, 이 상황을 잘 분석해서 어떤 지표를 중점적으로 볼지 결정하는 것이 중요하다.</p>
+<h2 id="f1-score-precision과-recall-둘-다-놓치지-않을-거예요">F1-Score: Precision과 Recall, 둘 다 놓치지 않을 거예요!<a hidden class="anchor" aria-hidden="true" href="#f1-score-precision과-recall-둘-다-놓치지-않을-거예요">#</a></h2>
+<p>&ldquo;아니, Precision이랑 Recall 둘 다 중요하면 어떡하라고? 하나만 고르기 너무 어려운데?&rdquo; 라는 생각이 들 수 있다. 실제로 많은 경우 Precision과 Recall은 서로 <code>반비례(Trade-off)</code> 관계에 있다. 하나를 높이려고 하면 다른 하나가 낮아지는 경향이 있다. (모델의 예측 <code>임계값(threshold)</code>을 조정해보면 이 관계를 확인할 수 있다.)</p>
+<img src="/tech/machinelearning/precision_recall.png" alt="trade off in precision and recall" width="70%">
+<p>그래서 등장한 것이 <code>F1-Score</code>다. <code>F1-Score</code>는 <code>Precision</code>과 <code>Recall</code>의 <code>조화 평균(Harmonic Mean)</code>을 계산하여, 두 지표를 균형 있게 고려하려는 지표다.</p>
+<p>$$ F1 = 2 \times \frac{PRECISION \times RECALL}{PRECISION + RECALL} $$</p>
+<p>왜 그냥 산술 평균((Precision + Recall) / 2)이 아니라 조화 평균을 쓸까? 조화 평균은 두 값 중 낮은 쪽에 더 큰 가중치를 주는 특징이 있다. 따라서 <code>Precision</code>과 <code>Recall</code> 어느 한쪽이라도 값이 매우 낮으면, <code>F1-Score</code> 역시 낮게 나온다. 즉, <code>F1-Score</code>가 높다는 것은 <code>Precision</code>과 <code>Recall</code>이 모두 어느 정도 높은 수준을 유지하고 있다는 의미로 해석할 수 있다. 둘 중 하나만 극단적으로 높고 다른 하나는 매우 낮은 경우, <code>F1-Score</code>는 낮게 평가하여 불균형을 잡아준다.</p>
+<p><code>F1-Score</code>는 특히 클래스 불균형이 심하거나, <code>Precision</code>과 <code>Recall</code> 모두 중요한 Task에서 유용하게 사용된다.</p>
+<p>(참고: <code>F-measure</code>는 <code>F1-Score</code>를 일반화한 것으로, <code>β</code> 값을 조절하여 <code>Precision</code> 또는 <code>Recall</code>에 더 가중치를 줄 수 있다. <code>F1-Score</code>는 <code>β=1</code>인 경우로, <code>Precision</code>과 <code>Recall</code>을 동일한 비중으로 고려한다.)</p>
+<h2 id="결론-상황에-맞는-지표-선택과-종합적인-판단이-핵심">결론: 상황에 맞는 지표 선택과 종합적인 판단이 핵심<a hidden class="anchor" aria-hidden="true" href="#결론-상황에-맞는-지표-선택과-종합적인-판단이-핵심">#</a></h2>
+<p>정리해보자.</p>
+<ul>
+<li><code>Accuracy:</code> 가장 직관적이지만, 데이터 불균형에 취약하다.</li>
+<li><code>Precision:</code> <code>Positive</code> 예측의 정확성. <code>FP</code>를 줄이는 것이 중요할 때. (예: 스팸 필터)</li>
+<li><code>Recall:</code> 실제 <code>Positive</code>를 놓치지 않는 능력. <code>FN</code>을 줄이는 것이 중요할 때. (예: 암 진단)</li>
+<li><code>F1-Score:</code> <code>Precision</code>과 <code>Recall</code>의 조화 평균. 둘 다 중요할 때 균형 있게 평가.</li>
+</ul>
+<p>어떤 지표가 절대적으로 좋다고 말할 수는 없다. 가장 중요한 것은 <code>Task</code>의 특성과 목적을 이해하고, 어떤 종류의 <code>오류</code>가 더 치명적인지 판단하여 적절한 <code>평가지표</code>를 선택하거나 여러 지표를 종합적으로 고려하는 것이다. 모델의 성능 숫자에만 매몰되지 말고, 그 숫자가 실제 상황에서 어떤 의미를 가지는지 해석하는 능력이 중요하다 하겠다.</p>
+<h1 id="references">References<a hidden class="anchor" aria-hidden="true" href="#references">#</a></h1>
+<ul>
+<li>[1] Wikipedia - Precision and recall: <a href="https://en.wikipedia.org/wiki/Precision_and_recall">https://en.wikipedia.org/wiki/Precision_and_recall</a></li>
+<li>[2] Google Developers - Classification: Accuracy: <a href="https://developers.google.com/machine-learning/crash-course/classification/accuracy">https://developers.google.com/machine-learning/crash-course/classification/accuracy</a></li>
+<li>[3] Scikit-learn Documentation - Precision, recall and F-measures: <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-f-measure-metrics">https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-f-measure-metrics</a></li>
+</ul>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="https://macsim2.github.io/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="https://macsim2.github.io/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>가중치 업데이트에 관해서 with wav2vec 2.0</span>
+  </a>
+  <a class="next" href="https://macsim2.github.io/posts/tech/tmp/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>Redis scan命令学习</span>
+  </a>
+</nav>
+
+
+<div class="share-buttons">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1) on twitter"
+       href="https://twitter.com/intent/tweet/?text=%eb%b6%84%eb%a5%98%20%eb%aa%a8%eb%8d%b8%20%ec%84%b1%eb%8a%a5%20%ec%b8%a1%ec%a0%95%3f%20Accuracy%eb%a7%8c%20%eb%af%bf%ec%9c%bc%eb%a9%b4%20%ed%81%b0%ec%9d%bc%eb%82%98%eb%8a%94%20%ec%9d%b4%ec%9c%a0%20%28Precision%2c%20Recall%2c%20F1%29&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fmachinelearning%2fclassification_metric%2f&amp;hashtags=machine_learning%2cclassification%2cbinaryclassification%2cmetric%2caccuracy%2cprecision%2crecall%2cf1-score">
+    <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-253.927,424.544c135.939,0 210.268,-112.643 210.268,-210.268c0,-3.218 0,-6.437 -0.153,-9.502c14.406,-10.421 26.973,-23.448 36.935,-38.314c-13.18,5.824 -27.433,9.809 -42.452,11.648c15.326,-9.196 26.973,-23.602 32.49,-40.92c-14.252,8.429 -30.038,14.56 -46.896,17.931c-13.487,-14.406 -32.644,-23.295 -53.946,-23.295c-40.767,0 -73.87,33.104 -73.87,73.87c0,5.824 0.613,11.494 1.992,16.858c-61.456,-3.065 -115.862,-32.49 -152.337,-77.241c-6.284,10.881 -9.962,23.601 -9.962,37.088c0,25.594 13.027,48.276 32.95,61.456c-12.107,-0.307 -23.448,-3.678 -33.41,-9.196l0,0.92c0,35.862 25.441,65.594 59.311,72.49c-6.13,1.686 -12.72,2.606 -19.464,2.606c-4.751,0 -9.348,-0.46 -13.946,-1.38c9.349,29.426 36.628,50.728 68.965,51.341c-25.287,19.771 -57.164,31.571 -91.8,31.571c-5.977,0 -11.801,-0.306 -17.625,-1.073c32.337,21.15 71.264,33.41 112.95,33.41Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1) on linkedin"
+       href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fmachinelearning%2fclassification_metric%2f&amp;title=%eb%b6%84%eb%a5%98%20%eb%aa%a8%eb%8d%b8%20%ec%84%b1%eb%8a%a5%20%ec%b8%a1%ec%a0%95%3f%20Accuracy%eb%a7%8c%20%eb%af%bf%ec%9c%bc%eb%a9%b4%20%ed%81%b0%ec%9d%bc%eb%82%98%eb%8a%94%20%ec%9d%b4%ec%9c%a0%20%28Precision%2c%20Recall%2c%20F1%29&amp;summary=%eb%b6%84%eb%a5%98%20%eb%aa%a8%eb%8d%b8%20%ec%84%b1%eb%8a%a5%20%ec%b8%a1%ec%a0%95%3f%20Accuracy%eb%a7%8c%20%eb%af%bf%ec%9c%bc%eb%a9%b4%20%ed%81%b0%ec%9d%bc%eb%82%98%eb%8a%94%20%ec%9d%b4%ec%9c%a0%20%28Precision%2c%20Recall%2c%20F1%29&amp;source=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fmachinelearning%2fclassification_metric%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1) on reddit"
+       href="https://reddit.com/submit?url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fmachinelearning%2fclassification_metric%2f&title=%eb%b6%84%eb%a5%98%20%eb%aa%a8%eb%8d%b8%20%ec%84%b1%eb%8a%a5%20%ec%b8%a1%ec%a0%95%3f%20Accuracy%eb%a7%8c%20%eb%af%bf%ec%9c%bc%eb%a9%b4%20%ed%81%b0%ec%9d%bc%eb%82%98%eb%8a%94%20%ec%9d%b4%ec%9c%a0%20%28Precision%2c%20Recall%2c%20F1%29">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1) on facebook"
+       href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fmachinelearning%2fclassification_metric%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1) on whatsapp"
+       href="https://api.whatsapp.com/send?text=%eb%b6%84%eb%a5%98%20%eb%aa%a8%eb%8d%b8%20%ec%84%b1%eb%8a%a5%20%ec%b8%a1%ec%a0%95%3f%20Accuracy%eb%a7%8c%20%eb%af%bf%ec%9c%bc%eb%a9%b4%20%ed%81%b0%ec%9d%bc%eb%82%98%eb%8a%94%20%ec%9d%b4%ec%9c%a0%20%28Precision%2c%20Recall%2c%20F1%29%20-%20https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fmachinelearning%2fclassification_metric%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1) on telegram"
+       href="https://telegram.me/share/url?text=%eb%b6%84%eb%a5%98%20%eb%aa%a8%eb%8d%b8%20%ec%84%b1%eb%8a%a5%20%ec%b8%a1%ec%a0%95%3f%20Accuracy%eb%a7%8c%20%eb%af%bf%ec%9c%bc%eb%a9%b4%20%ed%81%b0%ec%9d%bc%eb%82%98%eb%8a%94%20%ec%9d%b4%ec%9c%a0%20%28Precision%2c%20Recall%2c%20F1%29&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fmachinelearning%2fclassification_metric%2f">
+        <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28">
+            <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+        </svg>
+    </a>
+</div>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="https://macsim2.github.io/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

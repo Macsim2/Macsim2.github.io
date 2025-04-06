@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>데이터 전송, 어떻게 신뢰성을 보장할까? | macsim&#39;s Blog</title>
+<meta name="keywords" content="Data Transfer, Error Control, CRC">
+<meta name="description" content="무선 통신 환경에서 데이터가 1bit의 오류 없이 전송될 수 있는 원리를 알아보자.">
+<meta name="author" content="macsim">
+<link rel="canonical" href="https://macsim2.github.io/posts/life/data-transfer-confidence-explained/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="https://macsim2.github.io/img/Q.gif">
+<link rel="apple-touch-icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="https://macsim2.github.io/posts/life/data-transfer-confidence-explained/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script defer src="https://unpkg.com/mermaid@8.8.1/dist/mermaid.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="데이터 전송, 어떻게 신뢰성을 보장할까?" />
+<meta property="og:description" content="무선 통신 환경에서 데이터가 1bit의 오류 없이 전송될 수 있는 원리를 알아보자." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://macsim2.github.io/posts/life/data-transfer-confidence-explained/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-05-05T00:18:15+08:00" />
+<meta property="article:modified_time" content="2024-07-26T00:00:00+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="데이터 전송, 어떻게 신뢰성을 보장할까?"/>
+<meta name="twitter:description" content="무선 통신 환경에서 데이터가 1bit의 오류 없이 전송될 수 있는 원리를 알아보자."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "https://macsim2.github.io/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "🏖 life",
+          "item": "https://macsim2.github.io/posts/life/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "데이터 전송, 어떻게 신뢰성을 보장할까?",
+      "item": "https://macsim2.github.io/posts/life/data-transfer-confidence-explained/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "데이터 전송, 어떻게 신뢰성을 보장할까?",
+  "name": "데이터 전송, 어떻게 신뢰성을 보장할까?",
+  "description": "무선 통신 환경에서 데이터가 1bit의 오류 없이 전송될 수 있는 원리를 알아보자.",
+  "keywords": [
+    "Data Transfer", "Error Control", "CRC"
+  ],
+  "articleBody": "얼마전 친구와 카레를 먹으러 간날 생긴 일이다. 카레를 먹던 친구는 나에게 물었다.\n카카오톡도 통신과정에서 데이터가 1bit이라도 틀릴 수 있지 않나..?\n모든 경우에서 100%란 없을 텐데 어떻게 데이터 신뢰성을 보장할 수 있나?\n전산에 기본 지식이 있는 친구였기에 더 자세히 설명해주고 싶었지만, 못내 제대로 설명을 해주지 못한 점이 마음에 걸렸다. 게다가 그런 얘기를 들으니 무선 통신이라는 녀석이 더 신기하게 다가오는게 아닌가..! 그래서! 공부겸 정리겸 원리만 간단하게 나마 정리해두려 한다.\n데이터 전송의 기본: 변조와 복조 데이터를 한 곳에서 다른 곳으로, 특히 무선으로 보내려면 몇 가지 단계를 거쳐야 한다. 가장 기본적인 원리는 보내려는 데이터(정보) 를 전송 매체(채널) 에 적합한 신호 형태로 바꾸어 보내고(변조), 받은 쪽에서는 이 신호를 다시 원래 데이터로 복원하는(복조) 것이다.\n1. 전송할 데이터 우리가 보내려는 데이터는 크게 아날로그(연속적인 값, 예: 예전 라디오 음성)와 디지털(이산적인 값, 예: 컴퓨터 파일, 카톡 메시지)로 나눌 수 있다. 현대 통신에서는 대부분의 정보가 디지털 데이터(0과 1의 조합) 형태로 처리된다.\n2. 변조 (Modulation) 디지털 데이터(0과 1)는 그 자체로는 멀리 전송하기 어렵다. 특히 무선 환경에서는 더욱 그렇다. 변조는 이 디지털 데이터를 특정 주파수를 가진 반송파(Carrier Wave)에 실어 보내기 위한 과정이다. 즉, 데이터를 전송 매체(공기, 광케이블 등)의 특성에 맞는 전기적 신호 파형으로 변환하는 것이다.\n위 그림처럼, ‘0’과 ‘1’이라는 디지털 데이터를 특정 규칙에 따라 아날로그 신호 파형의 진폭(Amplitude), 주파수(Frequency), 또는 위상(Phase)을 변화시키는 방식으로 표현한다. 대표적인 디지털 변조 방식으로는 다음과 같은 것들이 있다.\nASK (Amplitude Shift Keying): 진폭의 크고 작음으로 0과 1을 구분한다. FSK (Frequency Shift Keying): 주파수의 높고 낮음으로 0과 1을 구분한다. PSK (Phase Shift Keying): 위상의 변화(꺾임)로 0과 1을 구분한다. (위 그림 예시) 변조는 데이터를 전송 가능한 형태로 만들 뿐 아니라, 한정된 주파수 자원을 여러 사용자가 효율적으로 나누어 사용할 수 있게(다중 접속) 하는 역할도 한다.\n3. 복조 (Demodulation) 수신 측에서는 변조된 신호를 받아 원래의 디지털 데이터(0과 1)를 복원해야 한다. 이 과정을 복조라고 하며, 기본적으로 변조의 역과정을 수행한다. 수신된 신호의 진폭, 주파수, 위상 변화를 감지하여 원래의 디지털 데이터 스트림을 알아낸다.\n데이터 신뢰성 확보의 핵심: 오류 제어 (Error Control) 변조와 복조만으로는 친구가 질문했던 ‘데이터 신뢰성’ 문제를 해결할 수 없다. 현실의 통신 채널(특히 무선 채널)은 잡음(Noise), 간섭(Interference), 신호 감쇠(Attenuation) 등 다양한 요인으로 인해 전송 중인 신호에 오류가 발생할 가능성이 항상 존재한다. 1이 0으로 바뀌거나, 0이 1로 바뀌는 등의 오류가 생길 수 있다는 뜻이다.\n이러한 오류를 극복하고 데이터의 정확성을 보장하기 위해 오류 제어 기술이 사용된다. 데이터 전송의 전체 과정을 좀 더 자세히 보면 다음과 같다. (송신 과정 기준)\n원본 데이터 → 소스 코딩 → 채널 코딩 → 변조 → 전송\n(수신 과정은 이 역순으로 진행된다: 수신 → 복조 → 채널 디코딩 → 소스 디코딩 → 복원된 데이터)\n여기서 데이터 신뢰성과 직접적으로 관련된 단계는 채널 코딩(Channel Coding)이다.\n채널 코딩 (Channel Coding) 이란? 채널 코딩은 전송할 원래 데이터에 의도적으로 추가 정보(잉여 비트, Redundancy)를 덧붙이는 과정이다. 이 추가 정보는 수신 측에서 데이터 전송 중 발생한 오류를 검출(Detection)하거나 심지어 정정(Correction)하는 데 사용된다.\n잡음이 많은 환경에서 중요한 내용을 전달할 때, 우리가 같은 말을 여러 번 반복하거나 핵심 단어를 강조해서 말하는 것과 비슷하다고 생각할 수 있다. 채널 코딩은 이런 ‘반복’과 ‘강조’를 수학적으로 정교하게 설계하여, 오류가 발생하더라도 원래 정보를 복원할 수 있는 가능성을 높이는 기술이다.\n채널 코딩 기법은 크게 오류 검출과 오류 정정으로 나눌 수 있다.\n1. 오류 검출 (Error Detection) 기법 오류 검출은 수신된 데이터에 오류가 발생했는지 ‘알아채는’ 데 중점을 둔다. 오류가 검출되면, 보통 수신 측은 송신 측에 데이터 재전송을 요청한다 (ARQ: Automatic Repeat reQuest 방식).\n패리티 검사 (Parity Check): 가장 간단한 방법이다. 데이터 블록 끝에 1비트(패리티 비트)를 추가하여, 전체 비트 중 ‘1’의 개수가 항상 짝수(짝수 패리티) 또는 홀수(홀수 패리티)가 되도록 만든다. 수신 측에서 ‘1’의 개수를 세어 약속된 규칙(짝수/홀수)을 만족하지 않으면 오류가 발생했다고 판단한다. 장점: 구현이 매우 간단하다. 단점: 홀수 개의 비트 오류만 검출할 수 있다 (2개 비트 오류 등 짝수 개 오류는 검출 불가). 오류 정정은 불가능하다. 체크섬 (Checksum): 데이터를 일정 크기의 블록으로 나누고, 각 블록의 값을 더한 후 그 합의 보수(complement) 등을 계산하여 데이터와 함께 보낸다. 수신 측에서 동일한 계산을 수행하여 결과가 일치하는지 확인한다. 패리티보다는 강력하지만, 여전히 일부 오류 패턴을 놓칠 수 있다. CRC (Cyclic Redundancy Check, 순환 중복 검사): 현재 가장 널리 사용되는 강력한 오류 검출 기법 중 하나이다. 전송할 데이터를 특정 다항식(Polynomial)으로 나누어 그 나머지를 계산하고, 이 나머지 값(CRC 코드)을 데이터 뒤에 붙여 전송한다. 수신 측에서 받은 데이터와 CRC 코드를 이용해 동일한 다항식으로 나누어 나머지가 0인지 확인한다. 나머지가 0이 아니면 오류가 발생한 것으로 간주한다. 장점: 하드웨어 구현이 용이하고, 특히 여러 비트가 연속적으로 깨지는 버스트 오류(Burst Error) 검출에 매우 효과적이다. 이더넷(LAN), 와이파이(Wi-Fi), 하드 디스크, 압축 파일(ZIP) 등 다양한 곳에서 사용된다. 2. 오류 정정 (Forward Error Correction, FEC) 기법 오류 정정은 수신 측에서 재전송 요청 없이 스스로 오류를 찾아 수정하는 것을 목표로 한다. 이를 위해 오류 검출 기법보다 더 많은 잉여 비트를 추가한다. 실시간 통신(전화, 화상 회의)이나 재전송이 어려운 환경(우주 통신)에서 필수적이다.\n해밍 코드 (Hamming Code): 비교적 간단한 FEC 코드 중 하나이다. 1비트 오류를 정정하고 2비트 오류를 검출할 수 있다. 메모리(RAM) 오류 검출 등에 사용되기도 했다. 리드-솔로몬 코드 (Reed-Solomon Code): 여러 개의 비트가 묶인 심볼(Symbol) 단위로 오류를 정정하는 강력한 블록 코드이다. 특히 버스트 오류 정정에 효과적이어서 CD, DVD, QR 코드, 디지털 방송 등 다양한 분야에서 핵심적으로 사용된다. 컨볼루션 코드 (Convolutional Code): 데이터 스트림을 처리하며 잉여 비트를 생성하는 방식으로, 비터비 알고리즘(Viterbi Algorithm) 등 효율적인 디코딩 방법과 함께 사용된다. 위성 통신, 이동 통신(GSM, CDMA) 등에 널리 사용되었다. 터보 코드 (Turbo Code) / LDPC 코드 (Low-Density Parity-Check Code): 현대 통신의 핵심 기술로, 이론적 한계(섀넌 한계)에 근접하는 매우 뛰어난 오류 정정 성능을 보여준다. 3G, 4G LTE, 5G 이동 통신, Wi-Fi (802.11n 이상), 디지털 비디오 방송(DVB-S2) 등 고속/고신뢰 통신 시스템에 필수적으로 사용된다. 오류 제어의 트레이드오프: 오류 검출 및 정정 능력을 높이려면 더 많은 잉여 비트를 추가해야 한다. 이는 전체 전송 데이터 양을 늘리고, 실제 데이터 전송률(Throughput)을 감소시키는 결과를 낳는다. 따라서 통신 시스템 설계 시에는 채널 환경, 요구되는 신뢰도 수준, 허용 가능한 전송 속도 등을 고려하여 적절한 오류 제어 기법과 부호화율(원본 데이터 대비 전체 데이터 비율)을 선택하는 것이 중요하다.\n결론: 신뢰성은 그냥 얻어지는 것이 아니다 다시 처음 질문으로 돌아가 보자. 카카오톡 메시지가 과연 1비트의 오류도 없이 전달될 수 있을까? 물리적인 전송 과정만 보면 오류 발생 가능성은 항상 존재한다. 하지만 우리가 일상에서 데이터 전송 오류를 거의 체감하지 못하는 이유는, 바로 앞에서 설명한 다양한 계층의 오류 제어 기술 덕분이다.\n물리 계층(Physical Layer)에서의 채널 코딩(오류 검출 및 정정)뿐만 아니라, 그 상위 계층인 데이터 링크 계층(Data Link Layer)이나 전송 계층(Transport Layer, 예: TCP 프로토콜)에서도 CRC, 체크섬, 재전송 메커니즘 등을 통해 추가적인 오류 검사와 복구를 수행한다.\n이처럼 여러 단계에 걸친 정교한 오류 제어 매커니즘이 있기 때문에, 우리는 잡음 많고 불안정한 통신 환경 속에서도 친구에게 보낸 카톡 메시지나 중요한 파일이 정확하게 전달될 것이라고 신뢰할 수 있는 것이다. 100% 완벽한 전송이란 물리적으로 불가능할지 몰라도, 현실적으로는 거의 100%에 가까운 신뢰도를 달성하도록 설계된 것이 현대의 통신 시스템이다.\n",
+  "wordCount" : "3397",
+  "inLanguage": "ko",
+  "datePublished": "2022-05-05T00:18:15+08:00",
+  "dateModified": "2024-07-26T00:00:00+09:00",
+  "author":[{
+    "@type": "Person",
+    "name": "macsim"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://macsim2.github.io/posts/life/data-transfer-confidence-explained/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://macsim2.github.io/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://macsim2.github.io/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://macsim2.github.io/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 홈</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/life/">🏖 life</a></div>
+            <h1 class="post-title">
+                데이터 전송, 어떻게 신뢰성을 보장할까?
+            </h1>
+            <div class="post-description">
+                무선 통신 환경에서 데이터가 1bit의 오류 없이 전송될 수 있는 원리를 알아보자.
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2022-05-05
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>3397 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>7 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="https://macsim2.github.io/tags/life/" style="color: var(--secondary)!important;">Life</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/signal/" style="color: var(--secondary)!important;">Signal</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/communication/" style="color: var(--secondary)!important;">Communication</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "https://macsim2.github.io/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%eb%8d%b0%ec%9d%b4%ed%84%b0-%ec%a0%84%ec%86%a1%ec%9d%98-%ea%b8%b0%eb%b3%b8-%eb%b3%80%ec%a1%b0%ec%99%80-%eb%b3%b5%ec%a1%b0" aria-label="데이터 전송의 기본: 변조와 복조">데이터 전송의 기본: 변조와 복조</a><ul>
+                        
+                <li>
+                    <a href="#1-%ec%a0%84%ec%86%a1%ed%95%a0-%eb%8d%b0%ec%9d%b4%ed%84%b0" aria-label="1. 전송할 데이터">1. 전송할 데이터</a></li>
+                <li>
+                    <a href="#2-%eb%b3%80%ec%a1%b0-modulation" aria-label="2. 변조 (Modulation)">2. 변조 (Modulation)</a></li>
+                <li>
+                    <a href="#3-%eb%b3%b5%ec%a1%b0-demodulation" aria-label="3. 복조 (Demodulation)">3. 복조 (Demodulation)</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%eb%8d%b0%ec%9d%b4%ed%84%b0-%ec%8b%a0%eb%a2%b0%ec%84%b1-%ed%99%95%eb%b3%b4%ec%9d%98-%ed%95%b5%ec%8b%ac-%ec%98%a4%eb%a5%98-%ec%a0%9c%ec%96%b4-error-control" aria-label="데이터 신뢰성 확보의 핵심: 오류 제어 (Error Control)">데이터 신뢰성 확보의 핵심: 오류 제어 (Error Control)</a><ul>
+                        
+                <li>
+                    <a href="#%ec%b1%84%eb%84%90-%ec%bd%94%eb%94%a9-channel-coding-%ec%9d%b4%eb%9e%80" aria-label="채널 코딩 (Channel Coding) 이란?">채널 코딩 (Channel Coding) 이란?</a><ul>
+                        
+                <li>
+                    <a href="#1-%ec%98%a4%eb%a5%98-%ea%b2%80%ec%b6%9c-error-detection-%ea%b8%b0%eb%b2%95" aria-label="1. 오류 검출 (Error Detection) 기법">1. 오류 검출 (Error Detection) 기법</a></li>
+                <li>
+                    <a href="#2-%ec%98%a4%eb%a5%98-%ec%a0%95%ec%a0%95-forward-error-correction-fec-%ea%b8%b0%eb%b2%95" aria-label="2. 오류 정정 (Forward Error Correction, FEC) 기법">2. 오류 정정 (Forward Error Correction, FEC) 기법</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#%ea%b2%b0%eb%a1%a0-%ec%8b%a0%eb%a2%b0%ec%84%b1%ec%9d%80-%ea%b7%b8%eb%83%a5-%ec%96%bb%ec%96%b4%ec%a7%80%eb%8a%94-%ea%b2%83%ec%9d%b4-%ec%95%84%eb%8b%88%eb%8b%a4" aria-label="결론: 신뢰성은 그냥 얻어지는 것이 아니다">결론: 신뢰성은 그냥 얻어지는 것이 아니다</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>얼마전 친구와 카레를 먹으러 간날 생긴 일이다. 카레를 먹던 친구는 나에게 물었다.<br>
+카카오톡도 통신과정에서 데이터가 1bit이라도 틀릴 수 있지 않나..?<br>
+모든 경우에서 100%란 없을 텐데 어떻게 데이터 신뢰성을 보장할 수 있나?<br>
+전산에 기본 지식이 있는 친구였기에 더 자세히 설명해주고 싶었지만, 못내 제대로 설명을 해주지 못한 점이 마음에 걸렸다. <br>
+게다가 그런 얘기를 들으니 무선 통신이라는 녀석이 더 신기하게 다가오는게 아닌가..! 그래서! 공부겸 정리겸 원리만 간단하게 나마 정리해두려 한다.</p>
+<h2 id="데이터-전송의-기본-변조와-복조">데이터 전송의 기본: 변조와 복조<a hidden class="anchor" aria-hidden="true" href="#데이터-전송의-기본-변조와-복조">#</a></h2>
+<p>데이터를 한 곳에서 다른 곳으로, 특히 무선으로 보내려면 몇 가지 단계를 거쳐야 한다. 가장 기본적인 원리는 보내려는 <code>데이터(정보)</code> 를 <code>전송 매체(채널)</code> 에 적합한 <code>신호</code> 형태로 바꾸어 보내고(변조), 받은 쪽에서는 이 신호를 다시 원래 데이터로 복원하는(복조) 것이다.</p>
+<h3 id="1-전송할-데이터">1. 전송할 데이터<a hidden class="anchor" aria-hidden="true" href="#1-전송할-데이터">#</a></h3>
+<p>우리가 보내려는 데이터는 크게 아날로그(연속적인 값, 예: 예전 라디오 음성)와 디지털(이산적인 값, 예: 컴퓨터 파일, 카톡 메시지)로 나눌 수 있다. 현대 통신에서는 대부분의 정보가 <code>디지털 데이터(0과 1의 조합)</code> 형태로 처리된다.</p>
+<h3 id="2-변조-modulation">2. 변조 (Modulation)<a hidden class="anchor" aria-hidden="true" href="#2-변조-modulation">#</a></h3>
+<p>디지털 데이터(0과 1)는 그 자체로는 멀리 전송하기 어렵다. 특히 무선 환경에서는 더욱 그렇다. <code>변조</code>는 이 디지털 데이터를 특정 주파수를 가진 <code>반송파(Carrier Wave)</code>에 실어 보내기 위한 과정이다. 즉, 데이터를 전송 매체(공기, 광케이블 등)의 특성에 맞는 전기적 신호 파형으로 변환하는 것이다.</p>
+<img src="/life/digital_modulation.png" alt="디지털 변조 예시" width="60%">
+<p>위 그림처럼, &lsquo;0&rsquo;과 &lsquo;1&rsquo;이라는 디지털 데이터를 특정 규칙에 따라 아날로그 신호 파형의 <code>진폭(Amplitude)</code>, <code>주파수(Frequency)</code>, 또는 <code>위상(Phase)</code>을 변화시키는 방식으로 표현한다. 대표적인 디지털 변조 방식으로는 다음과 같은 것들이 있다.</p>
+<ul>
+<li><code>ASK (Amplitude Shift Keying):</code> 진폭의 크고 작음으로 0과 1을 구분한다.</li>
+<li><code>FSK (Frequency Shift Keying):</code> 주파수의 높고 낮음으로 0과 1을 구분한다.</li>
+<li><code>PSK (Phase Shift Keying):</code> 위상의 변화(꺾임)로 0과 1을 구분한다. (위 그림 예시)</li>
+</ul>
+<p>변조는 데이터를 전송 가능한 형태로 만들 뿐 아니라, 한정된 주파수 자원을 여러 사용자가 효율적으로 나누어 사용할 수 있게(다중 접속) 하는 역할도 한다.</p>
+<h3 id="3-복조-demodulation">3. 복조 (Demodulation)<a hidden class="anchor" aria-hidden="true" href="#3-복조-demodulation">#</a></h3>
+<p>수신 측에서는 변조된 신호를 받아 원래의 디지털 데이터(0과 1)를 복원해야 한다. 이 과정을 <code>복조</code>라고 하며, 기본적으로 변조의 역과정을 수행한다. 수신된 신호의 진폭, 주파수, 위상 변화를 감지하여 원래의 디지털 데이터 스트림을 알아낸다.</p>
+<h2 id="데이터-신뢰성-확보의-핵심-오류-제어-error-control">데이터 신뢰성 확보의 핵심: 오류 제어 (Error Control)<a hidden class="anchor" aria-hidden="true" href="#데이터-신뢰성-확보의-핵심-오류-제어-error-control">#</a></h2>
+<p>변조와 복조만으로는 친구가 질문했던 &lsquo;데이터 신뢰성&rsquo; 문제를 해결할 수 없다. 현실의 통신 채널(특히 무선 채널)은 <code>잡음(Noise)</code>, <code>간섭(Interference)</code>, <code>신호 감쇠(Attenuation)</code> 등 다양한 요인으로 인해 전송 중인 신호에 오류가 발생할 가능성이 항상 존재한다. 1이 0으로 바뀌거나, 0이 1로 바뀌는 등의 오류가 생길 수 있다는 뜻이다.</p>
+<p>이러한 오류를 극복하고 데이터의 정확성을 보장하기 위해 <code>오류 제어</code> 기술이 사용된다. 데이터 전송의 전체 과정을 좀 더 자세히 보면 다음과 같다. (송신 과정 기준)</p>
+<p><strong>원본 데이터 → 소스 코딩 → 채널 코딩 → 변조 → 전송</strong></p>
+<p>(수신 과정은 이 역순으로 진행된다: <strong>수신 → 복조 → 채널 디코딩 → 소스 디코딩 → 복원된 데이터</strong>)</p>
+<p>여기서 데이터 신뢰성과 직접적으로 관련된 단계는 <code>채널 코딩(Channel Coding)</code>이다.</p>
+<h3 id="채널-코딩-channel-coding-이란">채널 코딩 (Channel Coding) 이란?<a hidden class="anchor" aria-hidden="true" href="#채널-코딩-channel-coding-이란">#</a></h3>
+<p>채널 코딩은 전송할 <code>원래 데이터에 의도적으로 추가 정보(잉여 비트, Redundancy)</code>를 덧붙이는 과정이다. 이 추가 정보는 수신 측에서 데이터 전송 중 발생한 오류를 <code>검출(Detection)</code>하거나 심지어 <code>정정(Correction)</code>하는 데 사용된다.</p>
+<p>잡음이 많은 환경에서 중요한 내용을 전달할 때, 우리가 같은 말을 여러 번 반복하거나 핵심 단어를 강조해서 말하는 것과 비슷하다고 생각할 수 있다. 채널 코딩은 이런 &lsquo;반복&rsquo;과 &lsquo;강조&rsquo;를 수학적으로 정교하게 설계하여, 오류가 발생하더라도 원래 정보를 복원할 수 있는 가능성을 높이는 기술이다.</p>
+<p>채널 코딩 기법은 크게 <code>오류 검출</code>과 <code>오류 정정</code>으로 나눌 수 있다.</p>
+<h4 id="1-오류-검출-error-detection-기법">1. 오류 검출 (Error Detection) 기법<a hidden class="anchor" aria-hidden="true" href="#1-오류-검출-error-detection-기법">#</a></h4>
+<p>오류 검출은 수신된 데이터에 오류가 발생했는지 &lsquo;알아채는&rsquo; 데 중점을 둔다. 오류가 검출되면, 보통 수신 측은 송신 측에 데이터 재전송을 요청한다 (ARQ: Automatic Repeat reQuest 방식).</p>
+<ul>
+<li><code>패리티 검사 (Parity Check):</code> 가장 간단한 방법이다. 데이터 블록 끝에 1비트(패리티 비트)를 추가하여, 전체 비트 중 &lsquo;1&rsquo;의 개수가 항상 짝수(짝수 패리티) 또는 홀수(홀수 패리티)가 되도록 만든다. 수신 측에서 &lsquo;1&rsquo;의 개수를 세어 약속된 규칙(짝수/홀수)을 만족하지 않으면 오류가 발생했다고 판단한다.
+<ul>
+<li><strong>장점:</strong> 구현이 매우 간단하다.</li>
+<li><strong>단점:</strong> 홀수 개의 비트 오류만 검출할 수 있다 (2개 비트 오류 등 짝수 개 오류는 검출 불가). 오류 정정은 불가능하다.</li>
+</ul>
+</li>
+<li><code>체크섬 (Checksum):</code> 데이터를 일정 크기의 블록으로 나누고, 각 블록의 값을 더한 후 그 합의 보수(complement) 등을 계산하여 데이터와 함께 보낸다. 수신 측에서 동일한 계산을 수행하여 결과가 일치하는지 확인한다. 패리티보다는 강력하지만, 여전히 일부 오류 패턴을 놓칠 수 있다.</li>
+<li><code>CRC (Cyclic Redundancy Check, 순환 중복 검사):</code> 현재 가장 널리 사용되는 강력한 오류 검출 기법 중 하나이다. 전송할 데이터를 특정 다항식(Polynomial)으로 나누어 그 나머지를 계산하고, 이 나머지 값(CRC 코드)을 데이터 뒤에 붙여 전송한다. 수신 측에서 받은 데이터와 CRC 코드를 이용해 동일한 다항식으로 나누어 나머지가 0인지 확인한다. 나머지가 0이 아니면 오류가 발생한 것으로 간주한다.
+<ul>
+<li><strong>장점:</strong> 하드웨어 구현이 용이하고, 특히 여러 비트가 연속적으로 깨지는 <code>버스트 오류(Burst Error)</code> 검출에 매우 효과적이다. 이더넷(LAN), 와이파이(Wi-Fi), 하드 디스크, 압축 파일(ZIP) 등 다양한 곳에서 사용된다.</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-오류-정정-forward-error-correction-fec-기법">2. 오류 정정 (Forward Error Correction, FEC) 기법<a hidden class="anchor" aria-hidden="true" href="#2-오류-정정-forward-error-correction-fec-기법">#</a></h4>
+<p>오류 정정은 수신 측에서 <strong>재전송 요청 없이 스스로 오류를 찾아 수정</strong>하는 것을 목표로 한다. 이를 위해 오류 검출 기법보다 더 많은 잉여 비트를 추가한다. 실시간 통신(전화, 화상 회의)이나 재전송이 어려운 환경(우주 통신)에서 필수적이다.</p>
+<ul>
+<li><strong>해밍 코드 (Hamming Code):</strong> 비교적 간단한 FEC 코드 중 하나이다. 1비트 오류를 정정하고 2비트 오류를 검출할 수 있다. 메모리(RAM) 오류 검출 등에 사용되기도 했다.</li>
+<li><strong>리드-솔로몬 코드 (Reed-Solomon Code):</strong> 여러 개의 비트가 묶인 심볼(Symbol) 단위로 오류를 정정하는 강력한 블록 코드이다. 특히 버스트 오류 정정에 효과적이어서 CD, DVD, QR 코드, 디지털 방송 등 다양한 분야에서 핵심적으로 사용된다.</li>
+<li><strong>컨볼루션 코드 (Convolutional Code):</strong> 데이터 스트림을 처리하며 잉여 비트를 생성하는 방식으로, 비터비 알고리즘(Viterbi Algorithm) 등 효율적인 디코딩 방법과 함께 사용된다. 위성 통신, 이동 통신(GSM, CDMA) 등에 널리 사용되었다.</li>
+<li><strong>터보 코드 (Turbo Code) / LDPC 코드 (Low-Density Parity-Check Code):</strong> 현대 통신의 핵심 기술로, 이론적 한계(섀넌 한계)에 근접하는 매우 뛰어난 오류 정정 성능을 보여준다. 3G, 4G LTE, 5G 이동 통신, Wi-Fi (802.11n 이상), 디지털 비디오 방송(DVB-S2) 등 고속/고신뢰 통신 시스템에 필수적으로 사용된다.</li>
+</ul>
+<p><strong>오류 제어의 트레이드오프:</strong> 오류 검출 및 정정 능력을 높이려면 더 많은 잉여 비트를 추가해야 한다. 이는 전체 전송 데이터 양을 늘리고, 실제 데이터 전송률(Throughput)을 감소시키는 결과를 낳는다. 따라서 통신 시스템 설계 시에는 채널 환경, 요구되는 신뢰도 수준, 허용 가능한 전송 속도 등을 고려하여 적절한 오류 제어 기법과 부호화율(원본 데이터 대비 전체 데이터 비율)을 선택하는 것이 중요하다.</p>
+<h2 id="결론-신뢰성은-그냥-얻어지는-것이-아니다">결론: 신뢰성은 그냥 얻어지는 것이 아니다<a hidden class="anchor" aria-hidden="true" href="#결론-신뢰성은-그냥-얻어지는-것이-아니다">#</a></h2>
+<p>다시 처음 질문으로 돌아가 보자. 카카오톡 메시지가 과연 1비트의 오류도 없이 전달될 수 있을까? 물리적인 전송 과정만 보면 오류 발생 가능성은 항상 존재한다. 하지만 우리가 일상에서 데이터 전송 오류를 거의 체감하지 못하는 이유는, 바로 앞에서 설명한 <code>다양한 계층의 오류 제어 기술</code> 덕분이다.</p>
+<p>물리 계층(Physical Layer)에서의 <code>채널 코딩(오류 검출 및 정정)</code>뿐만 아니라, 그 상위 계층인 데이터 링크 계층(Data Link Layer)이나 전송 계층(Transport Layer, 예: TCP 프로토콜)에서도 <code>CRC, 체크섬, 재전송 메커니즘</code> 등을 통해 추가적인 오류 검사와 복구를 수행한다.</p>
+<p>이처럼 여러 단계에 걸친 정교한 오류 제어 매커니즘이 있기 때문에, 우리는 잡음 많고 불안정한 통신 환경 속에서도 친구에게 보낸 카톡 메시지나 중요한 파일이 정확하게 전달될 것이라고 신뢰할 수 있는 것이다. 100% 완벽한 전송이란 물리적으로 불가능할지 몰라도, 현실적으로는 거의 100%에 가까운 신뢰도를 달성하도록 설계된 것이 현대의 통신 시스템이다.</p>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="https://macsim2.github.io/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="https://macsim2.github.io/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="https://macsim2.github.io/posts/life/life/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>Life</span>
+  </a>
+  <a class="next" href="https://macsim2.github.io/posts/read/read/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>Read</span>
+  </a>
+</nav>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="https://macsim2.github.io/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

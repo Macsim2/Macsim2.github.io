@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Linear_algebra on macsim&#39;s Blog</title>
+    <link>http://localhost:1313/tags/linear_algebra/</link>
+    <description>Recent content in Linear_algebra on macsim&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>ko-kr</language>
+    <lastBuildDate>Mon, 03 Mar 2025 01:17:26 +0900</lastBuildDate><atom:link href="http://localhost:1313/tags/linear_algebra/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Eigenvalues &amp; Eigenvectors</title>
+      <link>http://localhost:1313/posts/tech/linear_algebra/eigenvalues_eigenvectors/</link>
+      <pubDate>Mon, 03 Mar 2025 01:17:26 +0900</pubDate>
+      
+      <guid>http://localhost:1313/posts/tech/linear_algebra/eigenvalues_eigenvectors/</guid>
+      <description>about Eigenvalues &amp;amp; Eigenvectors</description>
+    </item>
+    
+  </channel>
+</rss>

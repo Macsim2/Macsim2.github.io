@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Sound | macsim&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="about sound">
+<meta name="author" content="macsim">
+<link rel="canonical" href="http://localhost:1313/posts/tech/signal/sound/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/img/Q.gif">
+<link rel="apple-touch-icon" href="http://localhost:1313/img/Q.gif">
+<link rel="mask-icon" href="http://localhost:1313/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="http://localhost:1313/posts/tech/signal/sound/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script defer src="https://unpkg.com/mermaid@8.8.1/dist/mermaid.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="Sound" />
+<meta property="og:description" content="about sound" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/posts/tech/signal/sound/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-03-01T01:17:26+09:00" />
+<meta property="article:modified_time" content="2025-03-01T01:17:26+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Sound"/>
+<meta name="twitter:description" content="about sound"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "http://localhost:1313/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "http://localhost:1313/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Sound",
+      "item": "http://localhost:1313/posts/tech/signal/sound/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Sound",
+  "name": "Sound",
+  "description": "about sound",
+  "keywords": [
+    ""
+  ],
+  "articleBody": "\u003c Index \u003e\nSound The Nature of Sound: Waves and Vibrations Time Domain vs Frequency Domain Importance of Fourier Transform in Audio Analysis The Nature of Sound: Waves and Vibrations 양자 물리에 따르자면 이 세상 삼라만상은 모두 입자인 동시에 파동이라고 한다.\n정확하게는 입자의 성질과 파동의 성질 둘 다를 가졌으며, 상황에 따라 입자 또는 파동의 성질을 보인다는 것이다.\n입자는 우리가 직관적으로 느끼기에 좀 더 쉽다. 하지만 왠지 파동이라고 하면 파도나 잔잔한 호수의 퍼지는 물의 진동이 먼저 떠오르지 않는가?\n그 보다 우리 주변에서 지금도 느낄 수 있는 파동이 있다. 바로 빛과 소리이다.와이파이도 파동이 맞다 그중 오늘은 소리(sound)에 대해 알아보자.\n소리는 우리 일상에서 가장 기본적인 정보 전달 수단 중 하나이다. 소리라는 현상의 본질은 무엇일까? 물리학적 관점에서 소리는 ‘매질(일반적으로 공기)을 통해 전파되는 압력 파동’이고, 이 파동은 물체의 진동에서 시작된다.\n우리가 소리가 듣는 과정을 살펴보면, 아래와 같다.\n물체(예: 기타 현, 스피커 진동판, 성대)가 진동한다.\n이 진동은 주변 공기 분자들을 압축하고 팽창시킨다.\n압축과 팽창의 패턴이 파동의 현상으로써 매질을 통해 전파된다.\n이 파동이 귀에 도달하면 고막을 진동시켜 우리가 소리를 인식하게 됩니다.\n소리는 종파(longitudinal wave)로, 파동의 진행 방향과 매질의 진동 방향이 같다. 시간에 따른 공기에 압력의 변화는 다음과 같은 수식으로 표현할 수 있다.\n$$ p(t) = p_0 + A \\sin(2\\pi f t + \\phi) $$ $p_0$는 주변 대기압, $A$는 파동의 진폭, $f$는 주파수(Hz), $\\phi$는 위상 오프셋\n굳이 위 식을 적는 이유는 이것이 바로 우리가 마이크로 수집하고 디지털로 변환하는 오디오 신호의 수학적 정의 이기 때문이다.\n[그림 필요: 소리의 발생과 전파를 보여주는 그림 - 진동하는 물체, 압축과 팽창의 파동, 그리고 시간에 따른 압력 변화 그래프]\nTime Domain vs Frequency Domain 소리를 분석하는 데는 두 가지 기본적인 관점이 있다.\n시간 도메인(Time Domain): 이것은 우리가 가장 직관적으로 이해하는 방식이다. 시간에 따라 소리의 신호의 크기가 어떻게 변하는지 보여준다. 이는 파형(waveform)으로 표현되며, 소리의 강도와 지속 시간을 직접적으로 확인할 수 있다.\n주파수 도메인(Frequency Domain): 이 관점에서는 소리를 다양한 주파수의 사인파(sine wave)들의 합으로 본다. 주파수 스펙트럼으로 표현되며, 어떤 주파수 성분이 얼마나 강한지 보여줍니다. 주파수는 초당 진동 횟수로, 단위는 Hz(헤르츠)이다. 동일한 소리가 두 도메인에서 완전히 다르게 표현될 수 있다.\n순수한 440Hz 톤(A음)은 시간 도메인에서 매끄러운 사인파로 나타난다.\n같은 톤이 주파수 도메인에서는 440Hz 위치에 하나의 뾰족한 선으로 나타난다.\n복잡한 소리(예: 말소리, 음악)는 시간 도메인에서는 복잡하고 해석하기 어려운 파형이지만, 주파수 도메인에서는 구성 요소들로 명확하게 분해된다.\nImportance of Fourier Transform in Audio Analysis 그렇다면 시간 도메인에서 보는 파형이 어떻게 특정한 주파수 들로 만들어진 것인지 알 수 있는 것일까?\n그 해결책은 바로 그 유명한 푸리에 변환(Fourier Transform) 이라는 것이다.\n푸리에의 업적은 열 전달 현상을 설명하기 위해 사인과 코사인 함수의 무한 급수(지금의 푸리에 급수)를 사용한 것이다. 그가 사용한 이 수학적 기법이 현재의 ‘푸리에 변환’으로 발전되어 신호처리, 음향학, 양자역학, 이미지 처리 등 여러 분야에서 핵심적인 도구가 되었다.\n푸리에 변환(Fourier Transform)은 시간 도메인의 신호를 주파수 도메인으로 변환하는 수학적 도구이다.\n이 변환의 핵심 아이디어는 모든 복잡한 파형이 다양한 주파수의 사인파와 코사인파의 합으로 표현될 수 있다는 것이다.\n푸리에 변환은 다음 수식으로 정의된다.\n$$ X(f) = \\int_{-\\infty}^{\\infty} x(t) e^{-j 2\\pi f t} , dt $$ 여기서: $x(t)$는 시간 도메인의 신호, $X(f)$는 주파수 도메인으로 변환된 신호, $e^{-j 2\\pi f t}$는 복소 지수 함수,\n오디오 분석에서 푸리에 변환이 중요한 이유는 다음과 같다.\n인간 청각 시스템의 작동 방식: 우리의 귀는 기본적으로 주파수 분석기이다. 달팽이관(cochlea)의 서로 다른 부분이 서로 다른 주파수에 반응하도록 설계되어 있어, 주파수 도메인 분석은 인간의 청각 인지와 밀접하게 관련된다.\n음향적 특성 파악: 주파수 성분을 분석함으로써 악기의 음색, 화자의 목소리 특성, 환경 소음의 특성 등을 정량적으로 파악할 수 있다.\n효율적인 음성 처리: 음성 인식, 화자 식별, 감정 분석 등 많은 오디오 처리 작업이 주파수 도메인 특성에 기반합니다. MFCC(Mel-Frequency Cepstral Coefficients)와 같은 대표적인 오디오 특징은 푸리에 변환에서 파생된다.\n효과적인 필터링: 특정 주파수 대역을 선택적으로 제거하거나 강화하는 오디오 필터링은 주파수 도메인에서 훨씬 간단하게 구현할 수 있다.\n데이터 압축: MP3와 같은 오디오 압축 형식은 푸리에 변환을 사용하여 인간이 덜 민감한 주파수 성분을 식별하고 제거한다.\n푸리에 변환은 단순한 수학적 도구를 넘어, 오디오 신호의 본질을 이해하고 분석하는 렌즈 역할을 한다. 현대 오디오 처리 기술의 많은 부분이 이 변환의 응용에서 비롯되었으며, 음성 인식이나 음악 정보 검색과 같은 고급 기술들도 대부분 푸리에 변환을 기본 요소로 사용한다.\n[그림 필요: 복잡한 오디오 신호가 다양한 주파수의 사인파로 분해되는 과정을 보여주는 그림 - 원래 신호와 여러 주파수 성분들, 그리고 이들의 합이 원래 신호와 일치함을 시각화]\n다음 장에서는 푸리에 변환의 수학적 기초와 구체적인 형태에 대해 더 자세히 살펴보겠습니다.\n",
+  "wordCount" : "2100",
+  "inLanguage": "ko",
+  "datePublished": "2025-03-01T01:17:26+09:00",
+  "dateModified": "2025-03-01T01:17:26+09:00",
+  "author":[{
+    "@type": "Person",
+    "name": "macsim"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/tech/signal/sound/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="http://localhost:1313/">🏠 홈</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">posts</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                Sound<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+            </h1>
+            <div class="post-description">
+                about sound
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2025-03-01
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>2100 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>5 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="http://localhost:1313/tags/sound/" style="color: var(--secondary)!important;">Sound</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "http://localhost:1313/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#a-idnature-of-soundathe-nature-of-sound-waves-and-vibrations" aria-label="The Nature of Sound: Waves and Vibrations"><a id="nature-of-sound"></a>The Nature of Sound: Waves and Vibrations</a></li>
+                <li>
+                    <a href="#a-idtime-frequency-domainatime-domain-vs-frequency-domain" aria-label="Time Domain vs Frequency Domain"><a id="time-frequency-domain"></a>Time Domain vs Frequency Domain</a></li>
+                <li>
+                    <a href="#a-idfourier-transformaimportance-of-fourier-transform-in-audio-analysis" aria-label="Importance of Fourier Transform in Audio Analysis"><a id="fourier-transform"></a>Importance of Fourier Transform in Audio Analysis</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>&lt; Index &gt;</p>
+<ul>
+<li>Sound
+<ul>
+<li><a href="#nature-of-sound">The Nature of Sound: Waves and Vibrations</a></li>
+<li><a href="#time-frequency-domain">Time Domain vs Frequency Domain</a></li>
+<li><a href="#fourier-transform">Importance of Fourier Transform in Audio Analysis</a></li>
+</ul>
+</li>
+<li></li>
+</ul>
+<h2 id="a-idnature-of-soundathe-nature-of-sound-waves-and-vibrations"><a id="nature-of-sound"></a>The Nature of Sound: Waves and Vibrations<a hidden class="anchor" aria-hidden="true" href="#a-idnature-of-soundathe-nature-of-sound-waves-and-vibrations">#</a></h2>
+<p>양자 물리에 따르자면 이 세상 삼라만상은 모두 입자인 동시에 파동이라고 한다.<br>
+정확하게는 입자의 성질과 파동의 성질 둘 다를 가졌으며, 상황에 따라 입자 또는 파동의 성질을 보인다는 것이다.<br>
+입자는 우리가 직관적으로 느끼기에 좀 더 쉽다. 하지만 왠지 파동이라고 하면 파도나 잔잔한 호수의 퍼지는 물의 진동이 먼저 떠오르지 않는가?<br>
+그 보다 우리 주변에서 지금도 느낄 수 있는 파동이 있다. 바로 빛과 소리이다.<del>와이파이도 파동이 맞다</del> 그중 오늘은 소리(sound)에 대해 알아보자.</p>
+<p>소리는 우리 일상에서 가장 기본적인 정보 전달 수단 중 하나이다. 소리라는 현상의 본질은 무엇일까? 물리학적 관점에서 소리는 &lsquo;매질(일반적으로 공기)을 통해 전파되는 압력 파동&rsquo;이고, 이 파동은 물체의 진동에서 시작된다.</p>
+<p>우리가 소리가 듣는 과정을 살펴보면, 아래와 같다.<br></p>
+<ol>
+<li>물체(예: 기타 현, 스피커 진동판, 성대)가 진동한다.<br></li>
+<li>이 진동은 주변 공기 분자들을 압축하고 팽창시킨다.<br></li>
+<li>압축과 팽창의 패턴이 파동의 현상으로써 매질을 통해 전파된다.<br></li>
+<li>이 파동이 귀에 도달하면 고막을 진동시켜 우리가 소리를 인식하게 됩니다.<br></li>
+</ol>
+<p>소리는 종파(longitudinal wave)로, 파동의 진행 방향과 매질의 진동 방향이 같다. 시간에 따른 공기에 압력의 변화는 다음과 같은 수식으로 표현할 수 있다.<br>
+$$
+p(t) = p_0 + A \sin(2\pi f t + \phi)
+$$
+$p_0$는 주변 대기압,
+$A$는 파동의 진폭,
+$f$는 주파수(Hz),
+$\phi$는 위상 오프셋</p>
+<p>굳이 위 식을 적는 이유는 이것이 바로 우리가 마이크로 수집하고 디지털로 변환하는 오디오 신호의 수학적 정의 이기 때문이다.<br></p>
+<p>[그림 필요: 소리의 발생과 전파를 보여주는 그림 - 진동하는 물체, 압축과 팽창의 파동, 그리고 시간에 따른 압력 변화 그래프]</p>
+<h2 id="a-idtime-frequency-domainatime-domain-vs-frequency-domain"><a id="time-frequency-domain"></a>Time Domain vs Frequency Domain<a hidden class="anchor" aria-hidden="true" href="#a-idtime-frequency-domainatime-domain-vs-frequency-domain">#</a></h2>
+<p>소리를 분석하는 데는 두 가지 기본적인 관점이 있다.<br></p>
+<ol>
+<li>시간 도메인(Time Domain): 이것은 우리가 가장 직관적으로 이해하는 방식이다. 시간에 따라 소리의 신호의 크기가 어떻게 변하는지 보여준다. 이는 파형(waveform)으로 표현되며, 소리의 강도와 지속 시간을 직접적으로 확인할 수 있다.<br></li>
+<li>주파수 도메인(Frequency Domain): 이 관점에서는 소리를 다양한 주파수의 사인파(sine wave)들의 합으로 본다. 주파수 스펙트럼으로 표현되며, 어떤 주파수 성분이 얼마나 강한지 보여줍니다. 주파수는 초당 진동 횟수로, 단위는 Hz(헤르츠)이다. <br></li>
+</ol>
+<p>동일한 소리가 두 도메인에서 완전히 다르게 표현될 수 있다.<br>
+<strong>순수한 440Hz 톤(A음)은 시간 도메인에서 매끄러운 사인파로 나타난다.</strong><br>
+같은 톤이 주파수 도메인에서는 440Hz 위치에 하나의 뾰족한 선으로 나타난다.<br>
+복잡한 소리(예: 말소리, 음악)는 시간 도메인에서는 복잡하고 해석하기 어려운 파형이지만, 주파수 도메인에서는 구성 요소들로 명확하게 분해된다.</p>
+<p><img loading="lazy" src="/tech/signal/sounds/sounds_1.2.png" alt="동일한 소리 신호의 시간 도메인 표현(파형)과 주파수 도메인 표현(스펙트럼) 비교"  />
+</p>
+<h2 id="a-idfourier-transformaimportance-of-fourier-transform-in-audio-analysis"><a id="fourier-transform"></a>Importance of Fourier Transform in Audio Analysis<a hidden class="anchor" aria-hidden="true" href="#a-idfourier-transformaimportance-of-fourier-transform-in-audio-analysis">#</a></h2>
+<p>그렇다면 시간 도메인에서 보는 파형이 어떻게 특정한 주파수 들로 만들어진 것인지 알 수 있는 것일까?<br>
+그 해결책은 바로 그 유명한 푸리에 변환(Fourier Transform) 이라는 것이다.<br>
+푸리에의 업적은 열 전달 현상을 설명하기 위해 사인과 코사인 함수의 무한 급수(지금의 푸리에 급수)를 사용한 것이다. 그가 사용한 이 수학적 기법이 현재의 &lsquo;푸리에 변환&rsquo;으로 발전되어 신호처리, 음향학, 양자역학, 이미지 처리 등 여러 분야에서 핵심적인 도구가 되었다.<br></p>
+<p>푸리에 변환(Fourier Transform)은 시간 도메인의 신호를 주파수 도메인으로 변환하는 수학적 도구이다.<br>
+이 변환의 핵심 아이디어는 모든 복잡한 파형이 다양한 주파수의 사인파와 코사인파의 합으로 표현될 수 있다는 것이다.<br>
+푸리에 변환은 다음 수식으로 정의된다.<br>
+$$
+X(f) = \int_{-\infty}^{\infty} x(t) e^{-j 2\pi f t} , dt
+$$
+<br>
+여기서:
+$x(t)$는 시간 도메인의 신호,
+$X(f)$는 주파수 도메인으로 변환된 신호,
+$e^{-j 2\pi f t}$는 복소 지수 함수,</p>
+<p>오디오 분석에서 푸리에 변환이 중요한 이유는 다음과 같다.<br>
+인간 청각 시스템의 작동 방식: 우리의 귀는 기본적으로 주파수 분석기이다. 달팽이관(cochlea)의 서로 다른 부분이 서로 다른 주파수에 반응하도록 설계되어 있어, 주파수 도메인 분석은 인간의 청각 인지와 밀접하게 관련된다.<br>
+음향적 특성 파악: 주파수 성분을 분석함으로써 악기의 음색, 화자의 목소리 특성, 환경 소음의 특성 등을 정량적으로 파악할 수 있다.<br>
+효율적인 음성 처리: 음성 인식, 화자 식별, 감정 분석 등 많은 오디오 처리 작업이 주파수 도메인 특성에 기반합니다. MFCC(Mel-Frequency Cepstral Coefficients)와 같은 대표적인 오디오 특징은 푸리에 변환에서 파생된다.<br>
+효과적인 필터링: 특정 주파수 대역을 선택적으로 제거하거나 강화하는 오디오 필터링은 주파수 도메인에서 훨씬 간단하게 구현할 수 있다.<br>
+데이터 압축: MP3와 같은 오디오 압축 형식은 푸리에 변환을 사용하여 인간이 덜 민감한 주파수 성분을 식별하고 제거한다.<br>
+푸리에 변환은 단순한 수학적 도구를 넘어, 오디오 신호의 본질을 이해하고 분석하는 렌즈 역할을 한다. 현대 오디오 처리 기술의 많은 부분이 이 변환의 응용에서 비롯되었으며, 음성 인식이나 음악 정보 검색과 같은 고급 기술들도 대부분 푸리에 변환을 기본 요소로 사용한다.<br></p>
+<p>[그림 필요: 복잡한 오디오 신호가 다양한 주파수의 사인파로 분해되는 과정을 보여주는 그림 - 원래 신호와 여러 주파수 성분들, 그리고 이들의 합이 원래 신호와 일치함을 시각화]</p>
+<p>다음 장에서는 푸리에 변환의 수학적 기초와 구체적인 형태에 대해 더 자세히 살펴보겠습니다.</p>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="http://localhost:1313/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="http://localhost:1313/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/tech/signal/fouriertransform/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>FourierTransform</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>용액</span>
+  </a>
+</nav>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="http://localhost:1313/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

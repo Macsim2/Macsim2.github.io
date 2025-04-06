@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Beam Search | macsim&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="about Beam Search">
+<meta name="author" content="macsim">
+<link rel="canonical" href="http://localhost:1313/posts/tech/asr/beam_search/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/img/Q.gif">
+<link rel="apple-touch-icon" href="http://localhost:1313/img/Q.gif">
+<link rel="mask-icon" href="http://localhost:1313/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="http://localhost:1313/posts/tech/asr/beam_search/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script defer src="https://unpkg.com/mermaid@8.8.1/dist/mermaid.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="Beam Search" />
+<meta property="og:description" content="about Beam Search" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/posts/tech/asr/beam_search/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-03-15T01:17:26+09:00" />
+<meta property="article:modified_time" content="2025-03-15T01:17:26+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Beam Search"/>
+<meta name="twitter:description" content="about Beam Search"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "http://localhost:1313/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "http://localhost:1313/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Beam Search",
+      "item": "http://localhost:1313/posts/tech/asr/beam_search/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Beam Search",
+  "name": "Beam Search",
+  "description": "about Beam Search",
+  "keywords": [
+    ""
+  ],
+  "articleBody": "Beam Search의 기본 개념과 원리 beam search, 음성 인식을 구현 해본 사람이라면, 한번 쯤은 들어보게 되는 용어이다. 다른 분야에서는 많이 사용하는지는 모르겠지만 search 알고리즘의 갈래이기도 하고, 선택지가 많아지는 task인 경우 사용할 수 있는 유용한(?) 방법 같다. 그래서 오늘은 ASR을 모델링 해본 사람으로써 beam search에 대해서 글로써 정리해보고자 한다. 주로 코드로 접하는 beam search 이지만 이번 기회에 개념부터 알아보자.\nBeam Search란 무엇인가? Beam Search는 자동 음성 인식(ASR) 시스템에서 디코딩 과정에 사용되는 핵심 알고리즘이다. 음성을 텍스트로 변환할 때, 입력된 음향 신호에 대해 가능한 여러 가설(hypothesis)들을 효율적으로 탐색하여 가장 확률이 높은 시퀀스를 찾아내는 방법이다.\nASR에서 디코딩은 다음과 같은 수식으로 표현할 수 있다:\n$$Y^* = \\arg\\max_Y P(Y|X)$$\n이 수식이 ASR task를 한마디로 하자면, 최종 수식이다. 여기서 $X$는 입력 음향 특징(acoustic feature), $Y$는 출력 텍스트 시퀀스를 의미한다. 이론적으로는 모든 가능한 $Y$에 대해 확률을 계산하여 최대값을 찾아야 하지만, 실제로는 가능한 경우의 수가 너무 많아 전수 조사(exhaustive search)가 불가능하다. 그리고 실제로 전수 조사를 하는 컴퓨팅 비용대비 얻는 보상이 크지 않다. 가성비가 떨어지는 느낌이랄까?\nGreedy Search와의 차이점 가장 단순한 디코딩 방법은 Greedy Search(탐욕 탐색)이다. 이 방법은 각 시점마다 가장 확률이 높은 하나의 토큰만을 선택하여 시퀀스를 구성한다.\n$$y_t = \\arg\\max_{y} P(y|X, y_1, y_2, \\ldots, y_{t-1})$$\n그러나 Greedy Search는 지역 최적해(local optimum)에 쉽게 빠질 수 있으며, 전체적으로 최적의 시퀀스를 놓칠 가능성이 크다. 예를 들어, 특정 시점에서 두 번째로 확률이 높은 선택이 이후의 단계에서 더 좋은 전체 경로로 이어질 수 있는데, Greedy Search는 이러한 가능성을 고려하지 않는다. 반면 Beam Search는 각 디코딩 단계에서 상위 k개의 가능성(beam)을 유지하며 탐색한다. 이를 통해 지역 최적해에 빠질 위험을 줄이고, 전체적으로 더 나은 해를 찾을 확률을 높인다.\nBeam Search의 작동 원리 Beam Search의 기본 알고리즘은 다음과 같다:\n초기 상태에서 시작하여 첫 번째 타임 스텝에서 가능한 모든 토큰의 확률을 계산한다.\n확률이 가장 높은 상위 k개의 토큰을 선택한다 (k는 beam width 또는 beam size).\n선택된 각 토큰에 대해, 다음 타임 스텝에서 가능한 모든 토큰의 확률을 계산한다.\n이전 경로의 확률과 현재 토큰의 확률을 결합하여 $k \\times |V|$ 개의 가능한 경로 중 상위 k개를 다시 선택한다 (|V|는 어휘 크기).\n종료 토큰이 나타나거나 최대 길이에 도달할 때까지 3-4 단계를 반복한다.\n수식적으로 표현하면, 시간 $t$에서의 경로 점수는 다음과 같이 계산된다: $$score(y_1, y_2, \\ldots, y_t) = \\log P(y_1, y_2, \\ldots, y_t|X) = \\sum_{i=1}^{t} \\log P(y_i|X, y_1, \\ldots, y_{i-1})$$\n4번 설명에서 ‘이전 경로의 확률과 현재 토큰의 확률의 결합’은 단순 multiply다. 그러나 확률은 0과 1사이의 값이므로 타입 스텝 $t$가 길어지면 0보다 작은 확률값 $y_t$가 점점 0과 가까워 질 것이므로 컴퓨터 연산에서 underflow 문제를 야기할 수 있다. 그래서 로그 확률의 합으로, 수치적 안정성을 위해 일반적으로 로그 도메인에서 계산함으로 문제를 해결한다.\nBeam Width(Size)의 의미와 선택 Beam width(k)는 각 디코딩 단계에서 유지하는 가설의 수를 결정하는 매개변수이다. 이는 탐색 공간과 계산 복잡성, 결과의 품질 사이의 중요한 균형점을 제공한다.\n작은 beam width (k=1):\nGreedy Search와 동일하며, 계산이 빠르지만 최적해를 놓칠 가능성이 높다.\n큰 beam width:\n더 넓은, 종합적인 탐색을 가능하게 하지만 계산 비용이 증가한다. ASR 시스템에서는 일반적으로 k=5~20 사이의 값을 사용하는데, 이는 디코딩 품질과 속도 사이의 합리적인 타협점을 제공한다. 그러나 최적의 beam width는 모델 아키텍처, 태스크 복잡성, 하드웨어 리소스 등에 따라 달라질 수 있다.\n흥미롭게도, beam width를 무한히 크게 하는 것이 항상 최상의 결과를 보장하지는 않는다고 한다. 이는 ‘beam search curse’라는 현상으로, 특정 임계값 이상에서는 성능 향상이 미미하거나 오히려 감소할 수 있다. 그렇다고 한다.\nASR 모델 아키텍처별 Beam Search 적용 HMM-GMM에서의 Beam Search HMM-GMM 시스템에서 Beam Search는 다음과 같이 작동한다: 각 시간 프레임마다 가능한 모든 HMM 상태의 확률을 계산한다. 확률이 임계값(beam threshold) 이하인 상태는 제거(pruning)한다. 남은 활성 상태(active states)에 대해서만 다음 프레임의 계산을 진행한다.\n수식적으로, 시간 $t$에서 상태 $s$의 Viterbi 경로 확률은: $$\\delta_t(s) = \\max_{s’} {\\delta_{t-1}(s’) \\cdot a_{s’s} \\cdot b_s(o_t)}$$\n여기서:\n$\\delta_t(s)$: 시간 $t$에서 상태 $s$까지의 최대 경로 확률\n$a_{s’s}$: 상태 $s’$에서 $s$로의 전이 확률\n$b_s(o_t)$: 상태 $s$에서 관측값 $o_t$의 방출 확률\nBeam Search에서는 각 시간 프레임마다 다음 조건을 만족하는 상태만 유지한다: $$\\delta_t(s) \\geq \\max_j {\\delta_t(j)} \\cdot \\theta$$ 여기서 $\\theta$는 beam threshold(0과 1 사이의 값)이다.\n",
+  "wordCount" : "1934",
+  "inLanguage": "ko",
+  "datePublished": "2025-03-15T01:17:26+09:00",
+  "dateModified": "2025-03-15T01:17:26+09:00",
+  "author":[{
+    "@type": "Person",
+    "name": "macsim"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/tech/asr/beam_search/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="http://localhost:1313/">🏠 홈</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">posts</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                Beam Search<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+            </h1>
+            <div class="post-description">
+                about Beam Search
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2025-03-15
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>1934 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>4 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="http://localhost:1313/tags/asr/" style="color: var(--secondary)!important;">ASR</a>
+                &nbsp;<a href="http://localhost:1313/tags/beamsearch/" style="color: var(--secondary)!important;">Beamsearch</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "http://localhost:1313/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#beam-search%ec%9d%98-%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90%ea%b3%bc-%ec%9b%90%eb%a6%ac" aria-label="Beam Search의 기본 개념과 원리">Beam Search의 기본 개념과 원리</a><ul>
+                        
+                <li>
+                    <a href="#beam-search%eb%9e%80-%eb%ac%b4%ec%97%87%ec%9d%b8%ea%b0%80" aria-label="Beam Search란 무엇인가?">Beam Search란 무엇인가?</a></li>
+                <li>
+                    <a href="#greedy-search%ec%99%80%ec%9d%98-%ec%b0%a8%ec%9d%b4%ec%a0%90" aria-label="Greedy Search와의 차이점">Greedy Search와의 차이점</a></li>
+                <li>
+                    <a href="#beam-search%ec%9d%98-%ec%9e%91%eb%8f%99-%ec%9b%90%eb%a6%ac" aria-label="Beam Search의 작동 원리">Beam Search의 작동 원리</a></li>
+                <li>
+                    <a href="#beam-widthsize%ec%9d%98-%ec%9d%98%eb%af%b8%ec%99%80-%ec%84%a0%ed%83%9d" aria-label="Beam Width(Size)의 의미와 선택">Beam Width(Size)의 의미와 선택</a></li></ul>
+                </li>
+                <li>
+                    <a href="#asr-%eb%aa%a8%eb%8d%b8-%ec%95%84%ed%82%a4%ed%85%8d%ec%b2%98%eb%b3%84-beam-search-%ec%a0%81%ec%9a%a9" aria-label="ASR 모델 아키텍처별 Beam Search 적용">ASR 모델 아키텍처별 Beam Search 적용</a><ul>
+                        
+                <li>
+                    <a href="#hmm-gmm%ec%97%90%ec%84%9c%ec%9d%98-beam-search" aria-label="HMM-GMM에서의 Beam Search">HMM-GMM에서의 Beam Search</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><h2 id="beam-search의-기본-개념과-원리">Beam Search의 기본 개념과 원리<a hidden class="anchor" aria-hidden="true" href="#beam-search의-기본-개념과-원리">#</a></h2>
+<p>beam search, 음성 인식을 구현 해본 사람이라면, 한번 쯤은 들어보게 되는 용어이다. 다른 분야에서는 많이 사용하는지는 모르겠지만 search 알고리즘의 갈래이기도 하고, 선택지가 많아지는 task인 경우 사용할 수 있는 유용한(?) 방법 같다. 그래서 오늘은 ASR을 모델링 해본 사람으로써 beam search에 대해서 글로써 정리해보고자 한다. 주로 코드로 접하는 beam search 이지만 이번 기회에 개념부터 알아보자.</p>
+<h3 id="beam-search란-무엇인가">Beam Search란 무엇인가?<a hidden class="anchor" aria-hidden="true" href="#beam-search란-무엇인가">#</a></h3>
+<p>Beam Search는 자동 음성 인식(ASR) 시스템에서 디코딩 과정에 사용되는 핵심 알고리즘이다. 음성을 텍스트로 변환할 때, 입력된 음향 신호에 대해 가능한 여러 가설(hypothesis)들을 효율적으로 탐색하여 가장 확률이 높은 시퀀스를 찾아내는 방법이다.<br>
+ASR에서 디코딩은 다음과 같은 수식으로 표현할 수 있다:</p>
+<p>$$Y^* = \arg\max_Y P(Y|X)$$</p>
+<p>이 수식이 ASR task를 한마디로 하자면, 최종 수식이다. 여기서 $X$는 입력 음향 특징(acoustic feature), $Y$는 출력 텍스트 시퀀스를 의미한다. 이론적으로는 모든 가능한 $Y$에 대해 확률을 계산하여 최대값을 찾아야 하지만, 실제로는 가능한 경우의 수가 너무 많아 전수 조사(exhaustive search)가 불가능하다. 그리고 실제로 전수 조사를 하는 컴퓨팅 비용대비 얻는 보상이 크지 않다. 가성비가 떨어지는 느낌이랄까?</p>
+<h3 id="greedy-search와의-차이점">Greedy Search와의 차이점<a hidden class="anchor" aria-hidden="true" href="#greedy-search와의-차이점">#</a></h3>
+<p>가장 단순한 디코딩 방법은 Greedy Search(탐욕 탐색)이다. 이 방법은 각 시점마다 가장 확률이 높은 하나의 토큰만을 선택하여 시퀀스를 구성한다.<br>
+$$y_t = \arg\max_{y} P(y|X, y_1, y_2, \ldots, y_{t-1})$$<br>
+그러나 Greedy Search는 지역 최적해(local optimum)에 쉽게 빠질 수 있으며, 전체적으로 최적의 시퀀스를 놓칠 가능성이 크다. 예를 들어, 특정 시점에서 두 번째로 확률이 높은 선택이 이후의 단계에서 더 좋은 전체 경로로 이어질 수 있는데, Greedy Search는 이러한 가능성을 고려하지 않는다.
+반면 Beam Search는 각 디코딩 단계에서 상위 k개의 가능성(beam)을 유지하며 탐색한다. 이를 통해 지역 최적해에 빠질 위험을 줄이고, 전체적으로 더 나은 해를 찾을 확률을 높인다.</p>
+<h3 id="beam-search의-작동-원리">Beam Search의 작동 원리<a hidden class="anchor" aria-hidden="true" href="#beam-search의-작동-원리">#</a></h3>
+<p>Beam Search의 기본 알고리즘은 다음과 같다:</p>
+<ol>
+<li>초기 상태에서 시작하여 첫 번째 타임 스텝에서 가능한 모든 토큰의 확률을 계산한다.<br></li>
+<li>확률이 가장 높은 상위 k개의 토큰을 선택한다 (k는 beam width 또는 beam size).<br></li>
+<li>선택된 각 토큰에 대해, 다음 타임 스텝에서 가능한 모든 토큰의 확률을 계산한다.<br></li>
+<li>이전 경로의 확률과 현재 토큰의 확률을 결합하여 $k \times |V|$ 개의 가능한 경로 중 상위 k개를 다시 선택한다 (|V|는 어휘 크기).<br></li>
+<li>종료 토큰이 나타나거나 최대 길이에 도달할 때까지 3-4 단계를 반복한다.<br></li>
+</ol>
+<p>수식적으로 표현하면, 시간 $t$에서의 경로 점수는 다음과 같이 계산된다:
+$$score(y_1, y_2, \ldots, y_t) = \log P(y_1, y_2, \ldots, y_t|X) = \sum_{i=1}^{t} \log P(y_i|X, y_1, \ldots, y_{i-1})$$</p>
+<p>4번 설명에서 &lsquo;이전 경로의 확률과 현재 토큰의 확률의 결합&rsquo;은 단순 multiply다. 그러나 확률은 0과 1사이의 값이므로 타입 스텝 $t$가 길어지면 0보다 작은 확률값 $y_t$가 점점 0과 가까워 질 것이므로 컴퓨터 연산에서 underflow 문제를 야기할 수 있다. 그래서 로그 확률의 합으로, 수치적 안정성을 위해 일반적으로 로그 도메인에서 계산함으로 문제를 해결한다.</p>
+<h3 id="beam-widthsize의-의미와-선택">Beam Width(Size)의 의미와 선택<a hidden class="anchor" aria-hidden="true" href="#beam-widthsize의-의미와-선택">#</a></h3>
+<p>Beam width(k)는 각 디코딩 단계에서 유지하는 가설의 수를 결정하는 매개변수이다. 이는 탐색 공간과 계산 복잡성, 결과의 품질 사이의 중요한 균형점을 제공한다.<br>
+작은 beam width (k=1):<br> Greedy Search와 동일하며, 계산이 빠르지만 최적해를 놓칠 가능성이 높다.<br>
+큰 beam width:<br> 더 넓은, 종합적인 탐색을 가능하게 하지만 계산 비용이 증가한다.
+ASR 시스템에서는 일반적으로 k=5~20 사이의 값을 사용하는데, 이는 디코딩 품질과 속도 사이의 합리적인 타협점을 제공한다. 그러나 최적의 beam width는 모델 아키텍처, 태스크 복잡성, 하드웨어 리소스 등에 따라 달라질 수 있다.</p>
+<p>흥미롭게도, beam width를 무한히 크게 하는 것이 항상 최상의 결과를 보장하지는 않는다고 한다. 이는 &lsquo;beam search curse&rsquo;라는 현상으로, 특정 임계값 이상에서는 성능 향상이 미미하거나 오히려 감소할 수 있다. 그렇다고 한다.</p>
+<h2 id="asr-모델-아키텍처별-beam-search-적용">ASR 모델 아키텍처별 Beam Search 적용<a hidden class="anchor" aria-hidden="true" href="#asr-모델-아키텍처별-beam-search-적용">#</a></h2>
+<h3 id="hmm-gmm에서의-beam-search">HMM-GMM에서의 Beam Search<a hidden class="anchor" aria-hidden="true" href="#hmm-gmm에서의-beam-search">#</a></h3>
+<p>HMM-GMM 시스템에서 Beam Search는 다음과 같이 작동한다:
+각 시간 프레임마다 가능한 모든 HMM 상태의 확률을 계산한다.
+확률이 임계값(beam threshold) 이하인 상태는 제거(pruning)한다.
+남은 활성 상태(active states)에 대해서만 다음 프레임의 계산을 진행한다.<br>
+수식적으로, 시간 $t$에서 상태 $s$의 Viterbi 경로 확률은:
+$$\delta_t(s) = \max_{s&rsquo;} {\delta_{t-1}(s&rsquo;) \cdot a_{s&rsquo;s} \cdot b_s(o_t)}$$</p>
+<p>여기서:</p>
+<p>$\delta_t(s)$: 시간 $t$에서 상태 $s$까지의 최대 경로 확률<br>
+$a_{s&rsquo;s}$: 상태 $s&rsquo;$에서 $s$로의 전이 확률<br>
+$b_s(o_t)$: 상태 $s$에서 관측값 $o_t$의 방출 확률<br></p>
+<p>Beam Search에서는 각 시간 프레임마다 다음 조건을 만족하는 상태만 유지한다:
+$$\delta_t(s) \geq \max_j {\delta_t(j)} \cdot \theta$$
+여기서 $\theta$는 beam threshold(0과 1 사이의 값)이다.</p>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="http://localhost:1313/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="http://localhost:1313/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/tech/deeplearning/momentum/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>Momentum in DeepLearning</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/tech/asr/viterbi/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>Viterbi in HMM-GMM</span>
+  </a>
+</nav>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="http://localhost:1313/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

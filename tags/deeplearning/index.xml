@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Deeplearning on macsim&#39;s Blog</title>
+    <link>https://macsim2.github.io/tags/deeplearning/</link>
+    <description>Recent content in Deeplearning on macsim&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>ko-kr</language>
+    <lastBuildDate>Tue, 30 Jul 2024 15:30:00 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/tags/deeplearning/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>TensorRT와 Triton: 딥러닝 추론 최적화의 강력한 조합</title>
+      <link>https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/</link>
+      <pubDate>Tue, 30 Jul 2024 15:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/</guid>
+      <description>NVIDIA TensorRT와 Triton Inference Server의 내부 구조와 실전 최적화 경험을 공유합니다</description>
+    </item>
+    
+    <item>
+      <title>ONNX Graph의 내부 구조와 최적화 여정</title>
+      <link>https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/</link>
+      <pubDate>Sun, 28 Jul 2024 15:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/</guid>
+      <description>ONNX Graph의 내부 구조를 파헤치고 실전 최적화 경험을 공유합니다</description>
+    </item>
+    
+    <item>
+      <title>가중치 업데이트에 관해서 with wav2vec 2.0</title>
+      <link>https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/</link>
+      <pubDate>Wed, 22 Feb 2023 21:13:51 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/</guid>
+      <description>wav2vec 2.0 은 얼마나 weight가 업데이트 되는걸까? </description>
+    </item>
+    
+  </channel>
+</rss>

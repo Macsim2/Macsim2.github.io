@@ -5,24 +5,42 @@
     <link>https://macsim2.github.io/posts/tech/</link>
     <description>Recent content in 👨🏻‍💻 tech on macsim&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <lastBuildDate>Sat, 07 Sep 2024 18:30:33 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/posts/tech/index.xml" rel="self" type="application/rss+xml" />
+    <language>ko-kr</language>
+    <lastBuildDate>Fri, 21 Mar 2025 00:09:29 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/posts/tech/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>용액</title>
-      <link>https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/</link>
-      <pubDate>Sat, 07 Sep 2024 18:30:33 +0900</pubDate>
+      <title>TensorRT와 Triton: 딥러닝 추론 최적화의 강력한 조합</title>
+      <link>https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/</link>
+      <pubDate>Tue, 30 Jul 2024 15:30:00 +0900</pubDate>
       
-      <guid>https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/</guid>
-      <description>BOJ 2467 문제 같은 양의 두 용액을 혼합하여 특성값이 0 에 가장 가까운 용액을 만들려고 한다. 입력 2 &amp;lt;= N &amp;lt;= 100,000 예제 입력 1 5 -99 -2 -1 4 98 예제 입력 2 4 -100 -2 -1 103 출력 예제 출력 1 -99 98 예제 출력 2 -2 -1 풀이 제한시간이 1초이고, 입력 범위가 $10^5$ 이므로 $n^2$ 의 시간복잡도를 넘어가면 안될 듯 하다. naive한 방식은 $n^2$ 인데 결국은 dp나 메모</description>
+      <guid>https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/</guid>
+      <description>NVIDIA TensorRT와 Triton Inference Server의 내부 구조와 실전 최적화 경험을 공유합니다</description>
     </item>
     
     <item>
-      <title>LCS2</title>
-      <link>https://macsim2.github.io/posts/tech/algorithm/boj/lcs2/</link>
-      <pubDate>Wed, 28 Aug 2024 01:17:26 +0900</pubDate>
+      <title>ONNX Graph의 내부 구조와 최적화 여정</title>
+      <link>https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/</link>
+      <pubDate>Sun, 28 Jul 2024 15:30:00 +0900</pubDate>
       
-      <guid>https://macsim2.github.io/posts/tech/algorithm/boj/lcs2/</guid>
-      <description>BOJ 9252 문제 LCS(Longest Common Subsequence, 최장 공통 부분 수열)문제는 두 수열이 주어졌을 때, 모두의 부분 수열이 되는 수열 중 가장 긴 것을 찾는 문제이다. 예를 들어, ACAYKP와 CAPCAK의 LCS는 ACAK가 된다. 입력 첫째 줄과 둘째 줄에 두 문자열이 주어진다. 문자열은 알파벳 대문자로만 이루어져 있으며, 최대 1000글자로 이루어져 있다</description>
+      <guid>https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/</guid>
+      <description>ONNX Graph의 내부 구조를 파헤치고 실전 최적화 경험을 공유합니다</description>
+    </item>
+    
+    <item>
+      <title>가중치 업데이트에 관해서 with wav2vec 2.0</title>
+      <link>https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/</link>
+      <pubDate>Wed, 22 Feb 2023 21:13:51 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/</guid>
+      <description>wav2vec 2.0 은 얼마나 weight가 업데이트 되는걸까? </description>
+    </item>
+    
+    <item>
+      <title>분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1)</title>
+      <link>https://macsim2.github.io/posts/tech/machinelearning/classification_metric/</link>
+      <pubDate>Tue, 21 Feb 2023 21:10:51 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/machinelearning/classification_metric/</guid>
+      <description>Accuracy의 함정과 Precision, Recall, F1-score가 왜 필요한지 알아보자.</description>
     </item>
     
     <item>
@@ -32,6 +50,24 @@
       
       <guid>https://macsim2.github.io/posts/tech/tmp/</guid>
       <description>scan命令详解</description>
+    </item>
+    
+    <item>
+      <title>Nginx와 blocking, sync</title>
+      <link>https://macsim2.github.io/posts/tech/dev/web/nginx/</link>
+      <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/dev/web/nginx/</guid>
+      <description>Nginx, Apache와 뭐가 다르고 왜 잘 나가는지 파헤쳐 보자.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://macsim2.github.io/posts/tech/asr/ctc_loss/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/asr/ctc_loss/</guid>
+      <description>요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT</description>
     </item>
     
   </channel>

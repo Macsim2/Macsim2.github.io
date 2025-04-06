@@ -5,7 +5,7 @@
     <link>https://macsim2.github.io/posts/life/</link>
     <description>Recent content in 🏖 life on macsim&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>ko-kr</language>
     <lastBuildDate>Sat, 10 Aug 2024 15:08:58 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/posts/life/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Test</title>
@@ -23,6 +23,15 @@
       
       <guid>https://macsim2.github.io/posts/life/life/</guid>
       <description></description>
+    </item>
+    
+    <item>
+      <title>데이터 전송, 어떻게 신뢰성을 보장할까?</title>
+      <link>https://macsim2.github.io/posts/life/data-transfer-confidence-explained/</link>
+      <pubDate>Thu, 05 May 2022 00:18:15 +0800</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/life/data-transfer-confidence-explained/</guid>
+      <description>무선 통신 환경에서 데이터가 1bit의 오류 없이 전송될 수 있는 원리를 알아보자.</description>
     </item>
     
   </channel>

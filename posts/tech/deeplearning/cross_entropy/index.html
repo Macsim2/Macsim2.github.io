@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Cross Entropy Loss in Deep Learning | macsim&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="딥러닝에서 Cross Entropy 손실 함수의 이해와 활용">
+<meta name="author" content="macsim">
+<link rel="canonical" href="http://localhost:1313/posts/tech/deeplearning/cross_entropy/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/img/Q.gif">
+<link rel="apple-touch-icon" href="http://localhost:1313/img/Q.gif">
+<link rel="mask-icon" href="http://localhost:1313/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="http://localhost:1313/posts/tech/deeplearning/cross_entropy/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script defer src="https://unpkg.com/mermaid@8.8.1/dist/mermaid.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="Cross Entropy Loss in Deep Learning" />
+<meta property="og:description" content="딥러닝에서 Cross Entropy 손실 함수의 이해와 활용" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/posts/tech/deeplearning/cross_entropy/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-03-19T01:17:26+09:00" />
+<meta property="article:modified_time" content="2025-03-19T01:17:26+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Cross Entropy Loss in Deep Learning"/>
+<meta name="twitter:description" content="딥러닝에서 Cross Entropy 손실 함수의 이해와 활용"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "http://localhost:1313/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "http://localhost:1313/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Cross Entropy Loss in Deep Learning",
+      "item": "http://localhost:1313/posts/tech/deeplearning/cross_entropy/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Cross Entropy Loss in Deep Learning",
+  "name": "Cross Entropy Loss in Deep Learning",
+  "description": "딥러닝에서 Cross Entropy 손실 함수의 이해와 활용",
+  "keywords": [
+    ""
+  ],
+  "articleBody": "물리학에서는 엔트로피는 시스템의 무질서도 또는 혼란도를 나타내는 척도라고 한다.\n열역학 제 2법칙에 따르면 고립된 시스템에서 엔트로피는 시간이 지남에 따라 항상 증가하거나 유지하는 경향을 보인다고 한다. 일상에서는 얼음이 녹거나 폭포가 떨어지는 것도 엔트로피 증가의 예시이다. 조금 어려운 말로는 사용 가능한 에너지에서 사용 불가능한 에너지로 변화하는 경향을 나타내는 개념이다.\n그렇다면 deep learning 에서 말하는 cross entropy란 무엇을 말하는걸까?\nCross Entropy의 기본 개념 Cross Entropy(교차 엔트로피)는 정보 이론에서 유래된 개념으로, 딥러닝에서 가장 널리 사용되는 손실 함수(loss function) 중 하나이다. 특히 분류 문제에서 모델의 예측과 실제 레이블 간의 차이를 측정하는 데 사용된다.\n직관적 이해 교차 엔트로피는 “두 확률 분포가 얼마나 다른지\"를 측정하는 방법이다. 간단히 말하면,\n실제 정답 분포(target distribution)가 있고 모델이 예측한 분포(predicted distribution)가 있을 때 이 두 분포가 얼마나 다른지를 수치화한 것이 교차 엔트로피 예를 들어, 고양이/개/새를 분류하는 문제에서:\n실제 레이블: [1, 0, 0] (이 이미지는 고양이) 모델 예측: [0.7, 0.2, 0.1] (모델은 70% 확률로 고양이, 20% 확률로 개, 10% 확률로 새라고 예측) 교차 엔트로피는 이 두 분포 간의 불일치를 수치화하여 모델이 얼마나 정확한지 평가한다.\n정보 이론적 배경 교차 엔트로피를 이해하기 위해서는 몇 가지 정보 이론 개념을 알아야 한다.\n엔트로피(Entropy) 엔트로피는 정보의 불확실성을 측정하는 지표이다. 확률 분포 $P$의 엔트로피는 다음과 같이 정의된다:\n$$H(P) = -\\sum_{i} P(i) \\log P(i)$$\n여기서:\n$P(i)$는 사건 $i$가 발생할 확률 로그의 밑은 보통 $e$(자연로그) 또는 2(비트 단위)를 사용 엔트로피가 높을수록 불확실성이 크고, 낮을수록 확실성이 높다.\nKL 발산(Kullback-Leibler Divergence) KL 발산은 두 확률 분포 $P$와 $Q$ 사이의 차이를 측정한다:\n$$D_{KL}(P||Q) = \\sum_{i} P(i) \\log \\frac{P(i)}{Q(i)}$$\n이는 “분포 $P$를 분포 $Q$로 표현할 때 발생하는 추가 정보량\"으로 해석할 수 있다.\n교차 엔트로피 교차 엔트로피는 KL 발산과 밀접하게 관련되어 있다:\n$$H(P, Q) = H(P) + D_{KL}(P||Q) = -\\sum_{i} P(i) \\log Q(i)$$\n여기서:\n$H(P)$는 분포 $P$의 엔트로피 $H(P, Q)$는 분포 $P$와 $Q$ 사이의 교차 엔트로피 분류 문제에서 실제 레이블 분포 $P$는 고정되어 있으므로, 교차 엔트로피를 최소화하는 것은 KL 발산을 최소화하는 것과 동일하다.\n딥러닝에서의 Cross Entropy 손실 함수 딥러닝 모델, 특히 분류 모델을 학습시킬 때 교차 엔트로피 손실 함수가 널리 사용되는 이유를 알아보자.\nBinary Cross Entropy (BCE) 이진 분류 문제(두 클래스 분류)에서 사용되는 손실 함수이다:\n$$BCE = -\\frac{1}{N}\\sum_{i=1}^{N}[y_i \\log(p_i) + (1-y_i) \\log(1-p_i)]$$\n여기서:\n$N$은 샘플 수 $y_i$는 실제 레이블(0 또는 1) $p_i$는 모델이 예측한 양성 클래스의 확률 Categorical Cross Entropy (CCE) 다중 클래스 분류 문제에서 사용되는 손실 함수이다:\n$$CCE = -\\frac{1}{N}\\sum_{i=1}^{N}\\sum_{j=1}^{C}y_{ij} \\log(p_{ij})$$\n여기서:\n$N$은 샘플 수 $C$는 클래스 수 $y_{ij}$는 샘플 $i$가 클래스 $j$에 속하는지 여부(0 또는 1) $p_{ij}$는 모델이 예측한 샘플 $i$가 클래스 $j$에 속할 확률 Sparse Categorical Cross Entropy 범주형 교차 엔트로피와 동일하지만, 원-핫 인코딩된 벡터 대신 정수 형태의 레이블을 사용한다. 클래스 수가 많을 때 메모리 효율성이 좋다.\nCross Entropy의 장점 딥러닝에서 교차 엔트로피가 손실 함수로 널리 사용되는 이유는 다음과 같다:\n1. 확률적 해석이 명확함 교차 엔트로피는 확률 분포 간의 차이를 직접 측정하기 때문에, 분류 문제에서 자연스러운 선택이다.\n2. 그래디언트 소실 문제를 완화 시그모이드나 소프트맥스 활성화 함수와 함께 사용할 때, 평균 제곱 오차(MSE)에 비해 그래디언트 소실 문제가 덜 심각하다.\n손실 함수 그래디언트 MSE + 시그모이드 $\\frac{\\partial L}{\\partial z} = (a-y) \\cdot a \\cdot (1-a)$ 교차 엔트로피 + 시그모이드 $\\frac{\\partial L}{\\partial z} = a-y$ 교차 엔트로피의 경우 그래디언트가 출력 활성화($a$)와 타겟($y$)의 차이에 직접 비례하므로, 활성화 함수의 도함수가 포함되지 않아 그래디언트 소실이 덜 발생한다.\n3. 최대 우도 추정(MLE)와의 연관성 교차 엔트로피 최소화는 통계학에서 최대 우도 추정과 수학적으로 동일하다. 따라서 확률론적 관점에서 이론적으로 견고한 기반을 가진다.\n4. 분류 경계에 집중 교차 엔트로피는 확신이 낮은 예측(확률이 0.5에 가까운)에 더 큰 페널티를 부과한다. 이는 분류 경계 부근의 샘플을 더 잘 구분하도록 모델을 학습시킨다.\nBinary Cross Entropy vs Categorical Cross Entropy 특성 Binary Cross Entropy Categorical Cross Entropy 적용 분야 이진 분류 (2개 클래스) 다중 클래스 분류 (3개 이상) 출력 활성화 함수 시그모이드 소프트맥스 출력 형태 단일 값 (0~1 사이) 각 클래스별 확률 벡터 타겟 형태 단일 값 (0 또는 1) 원-핫 인코딩 벡터 다중 레이블 분류 가능 여부 가능 (각 출력을 독립적으로 처리) 불가능 (소프트맥스는 상호 배타적) 실제 구현 및 사용 예시 PyTorch 예시 import torch import torch.nn as nn # 이진 분류를 위한 BCE criterion = nn.BCELoss() outputs = torch.tensor([0.7, 0.3, 0.9]) targets = torch.tensor([1.0, 0.0, 1.0]) loss = criterion(outputs, targets) print(f\"Binary Cross Entropy Loss: {loss.item()}\") # 다중 클래스 분류를 위한 CCE criterion = nn.CrossEntropyLoss() outputs = torch.tensor([[0.2, 0.5, 0.3], [0.8, 0.1, 0.1]]) targets = torch.tensor([1, 0]) # 클래스 인덱스 loss = criterion(outputs, targets) print(f\"Categorical Cross Entropy Loss: {loss.item()}\") TensorFlow/Keras 예시 import tensorflow as tf from tensorflow import keras # 이진 분류 모델 model = keras.Sequential([ keras.layers.Dense(1, activation='sigmoid') ]) model.compile( optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'] ) # 다중 클래스 분류 모델 model = keras.Sequential([ keras.layers.Dense(10, activation='softmax') ]) model.compile( optimizer='adam', loss='categorical_crossentropy', # 원-핫 인코딩된 타겟 # 또는 loss='sparse_categorical_crossentropy', # 정수 타겟 metrics=['accuracy'] ) 주의사항 및 실용적 팁 1. 수치적 안정성 로그 함수는 입력이 0에 가까울 때 불안정해진다. 따라서 구현 시 작은 epsilon 값을 더해 안정성을 확보하는 것이 중요하다:\ndef stable_cross_entropy(y_true, y_pred, epsilon=1e-15): y_pred = np.clip(y_pred, epsilon, 1 - epsilon) return -np.sum(y_true * np.log(y_pred)) 2. 클래스 불균형 문제 클래스 분포가 불균형한 데이터셋에서는 가중치를 적용한 교차 엔트로피를 사용할 수 있다:\n# PyTorch에서 가중치 적용 weight = torch.tensor([1.0, 5.0, 2.0]) # 클래스별 가중치 criterion = nn.CrossEntropyLoss(weight=weight) # TensorFlow/Keras에서 가중치 적용 model.compile( loss=keras.losses.CategoricalCrossentropy( class_weights={0: 1.0, 1: 5.0, 2: 2.0} ) ) 3. 레이블 스무딩(Label Smoothing) 모델의 과신(overconfidence)을 방지하고 일반화 성능을 향상시키기 위해 레이블 스무딩을 적용할 수 있다:\n# PyTorch에서 레이블 스무딩 criterion = nn.CrossEntropyLoss(label_smoothing=0.1) # TensorFlow/Keras에서 레이블 스무딩 model.compile( loss=keras.losses.CategoricalCrossentropy(label_smoothing=0.1) ) 레이블 스무딩은 원-핫 인코딩된 타겟을 약간 “부드럽게” 만들어, 1은 0.9로, 0은 0.1/(클래스 수-1)로 변환한다.\n결론 교차 엔트로피는 분류 문제에서 이론적으로 견고하고 실용적인 손실 함수이다. 정보 이론에 기반한 확률적 해석이 명확하고, 그래디언트 계산이 효율적이며, 실제로 우수한 성능을 발휘한다.\n모델의 예측을 확률 분포로 해석할 수 있는 거의 모든 분류 문제에서 기본적으로 선택할 수 있는 손실 함수이며, 이진 분류와 다중 클래스 분류 각각에 맞는 변형을 사용할 수 있다.\n딥러닝에서 교차 엔트로피의 중요성은 아무리 강조해도 지나치지 않으며, 모델의 학습과 성능을 좌우하는 핵심 요소 중 하나이다.\n참고 문헌 Shannon, C. E. (1948). A Mathematical Theory of Communication. Bell System Technical Journal. Goodfellow, I., Bengio, Y., \u0026 Courville, A. (2016). Deep Learning. MIT Press. Bishop, C. M. (2006). Pattern Recognition and Machine Learning. Springer. ",
+  "wordCount" : "2643",
+  "inLanguage": "ko",
+  "datePublished": "2025-03-19T01:17:26+09:00",
+  "dateModified": "2025-03-19T01:17:26+09:00",
+  "author":[{
+    "@type": "Person",
+    "name": "macsim"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/tech/deeplearning/cross_entropy/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="http://localhost:1313/">🏠 홈</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">posts</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                Cross Entropy Loss in Deep Learning<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+            </h1>
+            <div class="post-description">
+                딥러닝에서 Cross Entropy 손실 함수의 이해와 활용
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2025-03-19
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>2643 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>6 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="http://localhost:1313/tags/deeplearning/" style="color: var(--secondary)!important;">DeepLearning</a>
+                &nbsp;<a href="http://localhost:1313/tags/loss-function/" style="color: var(--secondary)!important;">Loss Function</a>
+                &nbsp;<a href="http://localhost:1313/tags/information-theory/" style="color: var(--secondary)!important;">Information Theory</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "http://localhost:1313/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#cross-entropy%ec%9d%98-%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90" aria-label="Cross Entropy의 기본 개념">Cross Entropy의 기본 개념</a><ul>
+                        
+                <li>
+                    <a href="#%ec%a7%81%ea%b4%80%ec%a0%81-%ec%9d%b4%ed%95%b4" aria-label="직관적 이해">직관적 이해</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ec%a0%95%eb%b3%b4-%ec%9d%b4%eb%a1%a0%ec%a0%81-%eb%b0%b0%ea%b2%bd" aria-label="정보 이론적 배경">정보 이론적 배경</a><ul>
+                        
+                <li>
+                    <a href="#%ec%97%94%ed%8a%b8%eb%a1%9c%ed%94%bcentropy" aria-label="엔트로피(Entropy)">엔트로피(Entropy)</a></li>
+                <li>
+                    <a href="#kl-%eb%b0%9c%ec%82%b0kullback-leibler-divergence" aria-label="KL 발산(Kullback-Leibler Divergence)">KL 발산(Kullback-Leibler Divergence)</a></li>
+                <li>
+                    <a href="#%ea%b5%90%ec%b0%a8-%ec%97%94%ed%8a%b8%eb%a1%9c%ed%94%bc" aria-label="교차 엔트로피">교차 엔트로피</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%eb%94%a5%eb%9f%ac%eb%8b%9d%ec%97%90%ec%84%9c%ec%9d%98-cross-entropy-%ec%86%90%ec%8b%a4-%ed%95%a8%ec%88%98" aria-label="딥러닝에서의 Cross Entropy 손실 함수">딥러닝에서의 Cross Entropy 손실 함수</a><ul>
+                        
+                <li>
+                    <a href="#binary-cross-entropy-bce" aria-label="Binary Cross Entropy (BCE)">Binary Cross Entropy (BCE)</a></li>
+                <li>
+                    <a href="#categorical-cross-entropy-cce" aria-label="Categorical Cross Entropy (CCE)">Categorical Cross Entropy (CCE)</a></li>
+                <li>
+                    <a href="#sparse-categorical-cross-entropy" aria-label="Sparse Categorical Cross Entropy">Sparse Categorical Cross Entropy</a></li></ul>
+                </li>
+                <li>
+                    <a href="#cross-entropy%ec%9d%98-%ec%9e%a5%ec%a0%90" aria-label="Cross Entropy의 장점">Cross Entropy의 장점</a><ul>
+                        
+                <li>
+                    <a href="#1-%ed%99%95%eb%a5%a0%ec%a0%81-%ed%95%b4%ec%84%9d%ec%9d%b4-%eb%aa%85%ed%99%95%ed%95%a8" aria-label="1. 확률적 해석이 명확함">1. 확률적 해석이 명확함</a></li>
+                <li>
+                    <a href="#2-%ea%b7%b8%eb%9e%98%eb%94%94%ec%96%b8%ed%8a%b8-%ec%86%8c%ec%8b%a4-%eb%ac%b8%ec%a0%9c%eb%a5%bc-%ec%99%84%ed%99%94" aria-label="2. 그래디언트 소실 문제를 완화">2. 그래디언트 소실 문제를 완화</a></li>
+                <li>
+                    <a href="#3-%ec%b5%9c%eb%8c%80-%ec%9a%b0%eb%8f%84-%ec%b6%94%ec%a0%95mle%ec%99%80%ec%9d%98-%ec%97%b0%ea%b4%80%ec%84%b1" aria-label="3. 최대 우도 추정(MLE)와의 연관성">3. 최대 우도 추정(MLE)와의 연관성</a></li>
+                <li>
+                    <a href="#4-%eb%b6%84%eb%a5%98-%ea%b2%bd%ea%b3%84%ec%97%90-%ec%a7%91%ec%a4%91" aria-label="4. 분류 경계에 집중">4. 분류 경계에 집중</a></li></ul>
+                </li>
+                <li>
+                    <a href="#binary-cross-entropy-vs-categorical-cross-entropy" aria-label="Binary Cross Entropy vs Categorical Cross Entropy">Binary Cross Entropy vs Categorical Cross Entropy</a></li>
+                <li>
+                    <a href="#%ec%8b%a4%ec%a0%9c-%ea%b5%ac%ed%98%84-%eb%b0%8f-%ec%82%ac%ec%9a%a9-%ec%98%88%ec%8b%9c" aria-label="실제 구현 및 사용 예시">실제 구현 및 사용 예시</a><ul>
+                        
+                <li>
+                    <a href="#pytorch-%ec%98%88%ec%8b%9c" aria-label="PyTorch 예시">PyTorch 예시</a></li>
+                <li>
+                    <a href="#tensorflowkeras-%ec%98%88%ec%8b%9c" aria-label="TensorFlow/Keras 예시">TensorFlow/Keras 예시</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ec%a3%bc%ec%9d%98%ec%82%ac%ed%95%ad-%eb%b0%8f-%ec%8b%a4%ec%9a%a9%ec%a0%81-%ed%8c%81" aria-label="주의사항 및 실용적 팁">주의사항 및 실용적 팁</a><ul>
+                        
+                <li>
+                    <a href="#1-%ec%88%98%ec%b9%98%ec%a0%81-%ec%95%88%ec%a0%95%ec%84%b1" aria-label="1. 수치적 안정성">1. 수치적 안정성</a></li>
+                <li>
+                    <a href="#2-%ed%81%b4%eb%9e%98%ec%8a%a4-%eb%b6%88%ea%b7%a0%ed%98%95-%eb%ac%b8%ec%a0%9c" aria-label="2. 클래스 불균형 문제">2. 클래스 불균형 문제</a></li>
+                <li>
+                    <a href="#3-%eb%a0%88%ec%9d%b4%eb%b8%94-%ec%8a%a4%eb%ac%b4%eb%94%a9label-smoothing" aria-label="3. 레이블 스무딩(Label Smoothing)">3. 레이블 스무딩(Label Smoothing)</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ea%b2%b0%eb%a1%a0" aria-label="결론">결론</a></li>
+                <li>
+                    <a href="#%ec%b0%b8%ea%b3%a0-%eb%ac%b8%ed%97%8c" aria-label="참고 문헌">참고 문헌</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>물리학에서는 엔트로피는 시스템의 무질서도 또는 혼란도를 나타내는 척도라고 한다.</p>
+<p>열역학 제 2법칙에 따르면 고립된 시스템에서 엔트로피는 시간이 지남에 따라 항상 증가하거나 유지하는 경향을 보인다고 한다. 일상에서는 얼음이 녹거나 폭포가 떨어지는 것도 엔트로피 증가의 예시이다. 조금 어려운 말로는 사용 가능한 에너지에서 사용 불가능한 에너지로 변화하는 경향을 나타내는 개념이다.</p>
+<p>그렇다면 deep learning 에서 말하는 cross entropy란 무엇을 말하는걸까?</p>
+<h2 id="cross-entropy의-기본-개념">Cross Entropy의 기본 개념<a hidden class="anchor" aria-hidden="true" href="#cross-entropy의-기본-개념">#</a></h2>
+<p>Cross Entropy(교차 엔트로피)는 정보 이론에서 유래된 개념으로, 딥러닝에서 가장 널리 사용되는 손실 함수(loss function) 중 하나이다. 특히 분류 문제에서 모델의 예측과 실제 레이블 간의 차이를 측정하는 데 사용된다.</p>
+<h3 id="직관적-이해">직관적 이해<a hidden class="anchor" aria-hidden="true" href="#직관적-이해">#</a></h3>
+<p>교차 엔트로피는 &ldquo;두 확률 분포가 얼마나 다른지&quot;를 측정하는 방법이다. 간단히 말하면,</p>
+<ul>
+<li>실제 정답 분포(target distribution)가 있고</li>
+<li>모델이 예측한 분포(predicted distribution)가 있을 때</li>
+<li>이 두 분포가 얼마나 다른지를 수치화한 것이 교차 엔트로피</li>
+</ul>
+<p>예를 들어, 고양이/개/새를 분류하는 문제에서:</p>
+<ul>
+<li>실제 레이블: [1, 0, 0] (이 이미지는 고양이)</li>
+<li>모델 예측: [0.7, 0.2, 0.1] (모델은 70% 확률로 고양이, 20% 확률로 개, 10% 확률로 새라고 예측)</li>
+</ul>
+<p>교차 엔트로피는 이 두 분포 간의 불일치를 수치화하여 모델이 얼마나 정확한지 평가한다.</p>
+<h2 id="정보-이론적-배경">정보 이론적 배경<a hidden class="anchor" aria-hidden="true" href="#정보-이론적-배경">#</a></h2>
+<p>교차 엔트로피를 이해하기 위해서는 몇 가지 정보 이론 개념을 알아야 한다.</p>
+<h3 id="엔트로피entropy">엔트로피(Entropy)<a hidden class="anchor" aria-hidden="true" href="#엔트로피entropy">#</a></h3>
+<p>엔트로피는 정보의 불확실성을 측정하는 지표이다. 확률 분포 $P$의 엔트로피는 다음과 같이 정의된다:</p>
+<p>$$H(P) = -\sum_{i} P(i) \log P(i)$$</p>
+<p>여기서:</p>
+<ul>
+<li>$P(i)$는 사건 $i$가 발생할 확률</li>
+<li>로그의 밑은 보통 $e$(자연로그) 또는 2(비트 단위)를 사용</li>
+</ul>
+<p>엔트로피가 높을수록 불확실성이 크고, 낮을수록 확실성이 높다.</p>
+<h3 id="kl-발산kullback-leibler-divergence">KL 발산(Kullback-Leibler Divergence)<a hidden class="anchor" aria-hidden="true" href="#kl-발산kullback-leibler-divergence">#</a></h3>
+<p>KL 발산은 두 확률 분포 $P$와 $Q$ 사이의 차이를 측정한다:</p>
+<p>$$D_{KL}(P||Q) = \sum_{i} P(i) \log \frac{P(i)}{Q(i)}$$</p>
+<p>이는 &ldquo;분포 $P$를 분포 $Q$로 표현할 때 발생하는 추가 정보량&quot;으로 해석할 수 있다.</p>
+<h3 id="교차-엔트로피">교차 엔트로피<a hidden class="anchor" aria-hidden="true" href="#교차-엔트로피">#</a></h3>
+<p>교차 엔트로피는 KL 발산과 밀접하게 관련되어 있다:</p>
+<p>$$H(P, Q) = H(P) + D_{KL}(P||Q) = -\sum_{i} P(i) \log Q(i)$$</p>
+<p>여기서:</p>
+<ul>
+<li>$H(P)$는 분포 $P$의 엔트로피</li>
+<li>$H(P, Q)$는 분포 $P$와 $Q$ 사이의 교차 엔트로피</li>
+</ul>
+<p>분류 문제에서 실제 레이블 분포 $P$는 고정되어 있으므로, 교차 엔트로피를 최소화하는 것은 KL 발산을 최소화하는 것과 동일하다.</p>
+<h2 id="딥러닝에서의-cross-entropy-손실-함수">딥러닝에서의 Cross Entropy 손실 함수<a hidden class="anchor" aria-hidden="true" href="#딥러닝에서의-cross-entropy-손실-함수">#</a></h2>
+<p>딥러닝 모델, 특히 분류 모델을 학습시킬 때 교차 엔트로피 손실 함수가 널리 사용되는 이유를 알아보자.</p>
+<h3 id="binary-cross-entropy-bce">Binary Cross Entropy (BCE)<a hidden class="anchor" aria-hidden="true" href="#binary-cross-entropy-bce">#</a></h3>
+<p>이진 분류 문제(두 클래스 분류)에서 사용되는 손실 함수이다:</p>
+<p>$$BCE = -\frac{1}{N}\sum_{i=1}^{N}[y_i \log(p_i) + (1-y_i) \log(1-p_i)]$$</p>
+<p>여기서:</p>
+<ul>
+<li>$N$은 샘플 수</li>
+<li>$y_i$는 실제 레이블(0 또는 1)</li>
+<li>$p_i$는 모델이 예측한 양성 클래스의 확률</li>
+</ul>
+<h3 id="categorical-cross-entropy-cce">Categorical Cross Entropy (CCE)<a hidden class="anchor" aria-hidden="true" href="#categorical-cross-entropy-cce">#</a></h3>
+<p>다중 클래스 분류 문제에서 사용되는 손실 함수이다:</p>
+<p>$$CCE = -\frac{1}{N}\sum_{i=1}^{N}\sum_{j=1}^{C}y_{ij} \log(p_{ij})$$</p>
+<p>여기서:</p>
+<ul>
+<li>$N$은 샘플 수</li>
+<li>$C$는 클래스 수</li>
+<li>$y_{ij}$는 샘플 $i$가 클래스 $j$에 속하는지 여부(0 또는 1)</li>
+<li>$p_{ij}$는 모델이 예측한 샘플 $i$가 클래스 $j$에 속할 확률</li>
+</ul>
+<h3 id="sparse-categorical-cross-entropy">Sparse Categorical Cross Entropy<a hidden class="anchor" aria-hidden="true" href="#sparse-categorical-cross-entropy">#</a></h3>
+<p>범주형 교차 엔트로피와 동일하지만, 원-핫 인코딩된 벡터 대신 정수 형태의 레이블을 사용한다. 클래스 수가 많을 때 메모리 효율성이 좋다.</p>
+<h2 id="cross-entropy의-장점">Cross Entropy의 장점<a hidden class="anchor" aria-hidden="true" href="#cross-entropy의-장점">#</a></h2>
+<p>딥러닝에서 교차 엔트로피가 손실 함수로 널리 사용되는 이유는 다음과 같다:</p>
+<h3 id="1-확률적-해석이-명확함">1. 확률적 해석이 명확함<a hidden class="anchor" aria-hidden="true" href="#1-확률적-해석이-명확함">#</a></h3>
+<p>교차 엔트로피는 확률 분포 간의 차이를 직접 측정하기 때문에, 분류 문제에서 자연스러운 선택이다.</p>
+<h3 id="2-그래디언트-소실-문제를-완화">2. 그래디언트 소실 문제를 완화<a hidden class="anchor" aria-hidden="true" href="#2-그래디언트-소실-문제를-완화">#</a></h3>
+<p>시그모이드나 소프트맥스 활성화 함수와 함께 사용할 때, 평균 제곱 오차(MSE)에 비해 그래디언트 소실 문제가 덜 심각하다.</p>
+<table>
+<thead>
+<tr>
+<th>손실 함수</th>
+<th>그래디언트</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MSE + 시그모이드</td>
+<td>$\frac{\partial L}{\partial z} = (a-y) \cdot a \cdot (1-a)$</td>
+</tr>
+<tr>
+<td>교차 엔트로피 + 시그모이드</td>
+<td>$\frac{\partial L}{\partial z} = a-y$</td>
+</tr>
+</tbody>
+</table>
+<p>교차 엔트로피의 경우 그래디언트가 출력 활성화($a$)와 타겟($y$)의 차이에 직접 비례하므로, 활성화 함수의 도함수가 포함되지 않아 그래디언트 소실이 덜 발생한다.</p>
+<h3 id="3-최대-우도-추정mle와의-연관성">3. 최대 우도 추정(MLE)와의 연관성<a hidden class="anchor" aria-hidden="true" href="#3-최대-우도-추정mle와의-연관성">#</a></h3>
+<p>교차 엔트로피 최소화는 통계학에서 최대 우도 추정과 수학적으로 동일하다. 따라서 확률론적 관점에서 이론적으로 견고한 기반을 가진다.</p>
+<h3 id="4-분류-경계에-집중">4. 분류 경계에 집중<a hidden class="anchor" aria-hidden="true" href="#4-분류-경계에-집중">#</a></h3>
+<p>교차 엔트로피는 확신이 낮은 예측(확률이 0.5에 가까운)에 더 큰 페널티를 부과한다. 이는 분류 경계 부근의 샘플을 더 잘 구분하도록 모델을 학습시킨다.</p>
+<h2 id="binary-cross-entropy-vs-categorical-cross-entropy">Binary Cross Entropy vs Categorical Cross Entropy<a hidden class="anchor" aria-hidden="true" href="#binary-cross-entropy-vs-categorical-cross-entropy">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>특성</th>
+<th>Binary Cross Entropy</th>
+<th>Categorical Cross Entropy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>적용 분야</td>
+<td>이진 분류 (2개 클래스)</td>
+<td>다중 클래스 분류 (3개 이상)</td>
+</tr>
+<tr>
+<td>출력 활성화 함수</td>
+<td>시그모이드</td>
+<td>소프트맥스</td>
+</tr>
+<tr>
+<td>출력 형태</td>
+<td>단일 값 (0~1 사이)</td>
+<td>각 클래스별 확률 벡터</td>
+</tr>
+<tr>
+<td>타겟 형태</td>
+<td>단일 값 (0 또는 1)</td>
+<td>원-핫 인코딩 벡터</td>
+</tr>
+<tr>
+<td>다중 레이블 분류 가능 여부</td>
+<td>가능 (각 출력을 독립적으로 처리)</td>
+<td>불가능 (소프트맥스는 상호 배타적)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="실제-구현-및-사용-예시">실제 구현 및 사용 예시<a hidden class="anchor" aria-hidden="true" href="#실제-구현-및-사용-예시">#</a></h2>
+<h3 id="pytorch-예시">PyTorch 예시<a hidden class="anchor" aria-hidden="true" href="#pytorch-예시">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch.nn <span style="color:#66d9ef">as</span> nn
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 이진 분류를 위한 BCE</span>
+</span></span><span style="display:flex;"><span>criterion <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>BCELoss()
+</span></span><span style="display:flex;"><span>outputs <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">0.7</span>, <span style="color:#ae81ff">0.3</span>, <span style="color:#ae81ff">0.9</span>])
+</span></span><span style="display:flex;"><span>targets <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">1.0</span>, <span style="color:#ae81ff">0.0</span>, <span style="color:#ae81ff">1.0</span>])
+</span></span><span style="display:flex;"><span>loss <span style="color:#f92672">=</span> criterion(outputs, targets)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Binary Cross Entropy Loss: </span><span style="color:#e6db74">{</span>loss<span style="color:#f92672">.</span>item()<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 다중 클래스 분류를 위한 CCE</span>
+</span></span><span style="display:flex;"><span>criterion <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>CrossEntropyLoss()
+</span></span><span style="display:flex;"><span>outputs <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([[<span style="color:#ae81ff">0.2</span>, <span style="color:#ae81ff">0.5</span>, <span style="color:#ae81ff">0.3</span>], [<span style="color:#ae81ff">0.8</span>, <span style="color:#ae81ff">0.1</span>, <span style="color:#ae81ff">0.1</span>]])
+</span></span><span style="display:flex;"><span>targets <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>])  <span style="color:#75715e"># 클래스 인덱스</span>
+</span></span><span style="display:flex;"><span>loss <span style="color:#f92672">=</span> criterion(outputs, targets)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Categorical Cross Entropy Loss: </span><span style="color:#e6db74">{</span>loss<span style="color:#f92672">.</span>item()<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><h3 id="tensorflowkeras-예시">TensorFlow/Keras 예시<a hidden class="anchor" aria-hidden="true" href="#tensorflowkeras-예시">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> tensorflow <span style="color:#66d9ef">as</span> tf
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> tensorflow <span style="color:#f92672">import</span> keras
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 이진 분류 모델</span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> keras<span style="color:#f92672">.</span>Sequential([
+</span></span><span style="display:flex;"><span>    keras<span style="color:#f92672">.</span>layers<span style="color:#f92672">.</span>Dense(<span style="color:#ae81ff">1</span>, activation<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;sigmoid&#39;</span>)
+</span></span><span style="display:flex;"><span>])
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>compile(
+</span></span><span style="display:flex;"><span>    optimizer<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;adam&#39;</span>,
+</span></span><span style="display:flex;"><span>    loss<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;binary_crossentropy&#39;</span>,
+</span></span><span style="display:flex;"><span>    metrics<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;accuracy&#39;</span>]
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 다중 클래스 분류 모델</span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> keras<span style="color:#f92672">.</span>Sequential([
+</span></span><span style="display:flex;"><span>    keras<span style="color:#f92672">.</span>layers<span style="color:#f92672">.</span>Dense(<span style="color:#ae81ff">10</span>, activation<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;softmax&#39;</span>)
+</span></span><span style="display:flex;"><span>])
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>compile(
+</span></span><span style="display:flex;"><span>    optimizer<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;adam&#39;</span>,
+</span></span><span style="display:flex;"><span>    loss<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;categorical_crossentropy&#39;</span>,  <span style="color:#75715e"># 원-핫 인코딩된 타겟</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 또는 loss=&#39;sparse_categorical_crossentropy&#39;,  # 정수 타겟</span>
+</span></span><span style="display:flex;"><span>    metrics<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;accuracy&#39;</span>]
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><h2 id="주의사항-및-실용적-팁">주의사항 및 실용적 팁<a hidden class="anchor" aria-hidden="true" href="#주의사항-및-실용적-팁">#</a></h2>
+<h3 id="1-수치적-안정성">1. 수치적 안정성<a hidden class="anchor" aria-hidden="true" href="#1-수치적-안정성">#</a></h3>
+<p>로그 함수는 입력이 0에 가까울 때 불안정해진다. 따라서 구현 시 작은 epsilon 값을 더해 안정성을 확보하는 것이 중요하다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">stable_cross_entropy</span>(y_true, y_pred, epsilon<span style="color:#f92672">=</span><span style="color:#ae81ff">1e-15</span>):
+</span></span><span style="display:flex;"><span>    y_pred <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>clip(y_pred, epsilon, <span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> epsilon)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span>np<span style="color:#f92672">.</span>sum(y_true <span style="color:#f92672">*</span> np<span style="color:#f92672">.</span>log(y_pred))
+</span></span></code></pre></div><h3 id="2-클래스-불균형-문제">2. 클래스 불균형 문제<a hidden class="anchor" aria-hidden="true" href="#2-클래스-불균형-문제">#</a></h3>
+<p>클래스 분포가 불균형한 데이터셋에서는 가중치를 적용한 교차 엔트로피를 사용할 수 있다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch에서 가중치 적용</span>
+</span></span><span style="display:flex;"><span>weight <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">1.0</span>, <span style="color:#ae81ff">5.0</span>, <span style="color:#ae81ff">2.0</span>])  <span style="color:#75715e"># 클래스별 가중치</span>
+</span></span><span style="display:flex;"><span>criterion <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>CrossEntropyLoss(weight<span style="color:#f92672">=</span>weight)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># TensorFlow/Keras에서 가중치 적용</span>
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>compile(
+</span></span><span style="display:flex;"><span>    loss<span style="color:#f92672">=</span>keras<span style="color:#f92672">.</span>losses<span style="color:#f92672">.</span>CategoricalCrossentropy(
+</span></span><span style="display:flex;"><span>        class_weights<span style="color:#f92672">=</span>{<span style="color:#ae81ff">0</span>: <span style="color:#ae81ff">1.0</span>, <span style="color:#ae81ff">1</span>: <span style="color:#ae81ff">5.0</span>, <span style="color:#ae81ff">2</span>: <span style="color:#ae81ff">2.0</span>}
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><h3 id="3-레이블-스무딩label-smoothing">3. 레이블 스무딩(Label Smoothing)<a hidden class="anchor" aria-hidden="true" href="#3-레이블-스무딩label-smoothing">#</a></h3>
+<p>모델의 과신(overconfidence)을 방지하고 일반화 성능을 향상시키기 위해 레이블 스무딩을 적용할 수 있다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch에서 레이블 스무딩</span>
+</span></span><span style="display:flex;"><span>criterion <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>CrossEntropyLoss(label_smoothing<span style="color:#f92672">=</span><span style="color:#ae81ff">0.1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># TensorFlow/Keras에서 레이블 스무딩</span>
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>compile(
+</span></span><span style="display:flex;"><span>    loss<span style="color:#f92672">=</span>keras<span style="color:#f92672">.</span>losses<span style="color:#f92672">.</span>CategoricalCrossentropy(label_smoothing<span style="color:#f92672">=</span><span style="color:#ae81ff">0.1</span>)
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>레이블 스무딩은 원-핫 인코딩된 타겟을 약간 &ldquo;부드럽게&rdquo; 만들어, 1은 0.9로, 0은 0.1/(클래스 수-1)로 변환한다.</p>
+<h2 id="결론">결론<a hidden class="anchor" aria-hidden="true" href="#결론">#</a></h2>
+<p>교차 엔트로피는 분류 문제에서 이론적으로 견고하고 실용적인 손실 함수이다. 정보 이론에 기반한 확률적 해석이 명확하고, 그래디언트 계산이 효율적이며, 실제로 우수한 성능을 발휘한다.</p>
+<p>모델의 예측을 확률 분포로 해석할 수 있는 거의 모든 분류 문제에서 기본적으로 선택할 수 있는 손실 함수이며, 이진 분류와 다중 클래스 분류 각각에 맞는 변형을 사용할 수 있다.</p>
+<p>딥러닝에서 교차 엔트로피의 중요성은 아무리 강조해도 지나치지 않으며, 모델의 학습과 성능을 좌우하는 핵심 요소 중 하나이다.</p>
+<h2 id="참고-문헌">참고 문헌<a hidden class="anchor" aria-hidden="true" href="#참고-문헌">#</a></h2>
+<ol>
+<li>Shannon, C. E. (1948). A Mathematical Theory of Communication. Bell System Technical Journal.</li>
+<li>Goodfellow, I., Bengio, Y., &amp; Courville, A. (2016). Deep Learning. MIT Press.</li>
+<li>Bishop, C. M. (2006). Pattern Recognition and Machine Learning. Springer.</li>
+</ol>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="http://localhost:1313/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="http://localhost:1313/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/tech/test/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>Test</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/tech/deeplearning/backpropagation/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>Backpropagation in Deep Learning</span>
+  </a>
+</nav>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="http://localhost:1313/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

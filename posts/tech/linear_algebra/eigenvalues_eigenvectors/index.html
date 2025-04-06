@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Eigenvalues &amp; Eigenvectors | macsim&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="about Eigenvalues &amp; Eigenvectors">
+<meta name="author" content="macsim">
+<link rel="canonical" href="http://localhost:1313/posts/tech/linear_algebra/eigenvalues_eigenvectors/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/img/Q.gif">
+<link rel="apple-touch-icon" href="http://localhost:1313/img/Q.gif">
+<link rel="mask-icon" href="http://localhost:1313/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="http://localhost:1313/posts/tech/linear_algebra/eigenvalues_eigenvectors/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script defer src="https://unpkg.com/mermaid@8.8.1/dist/mermaid.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="Eigenvalues &amp; Eigenvectors" />
+<meta property="og:description" content="about Eigenvalues &amp; Eigenvectors" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/posts/tech/linear_algebra/eigenvalues_eigenvectors/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-03-03T01:17:26+09:00" />
+<meta property="article:modified_time" content="2025-03-03T01:17:26+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Eigenvalues &amp; Eigenvectors"/>
+<meta name="twitter:description" content="about Eigenvalues &amp; Eigenvectors"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "http://localhost:1313/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "http://localhost:1313/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Eigenvalues \u0026 Eigenvectors",
+      "item": "http://localhost:1313/posts/tech/linear_algebra/eigenvalues_eigenvectors/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Eigenvalues \u0026 Eigenvectors",
+  "name": "Eigenvalues \u0026 Eigenvectors",
+  "description": "about Eigenvalues \u0026 Eigenvectors",
+  "keywords": [
+    ""
+  ],
+  "articleBody": "\u003c Index \u003e\nEigenvalues \u0026 Eigenvectors 기본 개념 수학적 정의 기하학적 의미 주요 성질 대각화 고유값 분해 응용 분야 고유값 계산 방법 특이값 분해와의 관계 =\u003e 실제 응용: 구글의 PageRank 알고리즘, 주성분 분석(PCA), 진동 모드 분석\n기본 개념 고유값과 고유벡터는 선형대수학에서 가장 중요한 개념 중 하나이다. 정방행렬 $A$에 대하여, 0이 아닌 벡터 $v$와 스칼라 $\\lambda$가 다음 방정식을 만족할 때:\n$$Av = \\lambda v$$\n$\\lambda$를 행렬 $A$의 고유값(eigen value) 이라 하고, $v$를 $\\lambda$에 대응하는 고유벡터(eigen vector) 라고 한다. 직관적으로 이해 하자면 고유벡터는 행렬 $A$에 의한 선형변환이 적용될 때 방향이 변하지 않고 오직 크기만 $\\lambda$배 변하는 특별한 벡터이다. 즉, 행렬 $A$가 고유벡터 $v$에 작용하면 $v$의 방향은 그대로 유지된다.\n또, 고유벡터의 크기는 고유값 $\\lambda$에 비례하여 늘어나거나 줄어든다.\n수학적 정의\n고유방정식: $Av = \\lambda v$\n특성방정식: $\\det(A - \\lambda I) = 0$\n고유공간: 고유값 $\\lambda$에 대응하는 모든 고유벡터의 집합 $E_{\\lambda} = {v \\neq 0 : Av = \\lambda v}$\n예를 들어, 행렬 $A = \\begin{bmatrix} 3 \u0026 1 \\\\ 1 \u0026 3 \\end{bmatrix}$의 경우\n특성방정식: $\\det(A - \\lambda I) = \\det\\begin{bmatrix} 3-\\lambda \u0026 1 \\\\ 1 \u0026 3-\\lambda \\end{bmatrix} = (3-\\lambda)^2 - 1 = 0$ 이를 풀면 $\\lambda = 2$ 또는 $\\lambda = 4$가 된다. $\\lambda = 2$일 때의 고유벡터는 $v_1 = \\begin{bmatrix} -1 \\\\ 1 \\end{bmatrix}$ (또는 이의 스칼라 배) $\\lambda = 4$일 때의 고유벡터는 $v_2 = \\begin{bmatrix} 1 \\\\ 1 \\end{bmatrix}$ (또는 이의 스칼라 배)\n행렬식(determinant, $\\det$)은 정방행렬에 대해 정의되는 스칼라 값이다.\n기하학적 의미 고유벡터는 선형변환 $A$에 의해 방향이 변하지 않고 오직 크기만 $\\lambda$배 변하는 특별한 벡터이다. 이것은 다음과 같은 의미를 갖는다.\n$\\lambda \u003e 0$: 고유벡터는 같은 방향으로 늘어나거나 줄어든다 $\\lambda \u003c 0$: 고유벡터는 반대 방향으로 늘어나거나 줄어든다 $|\\lambda| = 1$: 고유벡터의 길이가 보존된다 $\\lambda = 0$: 고유벡터는 영벡터로 매핑된다 주요 성질 $n \\times n$ 행렬은 최대 $n$개의 서로 다른 고유값을 가진다. 대칭행렬($A = A^T$)의 모든 고유값은 실수이다. 직교행렬($A^TA = I$)의 모든 고유값의 절댓값은 1이다. 행렬 $A$의 대각합(trace)은 모든 고유값의 합과 같다: $\\text{tr}(A) = \\sum_{i=1}^{n} \\lambda_i$ 행렬 $A$의 행렬식은 모든 고유값의 곱과 같다: $\\det(A) = \\prod_{i=1}^{n} \\lambda_i$ 대각화(Diagonalization) 대각화는 주어진 정방행렬을 유사한 대각행렬로 변환하는 과정이다.\n쉽게 말해,\n복잡한 행렬을 대각 원소만 값을 가지고 나머지는 모두 0인 더 단순한 형태의 행렬로 바꾸는 것 이다. 고유값 분해(Eigen decomposition) 고유값 분해는 정방행렬을 고유값과 고유벡터를 이용하여 대각화하는 방법이다. 이는 복잡한 행렬을 더 단순한 형태로 표현하여 계산과 분석을 용이하게 한다.\n대각화 가능한 $n \\times n$ 행렬 $A$는 다음과 같이 분해할 수 있다.\n$$A = PDP^{-1}$$\n여기서:\n$P$는 $A$의 고유벡터들을 열로 갖는 행렬이다 $D$는 대응하는 고유값들을 대각선에 갖는 대각행렬이다 대각행렬 $D$는 다음과 같은 형태를 가진다. $$D = \\begin{bmatrix} \\lambda_1 \u0026 0 \u0026 \\cdots \u0026 0 \\\\ 0 \u0026 \\lambda_2 \u0026 \\cdots \u0026 0 \\\\ \\vdots \u0026 \\vdots \u0026 \\ddots \u0026 \\vdots \\\\ 0 \u0026 0 \u0026 \\cdots \u0026 \\lambda_n \\end{bmatrix}$$ 대각 원소 $\\lambda_1, \\lambda_2, \\ldots, \\lambda_n$은 원래 행렬 $A$의 고유값들이다.\n위의 예제를 가지고 대각행렬 $D$ 구해보자.\n행렬 $A = \\begin{bmatrix} 3 \u0026 1 \\\\ 1 \u0026 3 \\end{bmatrix}$\n고유값: $\\lambda_1 = 4$, $\\lambda_2 = 2$\n고유벡터: $v_1 = \\begin{bmatrix} 1 \\\\ 1 \\end{bmatrix}$, $v_2 = \\begin{bmatrix} 1 \\\\ -1 \\end{bmatrix}$\n행렬 $P = \\begin{bmatrix} 1 \u0026 1 \\\\ 1 \u0026 -1 \\end{bmatrix}$\n대각행렬 $D = \\begin{bmatrix} 4 \u0026 0 \\\\ 0 \u0026 2 \\end{bmatrix}$\n$PDP^{-1} = A$ 임을 검증을 마지막으로 대각행렬 $D$를 확인한다. 이로써 행렬 $A$ 대신 더 단순한 대각행렬 $D$로 계산을 수행할 수 있다.\n그렇다면 $3X3$ 이상의 행렬에 대해서는 어떻게 고유값과 고유벡터를 구할 수 있을까?\n특성다항식 설정: $\\det(A - \\lambda I) = 0$ 행렬식 계산: 3×3 이상 행렬의 행렬식은 다음과 같은 방법으로 계산한다. 여인수 전개(cofactor expansion) 행 연산을 통한 상삼각/하삼각 행렬로의 변환 다항식 근 구하기: 특성다항식의 근이 행렬의 고유값이다. 그런 다음, 이제 고유벡터를 구해주면 된다.\n연립방정식 설정: $(A - \\lambda I)v = 0$ 기약행사다리꼴(RREF)로 변환: 가우스-조던 소거법 적용 해공간(null space) 구하기: 기저 벡터들이 고유벡터이다. 실제 행렬이 큰 경우 위 방법이 어렵거나 비효율적일 수 있어 다음의 방법을 사용한다고 한다.\nQR 알고리즘: 큰 행렬의 고유값을 수치적으로 계산하는 데 효율적이다 멱승법(Power method): 가장 큰 절댓값을 갖는 고유값과 그에 대응하는 고유벡터를 찾는다 역멱승법(Inverse power method): 특정 값 근처의 고유값을 찾는 데 사용된다 행렬 $A = \\begin{bmatrix} 1 \u0026 2 \u0026 0 \\\\ 0 \u0026 3 \u0026 0 \\\\ 2 \u0026 -4 \u0026 2 \\end{bmatrix}$의 고유값과 고유벡터를 구해보자.\n고유값 구하기: 특성다항식: $$\\det(A - \\lambda I) = \\det\\begin{bmatrix} 1-\\lambda \u0026 2 \u0026 0 \\\\ 0 \u0026 3-\\lambda \u0026 0 \\\\ 2 \u0026 -4 \u0026 2-\\lambda \\end{bmatrix} = 0$$ 행렬식 계산(첫 번째 열 기준 여인수 전개): $$\\begin{align} \u0026(1-\\lambda)\\det\\begin{bmatrix} 3-\\lambda \u0026 0 \\\\ -4 \u0026 2-\\lambda \\end{bmatrix} - 0 + 2\\det\\begin{bmatrix} 2 \u0026 0 \\\\ 3-\\lambda \u0026 0 \\end{bmatrix}\\\\ \u0026= (1-\\lambda)[(3-\\lambda)(2-\\lambda) - 0] + 2[0]\\\\ \u0026= (1-\\lambda)(3-\\lambda)(2-\\lambda) \\end{align}$$ 고유값: $\\lambda_1 = 1$, $\\lambda_2 = 3$, $\\lambda_3 = 2$ 고유벡터 구하기: $\\lambda_1 = 1$일 때:\n$(A - I)v = 0$ 풀기 $\\begin{bmatrix} 0 \u0026 2 \u0026 0 \\\\ 0 \u0026 2 \u0026 0 \\\\ 2 \u0026 -4 \u0026 1 \\end{bmatrix}\\begin{bmatrix} v_1 \\\\ v_2 \\\\ v_3 \\end{bmatrix} = \\begin{bmatrix} 0 \\\\ 0 \\\\ 0 \\end{bmatrix}$ 해공간 구하기: $v_1 = \\begin{bmatrix} -1 \\\\ 0 \\\\ \\frac{1}{2} \\end{bmatrix}$ 또는 이의 스칼라 배\n$\\lambda_2 = 3$일 때:\n$(A - 3I)v = 0$ 풀기 $\\begin{bmatrix} -2 \u0026 2 \u0026 0 \\\\ 0 \u0026 0 \u0026 0 \\\\ 2 \u0026 -4 \u0026 -1 \\end{bmatrix}\\begin{bmatrix} v_1 \\\\ v_2 \\\\ v_3 \\end{bmatrix} = \\begin{bmatrix} 0 \\\\ 0 \\\\ 0 \\end{bmatrix}$ 해공간 구하기: $v_2 = \\begin{bmatrix} 1 \\\\ 1 \\\\ 0 \\end{bmatrix}$ 또는 이의 스칼라 배\n$\\lambda_3 = 2$일 때:\n$(A - 2I)v = 0$ 풀기 $\\begin{bmatrix} -1 \u0026 2 \u0026 0 \\\\ 0 \u0026 1 \u0026 0 \\\\ 2 \u0026 -4 \u0026 0 \\end{bmatrix}\\begin{bmatrix} v_1 \\\\ v_2 \\\\ v_3 \\end{bmatrix} = \\begin{bmatrix} 0 \\\\ 0 \\\\ 0 \\end{bmatrix}$ 해공간 구하기: $v_3 = \\begin{bmatrix} 0 \\\\ 0 \\\\ 1 \\end{bmatrix}$ 또는 이의 스칼라 배\n위 연립 방정식은 가우스-조던 소거법을 적용하여 구하는 것이 가능하다.\n특이값 분해(SVD)와의 관계 특이값 분해는 고유값 분해의 일반화로, 정방행렬이 아닌 행렬에도 적용할 수 있다.\nSVD(특이값 분해)는 임의의 행렬 A를 다음과 같이 세 개의 행렬로 분해합니다. $$A = U\\Sigma V^T$$\n$U$ 정의: $A$ 행렬이 $m \\times n$ 크기라면, $U$는 $m \\times m$ 크기의 직교행렬입니다. $\\Sigma$ 정의: $\\Sigma$는 $m \\times n$ 크기의 대각행렬인데, NumPy에서는 대각원소만 1차원 배열 S로 반환합니다. $V^T$ 정의: $V$는 $n \\times n$ 크기의 직교행렬이며, $V^T$는 이의 전치행렬입니다. 많은 응용에서는 전체 SVD 대신 압축된 형태인 “압축형 SVD”(compact SVD)나 “절단 SVD”(truncated SVD)를 사용한다. $$A = U_r \\Sigma_r V_r^T$$ 여기서 $r$은 행렬의 랭크이고, $U_r$은 처음 $r$개의 왼쪽 특이벡터, $\\Sigma_r$은 처음 $r$개의 특이값을 포함하는 $r \\times r$ 대각행렬, $V_r$은 처음 $r$개의 오른쪽 특이벡터를 포함한다.\n고유값 분해와의 비교 특이값 분해 (SVD) 고유값 분해 (Eigendecomposition) 모든 행렬에 적용 가능 정방행렬에만 적용 가능 $A = U\\Sigma V^T$ $A = PDP^{-1}$ $U$, $V$는 직교행렬 $P$는 일반적으로 직교행렬이 아님 특이값은 항상 실수이고 음이 아님 고유값은 복소수일 수 있음 수치적으로 안정적 일부 행렬에서는 불안정할 수 있음 import numpy as np # 행렬 정의 A = np.array([[4, 0, 3], [-3, -5, 0]]) # SVD 계산 U, S, Vt = np.linalg.svd(A) print(\"U =\\n\", U) print(\"S =\\n\", S) # 특이값만 반환 print(\"V^T =\\n\", Vt) # 원 행렬 재구성 S_matrix = np.zeros((A.shape[0], A.shape[1])) np.fill_diagonal(S_matrix, S) A_reconstructed = U @ S_matrix @ Vt print(\"A_reconstructed =\\n\", A_reconstructed) ",
+  "wordCount" : "2704",
+  "inLanguage": "ko",
+  "datePublished": "2025-03-03T01:17:26+09:00",
+  "dateModified": "2025-03-03T01:17:26+09:00",
+  "author":[{
+    "@type": "Person",
+    "name": "macsim"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/tech/linear_algebra/eigenvalues_eigenvectors/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="http://localhost:1313/">🏠 홈</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">posts</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                Eigenvalues &amp; Eigenvectors<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+            </h1>
+            <div class="post-description">
+                about Eigenvalues &amp; Eigenvectors
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2025-03-03
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>2704 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>6 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="http://localhost:1313/tags/linear_algebra/" style="color: var(--secondary)!important;">Linear_algebra</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "http://localhost:1313/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90" aria-label="기본 개념">기본 개념</a></li>
+                <li>
+                    <a href="#%ec%88%98%ed%95%99%ec%a0%81-%ec%a0%95%ec%9d%98br" aria-label="수학적 정의
+">수학적 정의<br></a></li>
+                <li>
+                    <a href="#%ea%b8%b0%ed%95%98%ed%95%99%ec%a0%81-%ec%9d%98%eb%af%b8" aria-label="기하학적 의미">기하학적 의미</a></li>
+                <li>
+                    <a href="#%ec%a3%bc%ec%9a%94-%ec%84%b1%ec%a7%88" aria-label="주요 성질">주요 성질</a></li>
+                <li>
+                    <a href="#%eb%8c%80%ea%b0%81%ed%99%94diagonalization" aria-label="대각화(Diagonalization)">대각화(Diagonalization)</a><ul>
+                        <ul>
+                        
+                <li>
+                    <a href="#%eb%b3%b5%ec%9e%a1%ed%95%9c-%ed%96%89%eb%a0%ac%ec%9d%84-%eb%8c%80%ea%b0%81-%ec%9b%90%ec%86%8c%eb%a7%8c-%ea%b0%92%ec%9d%84-%ea%b0%80%ec%a7%80%ea%b3%a0-%eb%82%98%eb%a8%b8%ec%a7%80%eb%8a%94-%eb%aa%a8%eb%91%90-0%ec%9d%b8-%eb%8d%94-%eb%8b%a8%ec%88%9c%ed%95%9c-%ed%98%95%ed%83%9c%ec%9d%98-%ed%96%89%eb%a0%ac%eb%a1%9c-%eb%b0%94%ea%be%b8%eb%8a%94-%ea%b2%83-%ec%9d%b4%eb%8b%a4" aria-label="복잡한 행렬을 대각 원소만 값을 가지고 나머지는 모두 0인 더 단순한 형태의 행렬로 바꾸는 것 이다.">복잡한 행렬을 대각 원소만 값을 가지고 나머지는 모두 0인 더 단순한 형태의 행렬로 바꾸는 것 이다.</a></li></ul>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#%ea%b3%a0%ec%9c%a0%ea%b0%92-%eb%b6%84%ed%95%b4eigen-decomposition" aria-label="고유값 분해(Eigen decomposition)">고유값 분해(Eigen decomposition)</a><ul>
+                        <ul>
+                        
+                <li>
+                    <a href="#%ea%b3%a0%ec%9c%a0%ea%b0%92-%eb%b6%84%ed%95%b4%eb%8a%94-%ec%a0%95%eb%b0%a9%ed%96%89%eb%a0%ac%ec%9d%84-%ea%b3%a0%ec%9c%a0%ea%b0%92%ea%b3%bc-%ea%b3%a0%ec%9c%a0%eb%b2%a1%ed%84%b0%eb%a5%bc-%ec%9d%b4%ec%9a%a9%ed%95%98%ec%97%ac-%eb%8c%80%ea%b0%81%ed%99%94%ed%95%98%eb%8a%94-%eb%b0%a9%eb%b2%95%ec%9d%b4%eb%8b%a4" aria-label="고유값 분해는 정방행렬을 고유값과 고유벡터를 이용하여 대각화하는 방법이다.">고유값 분해는 정방행렬을 고유값과 고유벡터를 이용하여 대각화하는 방법이다.</a></li></ul>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#%ed%8a%b9%ec%9d%b4%ea%b0%92-%eb%b6%84%ed%95%b4svd%ec%99%80%ec%9d%98-%ea%b4%80%ea%b3%84" aria-label="특이값 분해(SVD)와의 관계">특이값 분해(SVD)와의 관계</a></li>
+                <li>
+                    <a href="#%ea%b3%a0%ec%9c%a0%ea%b0%92-%eb%b6%84%ed%95%b4%ec%99%80%ec%9d%98-%eb%b9%84%ea%b5%90" aria-label="고유값 분해와의 비교">고유값 분해와의 비교</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>&lt; Index &gt;</p>
+<ul>
+<li>Eigenvalues &amp; Eigenvectors
+<ul>
+<li><a href="#%EA%B8%B0%EB%B3%B8-%EA%B0%9C%EB%85%90">기본 개념</a></li>
+<li><a href="#%EC%88%98%ED%95%99%EC%A0%81-%EC%A0%95%EC%9D%98">수학적 정의</a></li>
+<li><a href="#%EA%B8%B0%ED%95%98%ED%95%99%EC%A0%81-%EC%9D%98%EB%AF%B8">기하학적 의미</a></li>
+<li><a href="#%EC%A3%BC%EC%9A%94-%EC%84%B1%EC%A7%88">주요 성질</a></li>
+<li><a href="#%EB%8C%80%EA%B0%81%ED%99%94diagonalization">대각화</a></li>
+<li><a href="#%EA%B3%A0%EC%9C%A0%EA%B0%92-%EB%B6%84%ED%95%B4eigendecomposition">고유값 분해</a></li>
+<li><a href="#%EC%9D%91%EC%9A%A9-%EB%B6%84%EC%95%BC">응용 분야</a></li>
+<li><a href="#%EA%B3%A0%EC%9C%A0%EA%B0%92-%EA%B3%84%EC%82%B0-%EB%B0%A9%EB%B2%95">고유값 계산 방법</a></li>
+<li><a href="#%ED%8A%B9%EC%9D%B4%EA%B0%92-%EB%B6%84%ED%95%B4svd%EC%99%80%EC%9D%98-%EA%B4%80%EA%B3%84">특이값 분해와의 관계</a></li>
+</ul>
+</li>
+</ul>
+<p>=&gt; 실제 응용: 구글의 PageRank 알고리즘, 주성분 분석(PCA), 진동 모드 분석</p>
+<h2 id="기본-개념">기본 개념<a hidden class="anchor" aria-hidden="true" href="#기본-개념">#</a></h2>
+<p>고유값과 고유벡터는 선형대수학에서 가장 중요한 개념 중 하나이다. 정방행렬 $A$에 대하여, 0이 아닌 벡터 $v$와 스칼라 $\lambda$가 다음 방정식을 만족할 때:</p>
+<p>$$Av = \lambda v$$</p>
+<p>$\lambda$를 행렬 $A$의 <strong>고유값(eigen value)</strong> 이라 하고, $v$를 $\lambda$에 대응하는 <strong>고유벡터(eigen vector)</strong> 라고 한다. <br>
+직관적으로 이해 하자면 고유벡터는 행렬 $A$에 의한 선형변환이 적용될 때 방향이 변하지 않고 오직 크기만 $\lambda$배 변하는 특별한 벡터이다. <br>
+즉, 행렬 $A$가 고유벡터 $v$에 작용하면 $v$의 방향은 그대로 유지된다.<br>
+또, 고유벡터의 크기는 고유값 $\lambda$에 비례하여 늘어나거나 줄어든다.<br></p>
+<h2 id="수학적-정의br">수학적 정의<br><a hidden class="anchor" aria-hidden="true" href="#수학적-정의br">#</a></h2>
+<ul>
+<li><strong>고유방정식</strong>: $Av = \lambda v$<br></li>
+<li><strong>특성방정식</strong>: $\det(A - \lambda I) = 0$<br></li>
+<li><strong>고유공간</strong>: 고유값 $\lambda$에 대응하는 모든 고유벡터의 집합 $E_{\lambda} = {v \neq 0 : Av = \lambda v}$<br></li>
+</ul>
+<p>예를 들어, 행렬 $A = \begin{bmatrix} 3 &amp; 1 \\ 1 &amp; 3 \end{bmatrix}$의 경우<br>
+특성방정식: $\det(A - \lambda I) = \det\begin{bmatrix} 3-\lambda &amp; 1 \\ 1 &amp; 3-\lambda \end{bmatrix} = (3-\lambda)^2 - 1 = 0$
+이를 풀면 $\lambda = 2$ 또는 $\lambda = 4$가 된다.
+$\lambda = 2$일 때의 고유벡터는 $v_1 = \begin{bmatrix} -1 \\ 1 \end{bmatrix}$ (또는 이의 스칼라 배)
+$\lambda = 4$일 때의 고유벡터는 $v_2 = \begin{bmatrix} 1 \\ 1 \end{bmatrix}$ (또는 이의 스칼라 배)</p>
+<p>행렬식(determinant, $\det$)은 정방행렬에 대해 정의되는 스칼라 값이다.</p>
+<h2 id="기하학적-의미">기하학적 의미<a hidden class="anchor" aria-hidden="true" href="#기하학적-의미">#</a></h2>
+<p>고유벡터는 선형변환 $A$에 의해 방향이 변하지 않고 오직 크기만 $\lambda$배 변하는 특별한 벡터이다. 이것은 다음과 같은 의미를 갖는다.</p>
+<ul>
+<li>$\lambda &gt; 0$: 고유벡터는 같은 방향으로 늘어나거나 줄어든다</li>
+<li>$\lambda &lt; 0$: 고유벡터는 반대 방향으로 늘어나거나 줄어든다</li>
+<li>$|\lambda| = 1$: 고유벡터의 길이가 보존된다</li>
+<li>$\lambda = 0$: 고유벡터는 영벡터로 매핑된다</li>
+</ul>
+<h2 id="주요-성질">주요 성질<a hidden class="anchor" aria-hidden="true" href="#주요-성질">#</a></h2>
+<ol>
+<li>$n \times n$ 행렬은 최대 $n$개의 서로 다른 고유값을 가진다.</li>
+<li>대칭행렬($A = A^T$)의 모든 고유값은 실수이다.</li>
+<li>직교행렬($A^TA = I$)의 모든 고유값의 절댓값은 1이다.</li>
+<li>행렬 $A$의 대각합(trace)은 모든 고유값의 합과 같다: $\text{tr}(A) = \sum_{i=1}^{n} \lambda_i$</li>
+<li>행렬 $A$의 행렬식은 모든 고유값의 곱과 같다: $\det(A) = \prod_{i=1}^{n} \lambda_i$</li>
+</ol>
+<h2 id="대각화diagonalization">대각화(Diagonalization)<a hidden class="anchor" aria-hidden="true" href="#대각화diagonalization">#</a></h2>
+<p>대각화는 주어진 정방행렬을 유사한 대각행렬로 변환하는 과정이다.<br>
+쉽게 말해,</p>
+<h4 id="복잡한-행렬을-대각-원소만-값을-가지고-나머지는-모두-0인-더-단순한-형태의-행렬로-바꾸는-것-이다">복잡한 행렬을 대각 원소만 값을 가지고 나머지는 모두 0인 더 단순한 형태의 행렬로 바꾸는 것 이다.<a hidden class="anchor" aria-hidden="true" href="#복잡한-행렬을-대각-원소만-값을-가지고-나머지는-모두-0인-더-단순한-형태의-행렬로-바꾸는-것-이다">#</a></h4>
+<h2 id="고유값-분해eigen-decomposition">고유값 분해(Eigen decomposition)<a hidden class="anchor" aria-hidden="true" href="#고유값-분해eigen-decomposition">#</a></h2>
+<h4 id="고유값-분해는-정방행렬을-고유값과-고유벡터를-이용하여-대각화하는-방법이다">고유값 분해는 정방행렬을 고유값과 고유벡터를 이용하여 대각화하는 방법이다.<a hidden class="anchor" aria-hidden="true" href="#고유값-분해는-정방행렬을-고유값과-고유벡터를-이용하여-대각화하는-방법이다">#</a></h4>
+<p>이는 복잡한 행렬을 더 단순한 형태로 표현하여 계산과 분석을 용이하게 한다.<br>
+대각화 가능한 $n \times n$ 행렬 $A$는 다음과 같이 분해할 수 있다.</p>
+<p>$$A = PDP^{-1}$$</p>
+<p>여기서:</p>
+<ul>
+<li>$P$는 $A$의 고유벡터들을 열로 갖는 행렬이다</li>
+<li>$D$는 대응하는 고유값들을 대각선에 갖는 대각행렬이다</li>
+</ul>
+<p>대각행렬 $D$는 다음과 같은 형태를 가진다.
+$$D = \begin{bmatrix}
+\lambda_1 &amp; 0 &amp; \cdots &amp; 0 \\
+0 &amp; \lambda_2 &amp; \cdots &amp; 0 \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+0 &amp; 0 &amp; \cdots &amp; \lambda_n
+\end{bmatrix}$$
+대각 원소 $\lambda_1, \lambda_2, \ldots, \lambda_n$은 원래 행렬 $A$의 고유값들이다.</p>
+<p>위의 예제를 가지고 대각행렬 $D$ 구해보자.<br>
+행렬 $A = \begin{bmatrix} 3 &amp; 1 \\ 1 &amp; 3 \end{bmatrix}$<br>
+고유값: $\lambda_1 = 4$, $\lambda_2 = 2$<br>
+고유벡터: $v_1 = \begin{bmatrix} 1 \\ 1 \end{bmatrix}$, $v_2 = \begin{bmatrix} 1 \\ -1 \end{bmatrix}$<br>
+행렬 $P = \begin{bmatrix} 1 &amp; 1 \\ 1 &amp; -1 \end{bmatrix}$<br>
+대각행렬 $D = \begin{bmatrix} 4 &amp; 0 \\ 0 &amp; 2 \end{bmatrix}$<br>
+$PDP^{-1} = A$ 임을 검증을 마지막으로 대각행렬 $D$를 확인한다. 이로써 행렬 $A$ 대신 더 단순한 대각행렬 $D$로 계산을 수행할 수 있다.</p>
+<p>그렇다면 $3X3$ 이상의 행렬에 대해서는 어떻게 고유값과 고유벡터를 구할 수 있을까?<br></p>
+<ol>
+<li>특성다항식 설정: $\det(A - \lambda I) = 0$</li>
+<li>행렬식 계산: 3×3 이상 행렬의 행렬식은 다음과 같은 방법으로 계산한다.</li>
+</ol>
+<ul>
+<li>여인수 전개(cofactor expansion)</li>
+<li>행 연산을 통한 상삼각/하삼각 행렬로의 변환
+<br></li>
+</ul>
+<ol start="3">
+<li>다항식 근 구하기: 특성다항식의 근이 행렬의 고유값이다.</li>
+</ol>
+<p>그런 다음, 이제 고유벡터를 구해주면 된다.</p>
+<ol>
+<li>연립방정식 설정: $(A - \lambda I)v = 0$</li>
+<li>기약행사다리꼴(RREF)로 변환: 가우스-조던 소거법 적용</li>
+<li>해공간(null space) 구하기: 기저 벡터들이 고유벡터이다.</li>
+</ol>
+<br>
+<p>실제 행렬이 큰 경우 위 방법이 어렵거나 비효율적일 수 있어 다음의 방법을 사용한다고 한다.<br></p>
+<ol>
+<li><strong>QR 알고리즘</strong>: 큰 행렬의 고유값을 수치적으로 계산하는 데 효율적이다</li>
+<li><strong>멱승법(Power method)</strong>: 가장 큰 절댓값을 갖는 고유값과 그에 대응하는 고유벡터를 찾는다</li>
+<li><strong>역멱승법(Inverse power method)</strong>: 특정 값 근처의 고유값을 찾는 데 사용된다</li>
+</ol>
+<p>행렬 $A = \begin{bmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 3 &amp; 0 \\ 2 &amp; -4 &amp; 2 \end{bmatrix}$의 고유값과 고유벡터를 구해보자.<br>
+고유값 구하기:
+특성다항식:
+$$\det(A - \lambda I) = \det\begin{bmatrix} 1-\lambda &amp; 2 &amp; 0 \\ 0 &amp; 3-\lambda &amp; 0 \\ 2 &amp; -4 &amp; 2-\lambda \end{bmatrix} = 0$$
+행렬식 계산(첫 번째 열 기준 여인수 전개):
+$$\begin{align}
+&amp;(1-\lambda)\det\begin{bmatrix} 3-\lambda &amp; 0 \\ -4 &amp; 2-\lambda \end{bmatrix} - 0 + 2\det\begin{bmatrix} 2 &amp; 0 \\ 3-\lambda &amp; 0 \end{bmatrix}\\
+&amp;= (1-\lambda)[(3-\lambda)(2-\lambda) - 0] + 2[0]\\
+&amp;= (1-\lambda)(3-\lambda)(2-\lambda)
+\end{align}$$
+고유값: $\lambda_1 = 1$, $\lambda_2 = 3$, $\lambda_3 = 2$ <br>
+고유벡터 구하기:
+$\lambda_1 = 1$일 때:<br>
+$(A - I)v = 0$ 풀기
+$\begin{bmatrix} 0 &amp; 2 &amp; 0 \\ 0 &amp; 2 &amp; 0 \\ 2 &amp; -4 &amp; 1 \end{bmatrix}\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix}$
+해공간 구하기: $v_1 = \begin{bmatrix} -1 \\ 0 \\ \frac{1}{2} \end{bmatrix}$ 또는 이의 스칼라 배<br><br>
+$\lambda_2 = 3$일 때:<br>
+$(A - 3I)v = 0$ 풀기
+$\begin{bmatrix} -2 &amp; 2 &amp; 0 \\ 0 &amp; 0 &amp; 0 \\ 2 &amp; -4 &amp; -1 \end{bmatrix}\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix}$
+해공간 구하기: $v_2 = \begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix}$ 또는 이의 스칼라 배<br><br>
+$\lambda_3 = 2$일 때:<br>
+$(A - 2I)v = 0$ 풀기
+$\begin{bmatrix} -1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 2 &amp; -4 &amp; 0 \end{bmatrix}\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix}$
+해공간 구하기: $v_3 = \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix}$ 또는 이의 스칼라 배<br><br></p>
+<p>위 연립 방정식은 가우스-조던 소거법을 적용하여 구하는 것이 가능하다.<br></p>
+<h2 id="특이값-분해svd와의-관계">특이값 분해(SVD)와의 관계<a hidden class="anchor" aria-hidden="true" href="#특이값-분해svd와의-관계">#</a></h2>
+<p>특이값 분해는 고유값 분해의 일반화로, 정방행렬이 아닌 행렬에도 적용할 수 있다.</p>
+<p>SVD(특이값 분해)는 임의의 행렬 A를 다음과 같이 세 개의 행렬로 분해합니다.
+$$A = U\Sigma V^T$$</p>
+<ul>
+<li>$U$ 정의: $A$ 행렬이 $m \times n$ 크기라면, $U$는 $m \times m$ 크기의 직교행렬입니다.</li>
+<li>$\Sigma$ 정의: $\Sigma$는 $m \times n$ 크기의 대각행렬인데, NumPy에서는 대각원소만 1차원 배열 S로 반환합니다.</li>
+<li>$V^T$ 정의: $V$는 $n \times n$ 크기의 직교행렬이며, $V^T$는 이의 전치행렬입니다.</li>
+</ul>
+<!-- 여기서 $\Sigma$의 대각 원소들(특이값들)은 $A^TA$의 고유값들의 제곱근이다. -->
+<p>많은 응용에서는 전체 SVD 대신 압축된 형태인 &ldquo;압축형 SVD&rdquo;(compact SVD)나 &ldquo;절단 SVD&rdquo;(truncated SVD)를 사용한다.
+$$A = U_r \Sigma_r V_r^T$$
+여기서 $r$은 행렬의 랭크이고, $U_r$은 처음 $r$개의 왼쪽 특이벡터, $\Sigma_r$은 처음 $r$개의 특이값을 포함하는 $r \times r$ 대각행렬, $V_r$은 처음 $r$개의 오른쪽 특이벡터를 포함한다.</p>
+<h2 id="고유값-분해와의-비교">고유값 분해와의 비교<a hidden class="anchor" aria-hidden="true" href="#고유값-분해와의-비교">#</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">특이값 분해 (SVD)</th>
+<th style="text-align:center">고유값 분해 (Eigendecomposition)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">모든 행렬에 적용 가능</td>
+<td style="text-align:center">정방행렬에만 적용 가능</td>
+</tr>
+<tr>
+<td style="text-align:center">$A = U\Sigma V^T$</td>
+<td style="text-align:center">$A = PDP^{-1}$</td>
+</tr>
+<tr>
+<td style="text-align:center">$U$, $V$는 직교행렬</td>
+<td style="text-align:center">$P$는 일반적으로 직교행렬이 아님</td>
+</tr>
+<tr>
+<td style="text-align:center">특이값은 항상 실수이고 음이 아님</td>
+<td style="text-align:center">고유값은 복소수일 수 있음</td>
+</tr>
+<tr>
+<td style="text-align:center">수치적으로 안정적</td>
+<td style="text-align:center">일부 행렬에서는 불안정할 수 있음</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 행렬 정의</span>
+</span></span><span style="display:flex;"><span>A <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([[<span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">3</span>], [<span style="color:#f92672">-</span><span style="color:#ae81ff">3</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">0</span>]])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># SVD 계산</span>
+</span></span><span style="display:flex;"><span>U, S, Vt <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>svd(A)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;U =</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, U)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;S =</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, S)  <span style="color:#75715e"># 특이값만 반환</span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;V^T =</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, Vt)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 원 행렬 재구성</span>
+</span></span><span style="display:flex;"><span>S_matrix <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>zeros((A<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>], A<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">1</span>]))
+</span></span><span style="display:flex;"><span>np<span style="color:#f92672">.</span>fill_diagonal(S_matrix, S)
+</span></span><span style="display:flex;"><span>A_reconstructed <span style="color:#f92672">=</span> U <span style="color:#f92672">@</span> S_matrix <span style="color:#f92672">@</span> Vt
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;A_reconstructed =</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, A_reconstructed)
+</span></span></code></pre></div>
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="http://localhost:1313/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="http://localhost:1313/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/tech/asr/viterbi/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>Viterbi in HMM-GMM</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/tech/signal/fouriertransform/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>FourierTransform</span>
+  </a>
+</nav>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="http://localhost:1313/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

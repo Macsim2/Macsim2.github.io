@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Onnx on macsim&#39;s Blog</title>
+    <link>https://macsim2.github.io/tags/onnx/</link>
+    <description>Recent content in Onnx on macsim&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>ko-kr</language>
+    <lastBuildDate>Sun, 28 Jul 2024 15:30:00 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/tags/onnx/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ONNX Graph의 내부 구조와 최적화 여정</title>
+      <link>https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/</link>
+      <pubDate>Sun, 28 Jul 2024 15:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/</guid>
+      <description>ONNX Graph의 내부 구조를 파헤치고 실전 최적화 경험을 공유합니다</description>
+    </item>
+    
+  </channel>
+</rss>

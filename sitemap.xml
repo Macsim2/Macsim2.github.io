@@ -3,19 +3,13 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://macsim2.github.io/posts/tech/</loc>
-    <lastmod>2024-09-07T18:30:33+09:00</lastmod>
+    <lastmod>2025-03-21T00:09:29+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/</loc>
-    <lastmod>2024-09-07T18:30:33+09:00</lastmod>
+    <lastmod>2025-03-21T00:09:29+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/posts/</loc>
-    <lastmod>2024-09-07T18:30:33+09:00</lastmod>
-  </url><url>
-    <loc>https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/</loc>
-    <lastmod>2024-09-07T18:30:33+09:00</lastmod>
-  </url><url>
-    <loc>https://macsim2.github.io/posts/tech/algorithm/boj/lcs2/</loc>
-    <lastmod>2024-08-28T01:17:26+09:00</lastmod>
+    <lastmod>2025-03-21T00:09:29+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/posts/life/test/</loc>
     <lastmod>2024-08-10T15:08:58+09:00</lastmod>
@@ -24,7 +18,97 @@
     <lastmod>2024-08-10T15:08:58+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/categories/</loc>
-    <lastmod>2022-11-30T15:55:23+08:00</lastmod>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/deeplearning/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/categories/deeplearning/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/gpu-acceleration/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/inference-optimization/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/model-deployment/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/nvidia-triton/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/tensorrt/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/</loc>
+    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/computational-graph/</loc>
+    <lastmod>2024-07-28T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/inference/</loc>
+    <lastmod>2024-07-28T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/model-optimization/</loc>
+    <lastmod>2024-07-28T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/onnx/</loc>
+    <lastmod>2024-07-28T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/</loc>
+    <lastmod>2024-07-28T15:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/asr/</loc>
+    <lastmod>2024-07-27T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/fine-tuning/</loc>
+    <lastmod>2024-07-27T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/transfer-learning/</loc>
+    <lastmod>2024-07-27T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/wav2vec-2.0/</loc>
+    <lastmod>2024-07-27T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/weight-update/</loc>
+    <lastmod>2024-07-27T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/</loc>
+    <lastmod>2024-07-27T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/accuracy/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/binary-classification/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/classification/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/f1-score/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/machine_learning/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/categories/machine_learning/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/metric/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/precision/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/recall/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/tech/machinelearning/classification_metric/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/tags/redis/</loc>
     <lastmod>2022-11-30T15:55:23+08:00</lastmod>
@@ -38,9 +122,6 @@
     <loc>https://macsim2.github.io/tags/tech/</loc>
     <lastmod>2022-11-30T15:55:23+08:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/tags/</loc>
-    <lastmod>2022-11-30T15:55:23+08:00</lastmod>
-  </url><url>
     <loc>https://macsim2.github.io/tags/blog/</loc>
     <lastmod>2022-05-05T00:18:23+08:00</lastmod>
   </url><url>
@@ -50,11 +131,23 @@
     <loc>https://macsim2.github.io/posts/blog/</loc>
     <lastmod>2022-05-05T00:18:23+08:00</lastmod>
   </url><url>
+    <loc>https://macsim2.github.io/tags/communication/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
     <loc>https://macsim2.github.io/tags/life/</loc>
-    <lastmod>2022-05-05T00:18:15+08:00</lastmod>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/posts/life/life/</loc>
     <lastmod>2022-05-05T00:18:15+08:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/signal/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/categories/tech/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/life/data-transfer-confidence-explained/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/posts/read/</loc>
     <lastmod>2022-05-05T00:18:06+08:00</lastmod>
@@ -68,11 +161,37 @@
     <loc>https://macsim2.github.io/links/</loc>
     <lastmod>2021-11-06T15:15:53+08:00</lastmod>
   </url><url>
-    <loc>https://macsim2.github.io/archives/</loc>
-    <lastmod>2021-11-06T14:57:28+08:00</lastmod>
-  </url><url>
     <loc>https://macsim2.github.io/about/</loc>
     <lastmod>2021-11-06T14:57:28+08:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/apache/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/c10k/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/event-driven/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/load-balancer/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/nginx/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/tech/dev/web/nginx/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/reverse-proxy/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/categories/web/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/web-server/</loc>
+    <lastmod>2024-07-26T00:00:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/tech/asr/ctc_loss/</loc>
   </url><url>
     <loc>https://macsim2.github.io/search/</loc>
   </url><url>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Load Balancer on macsim&#39;s Blog</title>
+    <link>https://macsim2.github.io/tags/load-balancer/</link>
+    <description>Recent content in Load Balancer on macsim&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>ko-kr</language>
+    <lastBuildDate>Sun, 01 Nov 2020 00:00:00 +0000</lastBuildDate><atom:link href="https://macsim2.github.io/tags/load-balancer/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Nginx와 blocking, sync</title>
+      <link>https://macsim2.github.io/posts/tech/dev/web/nginx/</link>
+      <pubDate>Sun, 01 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/dev/web/nginx/</guid>
+      <description>Nginx, Apache와 뭐가 다르고 왜 잘 나가는지 파헤쳐 보자.</description>
+    </item>
+    
+  </channel>
+</rss>

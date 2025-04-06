@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Gpu Acceleration on macsim&#39;s Blog</title>
+    <link>https://macsim2.github.io/tags/gpu-acceleration/</link>
+    <description>Recent content in Gpu Acceleration on macsim&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>ko-kr</language>
+    <lastBuildDate>Tue, 30 Jul 2024 15:30:00 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/tags/gpu-acceleration/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>TensorRT와 Triton: 딥러닝 추론 최적화의 강력한 조합</title>
+      <link>https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/</link>
+      <pubDate>Tue, 30 Jul 2024 15:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/</guid>
+      <description>NVIDIA TensorRT와 Triton Inference Server의 내부 구조와 실전 최적화 경험을 공유합니다</description>
+    </item>
+    
+  </channel>
+</rss>

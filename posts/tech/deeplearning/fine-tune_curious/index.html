@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>가중치 업데이트에 관해서 with wav2vec 2.0 | macsim&#39;s Blog</title>
+<meta name="keywords" content="deeplearning, fine-tuning, transfer learning, wav2vec 2.0, ASR, weight update">
+<meta name="description" content="wav2vec 2.0 은 얼마나 weight가 업데이트 되는걸까? ">
+<meta name="author" content="macsim">
+<link rel="canonical" href="https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="https://macsim2.github.io/img/Q.gif">
+<link rel="apple-touch-icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="가중치 업데이트에 관해서 with wav2vec 2.0" />
+<meta property="og:description" content="wav2vec 2.0 은 얼마나 weight가 업데이트 되는걸까? " />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-02-22T21:13:51+09:00" />
+<meta property="article:modified_time" content="2024-07-27T00:00:00+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="가중치 업데이트에 관해서 with wav2vec 2.0"/>
+<meta name="twitter:description" content="wav2vec 2.0 은 얼마나 weight가 업데이트 되는걸까? "/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "https://macsim2.github.io/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "https://macsim2.github.io/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "가중치 업데이트에 관해서 with wav2vec 2.0",
+      "item": "https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "가중치 업데이트에 관해서 with wav2vec 2.0",
+  "name": "가중치 업데이트에 관해서 with wav2vec 2.0",
+  "description": "wav2vec 2.0 은 얼마나 weight가 업데이트 되는걸까? ",
+  "keywords": [
+    "deeplearning", "fine-tuning", "transfer learning", "wav2vec 2.0", "ASR", "weight update"
+  ],
+  "articleBody": "요즘 딥러닝 좀 만져봤다 하는 사람치고 Pre-trained Model 안 써본 사람 없을 거다. 거대 모델들이 이미 학습해놓은 방대한 지식을 쪽쪽 빨아먹는(?) Transfer Learning(전이 학습)은 이제 자연스럽다. 그리고 그 핵심 기술 중 하나가 바로 Fine-tuning(미세 조정)이다.\n작업할 당시 생긴 궁금증이 있다. “파인튜닝할 때 모델의 모든 가중치(weight)가 다 업데이트되는 걸까?” 아니면 일부만 업데이트되는 걸까? 🤔\n이 궁금증을 해결하기 위해, 음성 인식(ASR) 분야의 대표 주자 중 하나인 wav2vec 2.0 논문[1]을 샅샅이 뒤져보며 파인튜닝의 실체를 파헤쳐 보자!\n파인튜닝? 먼저 파인튜닝이 뭔지 간단히 짚고 넘어가자. 파인튜닝(fine-tuning)은 직역하면 미세 조정이라는 말이다. 풀어서 얘기하면 이미 대규모 데이터셋(Source Dataset)으로 **사전 학습(Pre-training)**된 모델을 가져와서, 우리가 **실제로 풀고 싶은 특정 작업(Target Task)과 관련된 데이터셋(Target Dataset)**으로 추가 학습시키는 과정을 말한다.\n[2]\n비유적으로 설명하자면 영어 원어민에게 한국어 수능 문제를 풀도록 가르치는 것과 비슷하다. 기본적인 언어 능력(사전 학습된 지식)은 이미 갖춰져 있으니, 유치원 과정부터 가르치는 일은 없어도 될거다. 그러니 목표 시험(Target Task)에 맞춰 약간의 요령(추가 학습)만 알려주면 훨씬 빠르고 효과적으로 목표를 달성할 수 있다. d2l.ai[2]의 설명처럼, 사전 학습된 모델 파라미터가 가진 지식이 목표 데이터셋에도 유용할 것이라는 가정하에 진행된다.\nWe assume that these model parameters contain the knowledge learned from the source dataset and this knowledge will also be applicable to the target dataset. - d2l.ai[2]\n자, 그럼 이제 wav2vec 2.0은 파인튜닝을 어떻게 수행하는지 본격적으로 살펴보자.\nwav2vec 2.0 파인튜닝: 선택과 집중의 미학 ✨ wav2vec 2.0은 Self-Supervised Learning (자기 지도 학습) 방식으로 사전 학습된 음성 표현(Speech Representation) 모델이다. 이 모델을 특정 음성 인식 작업(예: 특정 언어 받아쓰기)에 맞게 파인튜닝하는 과정은 논문에 꽤 구체적으로 나와 있다.\n논문의 두 부분을 통해 그 비밀을 엿볼 수 있다.\n1. 간단한 모델 구조\nPre-trained models are fine-tuned for speech recognition by adding a randomly initialized linear projection on top of the context network into C classes representing the vocabulary of the task. - wav2vec 2.0[1]\n사전 학습된 모델(feature encoder + Transformer) 위에 새로운 linear projection 레이어를 랜덤 초기화해서 추가한다고 한다. 이 레이어는 최종적으로 우리가 인식해야 할 단어 집합(vocabulary)의 종류(C classes)만큼의 출력을 내뱉는 역할을 한다. 다음은 wav2vec의 큰 모듈들이다.\nFeature Encoder (f: X -\u003e Z): 입력된 원시 음성 파형(Raw Audio, X)을 받아 잠재 음성 표현(latent speech representations, Z)으로 변환한다. 음성의 저수준 특징(음향 특징 등)을 추출하는 역할이다. Transformer (g: Z -\u003e C): Feature Encoder가 만든 Z를 입력받아 문맥 정보를 고려한 표현(context representations, C)으로 변환한다. 음성 내 시간적 관계나 문맥을 파악하는 역할이다. Linear Projection (추가됨): Transformer 위에 새로 추가된 분류기(Classifier). C를 입력받아 최종 단어(vocabulary) 확률을 출력한다. 2. 파인튜닝 학습 전략 (Experimental Setup Part)\nFor the first 10k updates only the output classifier is trained, after which the Transformer is also updated. The feature encoder is not trained during fine-tuning. - wav2vec 2.0[1]\n바로 여기에 우리의 핵심 궁금증에 대한 답이 있다!\n처음 10,000 업데이트(step) 동안은 새로 추가된 output classifier(Linear Projection)만 학습시킨다. 😮 그 이후에는 Transformer 부분도 같이 학습시킨다. 놀랍게도, Feature Encoder는 파인튜닝 과정에서 전혀 학습시키지 않는다 (frozen). 🧊 결론적으로 wav2vec 2.0의 파인튜닝에서는 모든 가중치가 업데이트되는 것이 아니었다! Feature Encoder는 얼려두고, Classifier와 Transformer만 선택적으로 업데이트하는 전략을 사용한다.\n잠깐! wav2vec 2.0의 사전 학습은 어떻게 하는 걸까? 자, 그런데 한 가지 중요한 부분을 건너뛰었다. 애초에 wav2vec 2.0이 뭐길래 이렇게 파인튜닝할 때 특별한 전략이 필요한 걸까? 먼저 wav2vec 2.0의 핵심인 Self-Supervised Learning (SSL, 자기 지도 학습) 방식부터 알아보자.\n레이블 없이 어떻게 학습한다고? wav2vec 2.0의 가장 인상적인 부분은 음성 인식을 위한 학습을 레이블 없이 진행한다는 것이다. 그냥 날것의 오디오 파일만 있으면 된다! 물론 파인튜닝 단계에서는 레이블이 필요하긴 하지만 학습을 하는데 labled data가 필요하지 않다니 상당히 매력적이다.\n기존의 음성 인식 모델들은 수천 시간의 음성 데이터와 이에 대응하는 텍스트 전사본(Transcription)이 필요했다. 하지만 모든 언어에 대해 이런 데이터를 구하는 것은 매우 어렵고 비용이 많이 든다. 특히 저자원 언어(Low-resource languages)의 경우 더욱 그렇다.\nwav2vec 2.0은 이런 문제를 해결하기 위해 사람이 텍스트 레이블을 제공하지 않아도 스스로 학습할 수 있는 방법을 고안했다.\n마스킹과 예측: 음성 BERT? 한마디로 하자면 wav2vec 2.0의 사전 학습 방식은 텍스트 분야의 BERT와 개념적으로 유사하다. 입력의 일부를 가리고(마스킹), 가려진 부분을 주변 문맥으로부터 예측하는 방식이다.\n구체적인 사전 학습 과정을 자세히 설명해보고자 한다. 조금 길어도 참아주시길 하하..\n1. Feature Extraction: 음성 신호를 의미 있는 표현으로 변환 먼저 원시 오디오 파형(X)을 Feature Encoder를 통해 잠재 표현(Z)으로 변환한다.\nCNN 기반 인코더: 논문에서는 7개의 블록으로 구성된 1D 컨볼루션 네트워크를 사용한다. 첫번째 블록은 스트라이드가 5, 나머지 6개는 2 이므로 5 * (2^6) = 320이다. 다운샘플링 효과: 이러한 구성으로 인해 원본 오디오는 약 320배 정도 다운샘플링된다. 예를 들어, 16kHz로 샘플링된 10초 길이의 오디오(160,000 샘플)는 약 500개의 특징 벡터로 변환되고, 하나의 벡터는 20ms의 오디오 정보를 담는다. 레이어 정규화와 GELU: 각 CNN 블록 후에는 레이어 정규화와 GELU 활성화 함수가 적용된다. 왜 이렇게까지 Feature 를 뽑는 것일까? 내 추측이지만 아마도 전통적 특징 추출 법은 인간의 청각 시스템에 기반했고, 사전에 정의된 필터로 정보 손실의 가능성이 있어서 이지 않을까 싶다. 그러나 당시 facebook 연구진들은 이것마저 신경망에 맡기려고 한 것 같다.\n어쨌든 이렇게 추출된 특징 벡터들(Z)은 원시 파형보다 훨씬 더 의미 있는 표현을 갖게 된다. 예를 들어, 음소(phoneme)와 같은 음성 단위나 음향적 특성(피치, 음색 등)을 포착할 수 있다.\n2. Masking: 예측 과제 생성을 위한 정보 가리기 변환된 특징 벡터들(Z) 중 일정 비율을 무작위로 마스킹한다. 이는 모델이 “채워 넣기” 과제를 학습하도록 하기 위함이다.\n마스킹 비율: 논문에서는 특징 벡터의 약 ~40%를 마스킹한다. 이 비율은 경험적으로 결정된 값으로, 너무 적으면 과제가 너무 쉬워지고, 너무 많으면 너무 어려워진다. 마스킹 전략: 개별 타임스텝을 독립적으로 마스킹하는 것이 아니라, 연속된 타임스텝 그룹(span)을 마스킹한다. 기본 설정에서는 10개의 타임스텝을 그룹으로 마스킹한다. 이는 음성의 시간적 특성을 고려한 설계다. 마스킹 표현: 마스킹된 부분은 학습 가능한 벡터(마스크 임베딩)로 대체된다. 이 벡터는 “이 부분은 마스킹되었다\"라는 표시자 역할을 한다. 예를 들어, 특징 벡터 시퀀스 [z₁, z₂, z₃, z₄, z₅, z₆, z₇, z₈, z₉, z₁₀]에서 [z₄, z₅, z₆]을 마스킹한다면, 시퀀스는 [z₁, z₂, z₃, M, M, M, z₇, z₈, z₉, z₁₀](여기서 M은 마스크 임베딩)으로 변환된다.\n3. Quantization: 연속적 표현을 이산적 코드로 변환 원래의 Z(마스킹되기 전)를 이산적인 표현 Q로 양자화한다. 이 과정은 실제로 음성의 의미 있는 단위(예: 음소)를 발견하는 데 중요하다.\n코드북(Codebook) 구성: 논문에서는 G=2개의 코드북을 사용하며, 각 코드북은 V=320개의 항목(entry)을 갖는다. 이는 총 G×V=640개의 가능한 코드 조합을 제공한다. 코드북 시스템은 쉽게 음소 사전이라고 생각하면 된다. 그러니 Q로 양자화 했다는 것은 음성 신호를 정해진 음소 entry에 매핑됐다는 의미이다. 벡터 양자화 과정: 특징 벡터 z에 선형 투영(linear projection)을 적용하여 로짓(logit) 벡터를 얻는다. 이 로짓으로부터 각 코드북에서 가장 가능성 높은 코드를 선택한다(Gumbel-Softmax 사용). 선택된 각 코드에 해당하는 임베딩을 가져와 합산한다. 효과: 이 양자화 과정을 통해 연속적인 음성 특징 공간을 유한한 수의 ‘음소 단위’로 매핑할 수 있다. 예를 들어, 특정 음소 “아\"에 해당하는 특징 벡터들은 비슷한 코드 조합(예: 코드북 1에서 코드 15[실제론 256차원 벡터], 코드북 2에서 코드 42[실제론 256차원 벡터])으로 양자화될 가능성이 높다.\n다음으로 넘어가기 전에 궁금증이 든다. 왜 처음보는 Gumbel-Softmax를 사용했을까?\nGumbel-Softmax ? 양자화 과정인 이산적 과정에서 argmax 연산이 들어가게 된다. 이 argmax는 미분이 불가능하므로 학습이 되지 않는다. 일반 softmax는 미분이 가능하나 확률 분포만 출력할 뿐, 샘플을 뽑는 과정은 포함되어 있지 않다. 양자화에는 실제 이산적 선택(하나의 코드북 선택)이 필요하다. gumbel softmax는 미분 가능성을 유지하면서도 확률 분포에서 샘플을 뽑는 과정이 내장 되어 있다. gumbel noise를 통해 초기 학습 단계에서 다양한 코드북 항목을 탐색 하도록 한다. 4. Context Network: 문맥 정보 통합 마스킹된 특징 벡터들(일부가 마스크 임베딩으로 대체된 Z)을 Transformer 모델에 통과시켜 문맥화된 표현(C)을 얻는다.\nTransformer 구조: 논문에서는 12개 또는 24개의 Transformer 블록을 사용한다. 각 블록은 자기 주의(self-attention) 메커니즘과 피드포워드 네트워크로 구성된다. 상대적 위치 인코딩: 절대적 위치 대신 상대적 위치 인코딩(relative positional encoding)을 사용하여 시퀀스 내 위치 정보를 제공한다. 문맥 통합 과정: Transformer는 각 타임스텝에서 주변 정보(마스킹되지 않은 부분)를 활용하여 마스킹된 부분에 대한 예측을 가능하게 하는 문맥화된 표현을 생성한다. 예를 들어, “안녕하_요\"에서 마스킹된 부분 “_“을 예측하기 위해, Transformer는 “안녕하\"와 “요” 부분의 정보를 종합하여 “세\"가 들어갈 가능성이 높다고 추론할 수 있다. transformer가 학습하는 “세\"는 Q의 결과와 유사하게끔 학습된다.\n5. Contrastive Learning: 비교를 통한 학습 Contrastive Learning이란 “이것은 저것과 같다/다르다\"를 구별하는 방식으로 학습하는 방법이다.\n몇번 들어본 cross entropy라든지, MSE 같은 loss 함수가 아닌 InfoNCE(Noise-Contrastive Estimation) loss 함수로 학습이 된다. 이 함수는 자기지도학습에서 주로 사용되는 요소로 “올바른 쌍과 잘못된 쌍을 구별하는 능력\"을 학습하는 방법이라고 생각하면 된다.\n한 마디로 하자면 모델은 실제 양자화 벡터(Q)와 다양한 “false” 양자화 벡터(negative samples)를 구별하는 법을 학습한다. 좀 더 구체적으로 설명해보겠다.\nInfoNCE의 Loss 함수 핵심 아이디어는 “같은 위치의 C와 Q는 가깝게, 다른 위치의 C와 Q는 멀게” 이다. InfoNCE의 Loss 함수의 변형으로 $$L_m = -\\log\\left[ \\frac{\\exp(\\text{sim}(c_t, q_t)/\\tau)}{\\exp(\\text{sim}(c_t, q_t)/\\tau) + \\sum \\exp(\\text{sim}(c_t, \\tilde{q})/\\tau)} \\right]$$ 이런 식을 사용하며,\n$L$: 최소화하고자 하는 InfoNCE 손실 값 $c_t$: 시간 스텝 $t$에서의 Transformer 출력 벡터 (문맥 표현) 마스킹된 위치에서 모델이 생성한 표현 차원: Transformer의 은닉층 크기와 동일 (일반적으로 768 또는 1024) $q_t$: 시간 스텝 $t$에서의 실제 양자화 벡터 (정답 타겟) 마스킹되기 전 원래 오디오 부분의 양자화된 표현 차원: 모델의 은닉층 크기와 동일 $\\tilde{q}$: 부정적 샘플들 (negative samples) 다른 시간 위치나 다른 오디오 파일에서 가져온 잘못된 양자화 벡터들 wav2vec 2.0에서는 보통 100개의 부정적 샘플 사용 $\\text{sim}(\\cdot,\\cdot)$: 유사도 함수 일반적으로 코사인 유사도 사용: $\\text{sim}(a,b) = \\frac{a \\cdot b}{||a|| \\cdot ||b||}$ 두 벡터가 얼마나 유사한지 -1에서 1 사이 값으로 측정 $\\tau$: 온도 파라미터 (temperature) 일반적으로 wav2vec 2.0에서는 0.1 사용 낮을수록 차이를 더 뚜렷하게 만들고, 높을수록 차이를 부드럽게 만듦 $\\exp(\\cdot)$: 지수 함수 유사도 점수를 항상 양수로 변환하고 차이를 강조 $\\sum$: 모든 부정적 샘플에 대한 합계 분모에서 모든 부정적 샘플들의 점수를 합산 단일 대조 학습 프레임워크 Transformer의 출력 C가 Q를 직접 “출력\"하도록 학습하는 것이 아니다. 대신, C와 Q 사이의 유사성(similarity)을 최대화하도록 학습되고, 이 과정이 InfoNCE 손실 함수를 통해 이루어진다.\n총 손실 함수 $$ L = L_m + αL_d$$ $L_m$: 주요 대조 손실 (마스크 예측용)\n$L_d$: 코드북 다양성 손실 (보조 목적) L_d = -H(q̄) = Σ_g Σ_v p(g,v) log p(g,v) $α$: 다양성 손실의 가중치\n이렇게 총 loss 함수로 학습이 되며, 부정 샘플링을 100개씩 뽑아서 loss를 계산한다고 한다.\n배치 내 부정 샘플을 뽑거나, 같은 오디오 안에서 다른 타입스텝의 양자화 벡터를 뽑거나 하는 방식을 사용한다고 한다.\n이러한 loss 함수 학습 과정을 통해, 모델은 점차적으로:\n음성의 시간적 패턴과 문맥적 관계를 이해하게 된다. 의미 있는 음향 단위(음소 등)를 스스로 발견하게 된다. 다양한 발화자, 환경, 언어적 변이에 강인한 표현을 학습하게 된다. 그리고 이것이 바로 wav2vec 2.0이 레이블 없이도 강력한 음성 표현을 학습할 수 있는 비결이다!\n파인튜닝 전략과 궁금증! 이제 위에서 설명한 사전 학습 과정과 파인튜닝 전략이 어떻게 연결되는지 이해할 수 있다.\n왜 Feature Encoder는 얼리는 걸까? Feature Encoder는 음성의 가장 기본적인 음향 특징(acoustic features)을 추출하는 역할을 한다. 이 특징은 특정 언어나 작업에 크게 구애받지 않는 범용적인(general) 정보일 가능성이 높다. 따라서 사전 학습된 상태를 유지하는 것이 오히려 다른 작업으로의 전이에 유리할 수 있다. 또한, 이 부분을 얼려두면 파인튜닝 시 업데이트해야 할 파라미터 수가 줄어들어 학습이 더 안정적이고 빨라질 수 있다. Transformer를 미세 조정하는 이유: Transformer는 문맥적 관계를 모델링하는데, 이는 특정 언어의 음소 순서나 단어 패턴 등과 연관될 수 있다. 따라서 목표 작업에 맞게 조정이 필요하다. Classifier를 먼저 학습시키는 이유: 새로 추가된 Classifier는 특정 언어의 단어 집합에 맞게 최적화되어야 하고, 이 과정에서 발생하는 큰 오차가 사전 학습된 표현을 손상시키지 않도록 먼저 안정화시킬 필요가 있다. 왜 처음 10k 스텝 동안은 Classifier만 학습시킬까? 새로 추가된 Classifier는 가중치가 랜덤하게 초기화되어 있다. 만약 처음부터 사전 학습된 Transformer와 함께 학습시키면, 이 랜덤한 가중치에서 발생하는 큰 오차(error)가 Transformer에게 잘못된 방향으로 영향을 줄 수 있다 (catastrophic forgetting 현상과 유사). 따라서 새로운 Classifier를 먼저 어느 정도 안정화시킨 후, 전체 모델을 함께 미세 조정하는 것이 더 안정적인 학습 전략일 수 있다. 그럼 10k라는 숫자는 절대적인 기준일까? 그렇지는 않다. 10k는 해당 논문의 실험 조건에서 찾은 경험적인(empirical) 값일 가능성이 높다. 실제로는 사용하는 데이터셋의 크기, 태스크의 종류, 모델 구조 등에 따라 최적의 스텝 수는 달라질 수 있다. 중요한 것은 **“새로운 레이어를 먼저 안정화시킨다”**는 전략 그 자체다. 사전 학습된 가중치는 초기값 역할만 할 뿐일까? 단순한 초기값 이상이다. 사전 학습은 모델이 데이터의 유의미한 구조나 특징을 이미 학습한 상태로 만들어준다. fine-tuning은 이 좋은 출발점에서 시작하여 목표 작업에 맞게 살짝 방향만 틀어주는 과정이다. 덕분에 적은 데이터로도 훨씬 빠르고 좋은 성능을 얻을 수 있다. 즉, 좋은 초기값을 제공할 뿐만 아니라, 학습 과정 전체에 긍정적인 영향을 미친다. 결국 wav2vec 2.0의 파인튜닝 전략은 사전 학습된 지식을 최대한 보존하면서 새로운 작업에 효과적으로 적응하기 위한 선택과 집중의 결과라고 볼 수 있다.\n실전에서의 wav2vec 2.0 의미는? wav2vec 2.0이 단순히 학술적 성과로 끝났을까? 그렇지 않다. 실제로 이 모델은 저자원 언어 음성 인식 분야에 혁명을 가져왔다.\n놀라운 성능, 적은 데이터로도! 📊 아래 논문의 실험 결과를 살펴보자.\nLibriSpeech 100h (100시간 레이블 데이터)만으로 파인튜닝했을 때, 기존 지도 학습 방식보다 훨씬 낮은 오류율을 보였다. 무려 10분(!) 분량의 레이블된 데이터만으로도 놀라울 정도로 작동하는 음성 인식기를 만들 수 있었다. 바닥부터 학습해도 이 정도 결과는 안 나온다는 게 논문의 요지다. 53개 언어에 대한 모델(XLSR-53)을 사전 학습하여 언어 간 전이가 가능함을 보여주었다. | 훈련 데이터량 | wav2vec 2.0 | 기존 지도 학습 | |--------------|------------|--------------| | 10분 | 4.8% WER | 분석 불가능 | | 1시간 | 3.5% WER | 17.0% WER | | 10시간 | 2.9% WER | 11.1% WER | | 100시간 | 2.2% WER | 6.5% WER | | 960시간 | 1.9% WER | 2.5% WER | 특히 저자원 상황(10분~10시간)에서의 성능 차이는 정말 극적이다. 이는 현실에서 학습 데이터를 구하기 어려운 많은 언어들에게 실질적인 희망이 되었다.\nwav2vec 2.0의 미래: 후속 모델들과 발전 방향 wav2vec 2.0 이후 음성 자기 지도 학습은 계속 발전하고 있다. 주요 후속 모델들을 간단히 살펴보자:\n1. wav2vec-U: 완전한 비지도 학습의 꿈 wav2vec-U(Unsupervised)는 한 걸음 더 나아가 파인튜닝 단계에서도 레이블이 전혀 필요 없는 완전한 비지도 학습 방식을 제안했다. 음성 데이터와 텍스트 데이터만 있고, 이들의 쌍(pair)은 없어도 모델을 학습시킬 수 있다는 놀라운 접근법이다.\n2. HuBERT: 마스킹에서 클러스터링으로 HuBERT(Hidden-Unit BERT)는 wav2vec 2.0의 양자화 방식 대신 클러스터링 기반 목표를 사용하여 더 안정적인 학습을 가능하게 했다. 또한 사전 학습과 파인튜닝의 차이를 줄여 더 좋은 성능을 얻을 수 있었다. 나중엔 HuBERT에 대해서도 포스팅을 해봐야 겠다.\n3. WavLM: 음향 이벤트까지 고려한 표현 학습 WavLM은 음성뿐만 아니라 다양한 음향 이벤트(배경 소음, 화자 중첩 등)까지 고려한 표현 학습을 제안했다. 이는 실제 환경에서의 강인한 음성 인식을 가능하게 한다.\n4. 다양한 도메인으로의 확장 이러한 자기 지도 학습 방식은 음성 인식(ASR)을 넘어 다양한 영역으로 확장되고 있다:\n음성 감정 인식: 화자의 감정 상태 파악 화자 식별: 누가 말하는지 구분 음성 합성: 자연스러운 음성 생성 다국어 음성 번역: 한 언어에서 다른 언어로 직접 번역 다시 파인튜닝으로: 우리가 배울 수 있는 교훈 지금까지 wav2vec 2.0의 사전 학습 방식, 파인튜닝 전략, 실제 응용, 그리고 후속 연구까지 살펴보았다. 이제 처음 던졌던 질문으로 돌아가보자: 파인튜닝에서 모든 가중치가 업데이트되어야 할까?\nwav2vec 2.0의 사례는 “아니오\"라고 명확히 답해준다. 오히려 더 중요한 질문은:\n어떤 레이어가 일반적인 지식을 담고 있어 고정해도 될까? 어떤 레이어가 태스크별로 특화된 정보를 학습해야 할까? 학습 과정에서 안정성과 효율성을 위한 최적의 전략은 무엇일까? 이러한 질문들은 wav2vec 2.0에만 국한되지 않고, 최근 급증하고 있는 모든 거대 사전 학습 모델들(GPT, BERT, CLIP 등)의 효과적인 파인튜닝에도 적용될 수 있는 보편적인 고민이다.\n결론: 파인튜닝, 아는 만큼 보인다! fine-tuning 작업을 할 때 모든 가중치가 업데이트될 것이라고 막연히 생각하기 쉽지만, wav2vec 2.0의 사례처럼 실제로는 어떤 레이어를 얼리고, 어떤 레이어를 학습시킬지 선택하는 전략이 매우 중요하다는 것을 알 수 있다.\n어떤 부분을 얼리고 어떤 부분을 학습시킬지는 모델의 구조, 사전 학습 방식, 목표 작업의 특성 등 다양한 요소를 고려하여 결정된다. 단순히 코드를 돌리는 것을 넘어, 이러한 전략적 선택의 이유를 이해하는 것이 모델의 성능을 최대한 끌어올리는 열쇠가 될 것이다.\n앞으로 fine-tuning을 할 때는 “이 모델은 어떤 부분을 업데이트하고 있을까?” 하고 한 번쯤 더 고민해보는 습관을 들여보는 것은 어떨까?\nReferences [1] wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations: https://arxiv.org/abs/2006.11477 [2] Dive into Deep Learning - Fine-Tuning: https://d2l.ai/chapter_computer-vision/fine-tuning.html ",
+  "wordCount" : "7723",
+  "inLanguage": "ko",
+  "datePublished": "2023-02-22T21:13:51+09:00",
+  "dateModified": "2024-07-27T00:00:00+09:00",
+  "author":{
+    "@type": "Person",
+    "name": "macsim"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://macsim2.github.io/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://macsim2.github.io/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://macsim2.github.io/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://macsim2.github.io/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 홈</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                가중치 업데이트에 관해서 with wav2vec 2.0
+            </h1>
+            <div class="post-description">
+                wav2vec 2.0 은 얼마나 weight가 업데이트 되는걸까? 
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2023-02-22
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>7723 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>16 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="https://macsim2.github.io/tags/deeplearning/" style="color: var(--secondary)!important;">Deeplearning</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/fine-tuning/" style="color: var(--secondary)!important;">Fine-Tuning</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/transfer-learning/" style="color: var(--secondary)!important;">Transfer Learning</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/wav2vec-2.0/" style="color: var(--secondary)!important;">Wav2vec 2.0</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/asr/" style="color: var(--secondary)!important;">ASR</a>
+                &nbsp;<a href="https://macsim2.github.io/tags/weight-update/" style="color: var(--secondary)!important;">Weight Update</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "https://macsim2.github.io/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%ed%8c%8c%ec%9d%b8%ed%8a%9c%eb%8b%9d" aria-label="파인튜닝?">파인튜닝?</a></li>
+                <li>
+                    <a href="#wav2vec-20-%ed%8c%8c%ec%9d%b8%ed%8a%9c%eb%8b%9d-%ec%84%a0%ed%83%9d%ea%b3%bc-%ec%a7%91%ec%a4%91%ec%9d%98-%eb%af%b8%ed%95%99-" aria-label="wav2vec 2.0 파인튜닝: 선택과 집중의 미학 ✨">wav2vec 2.0 파인튜닝: 선택과 집중의 미학 ✨</a></li>
+                <li>
+                    <a href="#%ec%9e%a0%ea%b9%90-wav2vec-20%ec%9d%98-%ec%82%ac%ec%a0%84-%ed%95%99%ec%8a%b5%ec%9d%80-%ec%96%b4%eb%96%bb%ea%b2%8c-%ed%95%98%eb%8a%94-%ea%b1%b8%ea%b9%8c" aria-label="잠깐! wav2vec 2.0의 사전 학습은 어떻게 하는 걸까?">잠깐! wav2vec 2.0의 사전 학습은 어떻게 하는 걸까?</a><ul>
+                        
+                <li>
+                    <a href="#%eb%a0%88%ec%9d%b4%eb%b8%94-%ec%97%86%ec%9d%b4-%ec%96%b4%eb%96%bb%ea%b2%8c-%ed%95%99%ec%8a%b5%ed%95%9c%eb%8b%a4%ea%b3%a0" aria-label="레이블 없이 어떻게 학습한다고?">레이블 없이 어떻게 학습한다고?</a></li>
+                <li>
+                    <a href="#%eb%a7%88%ec%8a%a4%ed%82%b9%ea%b3%bc-%ec%98%88%ec%b8%a1-%ec%9d%8c%ec%84%b1-bert" aria-label="마스킹과 예측: 음성 BERT?">마스킹과 예측: 음성 BERT?</a></li>
+                <li>
+                    <a href="#1-feature-extraction-%ec%9d%8c%ec%84%b1-%ec%8b%a0%ed%98%b8%eb%a5%bc-%ec%9d%98%eb%af%b8-%ec%9e%88%eb%8a%94-%ed%91%9c%ed%98%84%ec%9c%bc%eb%a1%9c-%eb%b3%80%ed%99%98" aria-label="1. Feature Extraction: 음성 신호를 의미 있는 표현으로 변환">1. Feature Extraction: 음성 신호를 의미 있는 표현으로 변환</a></li>
+                <li>
+                    <a href="#2-masking-%ec%98%88%ec%b8%a1-%ea%b3%bc%ec%a0%9c-%ec%83%9d%ec%84%b1%ec%9d%84-%ec%9c%84%ed%95%9c-%ec%a0%95%eb%b3%b4-%ea%b0%80%eb%a6%ac%ea%b8%b0" aria-label="2. Masking: 예측 과제 생성을 위한 정보 가리기">2. Masking: 예측 과제 생성을 위한 정보 가리기</a></li>
+                <li>
+                    <a href="#3-quantization-%ec%97%b0%ec%86%8d%ec%a0%81-%ed%91%9c%ed%98%84%ec%9d%84-%ec%9d%b4%ec%82%b0%ec%a0%81-%ec%bd%94%eb%93%9c%eb%a1%9c-%eb%b3%80%ed%99%98" aria-label="3. Quantization: 연속적 표현을 이산적 코드로 변환">3. Quantization: 연속적 표현을 이산적 코드로 변환</a><ul>
+                        
+                <li>
+                    <a href="#gumbel-softmax-" aria-label="Gumbel-Softmax ?">Gumbel-Softmax ?</a></li></ul>
+                </li>
+                <li>
+                    <a href="#4-context-network-%eb%ac%b8%eb%a7%a5-%ec%a0%95%eb%b3%b4-%ed%86%b5%ed%95%a9" aria-label="4. Context Network: 문맥 정보 통합">4. Context Network: 문맥 정보 통합</a></li>
+                <li>
+                    <a href="#5-contrastive-learning-%eb%b9%84%ea%b5%90%eb%a5%bc-%ed%86%b5%ed%95%9c-%ed%95%99%ec%8a%b5" aria-label="5. Contrastive Learning: 비교를 통한 학습">5. Contrastive Learning: 비교를 통한 학습</a><ul>
+                        
+                <li>
+                    <a href="#infonce%ec%9d%98-loss-%ed%95%a8%ec%88%98" aria-label="InfoNCE의 Loss 함수">InfoNCE의 Loss 함수</a></li>
+                <li>
+                    <a href="#%eb%8b%a8%ec%9d%bc-%eb%8c%80%ec%a1%b0-%ed%95%99%ec%8a%b5-%ed%94%84%eb%a0%88%ec%9e%84%ec%9b%8c%ed%81%ac" aria-label="단일 대조 학습 프레임워크">단일 대조 학습 프레임워크</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ed%8c%8c%ec%9d%b8%ed%8a%9c%eb%8b%9d-%ec%a0%84%eb%9e%b5%ea%b3%bc-%ea%b6%81%ea%b8%88%ec%a6%9d" aria-label="파인튜닝 전략과 궁금증!">파인튜닝 전략과 궁금증!</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ec%8b%a4%ec%a0%84%ec%97%90%ec%84%9c%ec%9d%98-wav2vec-20-%ec%9d%98%eb%af%b8%eb%8a%94" aria-label="실전에서의 wav2vec 2.0 의미는?">실전에서의 wav2vec 2.0 의미는?</a><ul>
+                        
+                <li>
+                    <a href="#%eb%86%80%eb%9d%bc%ec%9a%b4-%ec%84%b1%eb%8a%a5-%ec%a0%81%ec%9d%80-%eb%8d%b0%ec%9d%b4%ed%84%b0%eb%a1%9c%eb%8f%84-" aria-label="놀라운 성능, 적은 데이터로도! 📊">놀라운 성능, 적은 데이터로도! 📊</a></li></ul>
+                </li>
+                <li>
+                    <a href="#wav2vec-20%ec%9d%98-%eb%af%b8%eb%9e%98-%ed%9b%84%ec%86%8d-%eb%aa%a8%eb%8d%b8%eb%93%a4%ea%b3%bc-%eb%b0%9c%ec%a0%84-%eb%b0%a9%ed%96%a5" aria-label="wav2vec 2.0의 미래: 후속 모델들과 발전 방향">wav2vec 2.0의 미래: 후속 모델들과 발전 방향</a><ul>
+                        
+                <li>
+                    <a href="#1-wav2vec-u-%ec%99%84%ec%a0%84%ed%95%9c-%eb%b9%84%ec%a7%80%eb%8f%84-%ed%95%99%ec%8a%b5%ec%9d%98-%ea%bf%88" aria-label="1. wav2vec-U: 완전한 비지도 학습의 꿈">1. wav2vec-U: 완전한 비지도 학습의 꿈</a></li>
+                <li>
+                    <a href="#2-hubert-%eb%a7%88%ec%8a%a4%ed%82%b9%ec%97%90%ec%84%9c-%ed%81%b4%eb%9f%ac%ec%8a%a4%ed%84%b0%eb%a7%81%ec%9c%bc%eb%a1%9c" aria-label="2. HuBERT: 마스킹에서 클러스터링으로">2. HuBERT: 마스킹에서 클러스터링으로</a></li>
+                <li>
+                    <a href="#3-wavlm-%ec%9d%8c%ed%96%a5-%ec%9d%b4%eb%b2%a4%ed%8a%b8%ea%b9%8c%ec%a7%80-%ea%b3%a0%eb%a0%a4%ed%95%9c-%ed%91%9c%ed%98%84-%ed%95%99%ec%8a%b5" aria-label="3. WavLM: 음향 이벤트까지 고려한 표현 학습">3. WavLM: 음향 이벤트까지 고려한 표현 학습</a></li>
+                <li>
+                    <a href="#4-%eb%8b%a4%ec%96%91%ed%95%9c-%eb%8f%84%eb%a9%94%ec%9d%b8%ec%9c%bc%eb%a1%9c%ec%9d%98-%ed%99%95%ec%9e%a5" aria-label="4. 다양한 도메인으로의 확장">4. 다양한 도메인으로의 확장</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%eb%8b%a4%ec%8b%9c-%ed%8c%8c%ec%9d%b8%ed%8a%9c%eb%8b%9d%ec%9c%bc%eb%a1%9c-%ec%9a%b0%eb%a6%ac%ea%b0%80-%eb%b0%b0%ec%9a%b8-%ec%88%98-%ec%9e%88%eb%8a%94-%ea%b5%90%ed%9b%88" aria-label="다시 파인튜닝으로: 우리가 배울 수 있는 교훈">다시 파인튜닝으로: 우리가 배울 수 있는 교훈</a></li>
+                <li>
+                    <a href="#%ea%b2%b0%eb%a1%a0-%ed%8c%8c%ec%9d%b8%ed%8a%9c%eb%8b%9d-%ec%95%84%eb%8a%94-%eb%a7%8c%ed%81%bc-%eb%b3%b4%ec%9d%b8%eb%8b%a4" aria-label="결론: 파인튜닝, 아는 만큼 보인다!">결론: 파인튜닝, 아는 만큼 보인다!</a></li>
+                <li>
+                    <a href="#references" aria-label="References">References</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>요즘 딥러닝 좀 만져봤다 하는 사람치고 <code>Pre-trained Model</code> 안 써본 사람 없을 거다. 거대 모델들이 이미 학습해놓은 방대한 지식을 쪽쪽 빨아먹는(?) <code>Transfer Learning</code>(전이 학습)은 이제 자연스럽다. 그리고 그 핵심 기술 중 하나가 바로 <code>Fine-tuning</code>(미세 조정)이다.</p>
+<p>작업할 당시 생긴 궁금증이 있다. <strong>&ldquo;파인튜닝할 때 모델의 모든 <code>가중치(weight)</code>가 다 업데이트되는 걸까?&rdquo;</strong> 아니면 일부만 업데이트되는 걸까? 🤔</p>
+<p>이 궁금증을 해결하기 위해, 음성 인식(ASR) 분야의 대표 주자 중 하나인 <code>wav2vec 2.0</code> 논문[1]을 샅샅이 뒤져보며 파인튜닝의 실체를 파헤쳐 보자!</p>
+<h2 id="파인튜닝">파인튜닝?<a hidden class="anchor" aria-hidden="true" href="#파인튜닝">#</a></h2>
+<p>먼저 <code>파인튜닝</code>이 뭔지 간단히 짚고 넘어가자. <code>파인튜닝(fine-tuning)</code>은 직역하면 미세 조정이라는 말이다. 풀어서 얘기하면 이미 대규모 데이터셋(Source Dataset)으로 **사전 학습(Pre-training)**된 모델을 가져와서, 우리가 **실제로 풀고 싶은 특정 작업(Target Task)과 관련된 데이터셋(Target Dataset)**으로 <strong>추가 학습</strong>시키는 과정을 말한다.</p>
+<!-- 일반적인 파인튜닝 개념도 추천 -->
+<!-- 검색 키워드: "transfer learning fine tuning diagram", "pre-trained model fine-tuning process" -->
+<!-- 추천 그림 형태: Source Task로 Pre-trained된 모델 그림 -> Target Task 데이터로 Fine-tuning하는 과정 (마지막 레이어 교체 또는 전체 레이어 업데이트 표시) -->
+<p><img loading="lazy" src="/images/dl/d2l_fine-tuning.png" alt="일반적인 파인튜닝 개념"  />
+ <!-- 기존 이미지 활용 또는 교체 -->
+[2]</p>
+<p>비유적으로 설명하자면 영어 원어민에게 한국어 수능 문제를 풀도록 가르치는 것과 비슷하다. 기본적인 언어 능력(사전 학습된 지식)은 이미 갖춰져 있으니, 유치원 과정부터 가르치는 일은 없어도 될거다. 그러니 목표 시험(Target Task)에 맞춰 약간의 요령(추가 학습)만 알려주면 훨씬 빠르고 효과적으로 목표를 달성할 수 있다. <code>d2l.ai</code>[2]의 설명처럼, 사전 학습된 모델 파라미터가 가진 지식이 목표 데이터셋에도 유용할 것이라는 가정하에 진행된다.</p>
+<blockquote>
+<p>We assume that these model parameters contain the knowledge learned from the source dataset and this knowledge will also be applicable to the target dataset. - d2l.ai[2]</p>
+</blockquote>
+<p>자, 그럼 이제 <code>wav2vec 2.0</code>은 파인튜닝을 어떻게 수행하는지 본격적으로 살펴보자.</p>
+<h2 id="wav2vec-20-파인튜닝-선택과-집중의-미학-">wav2vec 2.0 파인튜닝: 선택과 집중의 미학 ✨<a hidden class="anchor" aria-hidden="true" href="#wav2vec-20-파인튜닝-선택과-집중의-미학-">#</a></h2>
+<p><code>wav2vec 2.0</code>은 Self-Supervised Learning (자기 지도 학습) 방식으로 사전 학습된 음성 표현(Speech Representation) 모델이다. 이 모델을 특정 음성 인식 작업(예: 특정 언어 받아쓰기)에 맞게 파인튜닝하는 과정은 논문에 꽤 구체적으로 나와 있다.</p>
+<p>논문의 두 부분을 통해 그 비밀을 엿볼 수 있다.</p>
+<p><strong>1. 간단한 모델 구조</strong></p>
+<blockquote>
+<p>Pre-trained models are fine-tuned for speech recognition by adding a randomly initialized linear projection on top of the context network into C classes representing the vocabulary of the task. - wav2vec 2.0[1]</p>
+</blockquote>
+<p>사전 학습된 모델(<code>feature encoder</code> + <code>Transformer</code>) 위에 <strong>새로운 <code>linear projection</code> 레이어를 랜덤 초기화</strong>해서 추가한다고 한다. 이 레이어는 최종적으로 우리가 인식해야 할 단어 집합(<code>vocabulary</code>)의 종류(<code>C classes</code>)만큼의 출력을 내뱉는 역할을 한다. 다음은 wav2vec의 큰 모듈들이다.</p>
+<ul>
+<li><strong><code>Feature Encoder</code> (f: X -&gt; Z):</strong> 입력된 원시 음성 파형(Raw Audio, <code>X</code>)을 받아 잠재 음성 표현(<code>latent speech representations</code>, <code>Z</code>)으로 변환한다. 음성의 저수준 특징(음향 특징 등)을 추출하는 역할이다.</li>
+<li><strong><code>Transformer</code> (g: Z -&gt; C):</strong> <code>Feature Encoder</code>가 만든 <code>Z</code>를 입력받아 문맥 정보를 고려한 표현(<code>context representations</code>, <code>C</code>)으로 변환한다. 음성 내 시간적 관계나 문맥을 파악하는 역할이다.</li>
+<li><strong><code>Linear Projection</code> (추가됨):</strong> <code>Transformer</code> 위에 새로 추가된 분류기(Classifier). <code>C</code>를 입력받아 최종 단어(<code>vocabulary</code>) 확률을 출력한다.</li>
+</ul>
+<!-- wav2vec 2.0 아키텍처 및 파인튜닝 구조 그림 추천 -->
+<!-- 검색 키워드: "wav2vec 2.0 architecture diagram", "wav2vec 2.0 fine-tuning structure" -->
+<!-- 추천 그림 형태: Feature Encoder -> Transformer -> (추가된) Linear Projection 구조를 보여주는 그림 -->
+<p><strong>2. 파인튜닝 학습 전략 (Experimental Setup Part)</strong></p>
+<blockquote>
+<p>For the first 10k updates only the output classifier is trained, after which the Transformer is also updated. The feature encoder is not trained during fine-tuning. - wav2vec 2.0[1]</p>
+</blockquote>
+<p>바로 여기에 우리의 핵심 궁금증에 대한 답이 있다!</p>
+<ul>
+<li><strong>처음 10,000 <code>업데이트(step)</code> 동안은 새로 추가된 <code>output classifier</code>(Linear Projection)만 학습시킨다.</strong> 😮</li>
+<li>그 이후에는 <code>Transformer</code> 부분도 <strong>같이 학습</strong>시킨다.</li>
+<li>놀랍게도, <strong><code>Feature Encoder</code>는 파인튜닝 과정에서 전혀 학습시키지 않는다 (frozen).</strong> 🧊</li>
+</ul>
+<!-- wav2vec 2.0 파인튜닝 단계별 학습 레이어 그림 추천 -->
+<!-- 검색 키워드: "wav2vec 2.0 fine-tuning layer freezing", "fine-tuning frozen layers visualization" -->
+<!-- 추천 그림 형태: 1단계 (Classifier만 학습, 나머지는 Frozen), 2단계 (Classifier + Transformer 학습, Encoder는 Frozen)를 시각적으로 보여주는 그림 -->
+<p>결론적으로 <code>wav2vec 2.0</code>의 파인튜닝에서는 <strong>모든 가중치가 업데이트되는 것이 아니었다!</strong> <code>Feature Encoder</code>는 얼려두고, <code>Classifier</code>와 <code>Transformer</code>만 선택적으로 업데이트하는 전략을 사용한다.</p>
+<h2 id="잠깐-wav2vec-20의-사전-학습은-어떻게-하는-걸까">잠깐! wav2vec 2.0의 사전 학습은 어떻게 하는 걸까?<a hidden class="anchor" aria-hidden="true" href="#잠깐-wav2vec-20의-사전-학습은-어떻게-하는-걸까">#</a></h2>
+<p>자, 그런데 한 가지 중요한 부분을 건너뛰었다. 애초에 <code>wav2vec 2.0</code>이 뭐길래 이렇게 파인튜닝할 때 특별한 전략이 필요한 걸까? 먼저 <code>wav2vec 2.0</code>의 핵심인 <strong>Self-Supervised Learning (SSL, 자기 지도 학습)</strong> 방식부터 알아보자.</p>
+<h3 id="레이블-없이-어떻게-학습한다고">레이블 없이 어떻게 학습한다고?<a hidden class="anchor" aria-hidden="true" href="#레이블-없이-어떻게-학습한다고">#</a></h3>
+<p><code>wav2vec 2.0</code>의 가장 인상적인 부분은 음성 인식을 위한 학습을 <strong>레이블 없이</strong> 진행한다는 것이다. 그냥 날것의 오디오 파일만 있으면 된다! 물론 파인튜닝 단계에서는 레이블이 필요하긴 하지만 학습을 하는데 labled data가 필요하지 않다니 상당히 매력적이다.</p>
+<p>기존의 음성 인식 모델들은 수천 시간의 음성 데이터와 이에 대응하는 텍스트 전사본(Transcription)이 필요했다. 하지만 모든 언어에 대해 이런 데이터를 구하는 것은 매우 어렵고 비용이 많이 든다. 특히 저자원 언어(Low-resource languages)의 경우 더욱 그렇다.</p>
+<p><code>wav2vec 2.0</code>은 이런 문제를 해결하기 위해 사람이 텍스트 레이블을 제공하지 않아도 <strong>스스로 학습할 수 있는</strong> 방법을 고안했다.</p>
+<h3 id="마스킹과-예측-음성-bert">마스킹과 예측: 음성 BERT?<a hidden class="anchor" aria-hidden="true" href="#마스킹과-예측-음성-bert">#</a></h3>
+<p>한마디로 하자면 <code>wav2vec 2.0</code>의 사전 학습 방식은 텍스트 분야의 <code>BERT</code>와 개념적으로 유사하다. 입력의 일부를 가리고(마스킹), 가려진 부분을 주변 문맥으로부터 예측하는 방식이다.</p>
+<!-- wav2vec 2.0 사전 학습 구조 그림 추천 -->
+<!-- 검색 키워드: "wav2vec 2.0 pretraining", "wav2vec 2.0 masking prediction" -->
+<!-- 추천 그림 형태: 음성 파형에서 일부 영역이 마스킹되고, 이를 예측하는 방식을 시각화한 그림 -->
+<p>구체적인 사전 학습 과정을 자세히 설명해보고자 한다. 조금 길어도 참아주시길 하하..</p>
+<h3 id="1-feature-extraction-음성-신호를-의미-있는-표현으로-변환">1. Feature Extraction: 음성 신호를 의미 있는 표현으로 변환<a hidden class="anchor" aria-hidden="true" href="#1-feature-extraction-음성-신호를-의미-있는-표현으로-변환">#</a></h3>
+<p>먼저 원시 오디오 파형(<code>X</code>)을 <code>Feature Encoder</code>를 통해 잠재 표현(<code>Z</code>)으로 변환한다.</p>
+<ul>
+<li><strong>CNN 기반 인코더:</strong> 논문에서는 7개의 블록으로 구성된 1D 컨볼루션 네트워크를 사용한다. 첫번째 블록은 스트라이드가 5, 나머지 6개는 2 이므로 5 * (2^6) = 320이다.</li>
+<li><strong>다운샘플링 효과:</strong> 이러한 구성으로 인해 원본 오디오는 약 320배 정도 다운샘플링된다. 예를 들어, 16kHz로 샘플링된 10초 길이의 오디오(160,000 샘플)는 약 500개의 특징 벡터로 변환되고, 하나의 벡터는 20ms의 오디오 정보를 담는다.</li>
+<li><strong>레이어 정규화와 GELU:</strong> 각 CNN 블록 후에는 레이어 정규화와 GELU 활성화 함수가 적용된다.</li>
+</ul>
+<p>왜 이렇게까지 Feature 를 뽑는 것일까? 내 추측이지만 아마도 전통적 특징 추출 법은 인간의 청각 시스템에 기반했고, 사전에 정의된 필터로 정보 손실의 가능성이 있어서 이지 않을까 싶다. 그러나 당시 facebook 연구진들은 이것마저 신경망에 맡기려고 한 것 같다.</p>
+<p>어쨌든 이렇게 추출된 특징 벡터들(<code>Z</code>)은 원시 파형보다 훨씬 더 의미 있는 표현을 갖게 된다. 예를 들어, 음소(phoneme)와 같은 음성 단위나 음향적 특성(피치, 음색 등)을 포착할 수 있다.</p>
+<h3 id="2-masking-예측-과제-생성을-위한-정보-가리기">2. Masking: 예측 과제 생성을 위한 정보 가리기<a hidden class="anchor" aria-hidden="true" href="#2-masking-예측-과제-생성을-위한-정보-가리기">#</a></h3>
+<p>변환된 특징 벡터들(<code>Z</code>) 중 일정 비율을 무작위로 마스킹한다. 이는 모델이 &ldquo;채워 넣기&rdquo; 과제를 학습하도록 하기 위함이다.</p>
+<ul>
+<li><strong>마스킹 비율:</strong> 논문에서는 특징 벡터의 약 ~40%를 마스킹한다. 이 비율은 경험적으로 결정된 값으로, 너무 적으면 과제가 너무 쉬워지고, 너무 많으면 너무 어려워진다.</li>
+<li><strong>마스킹 전략:</strong> 개별 타임스텝을 독립적으로 마스킹하는 것이 아니라, 연속된 타임스텝 그룹(span)을 마스킹한다. 기본 설정에서는 10개의 타임스텝을 그룹으로 마스킹한다. 이는 음성의 시간적 특성을 고려한 설계다.</li>
+<li><strong>마스킹 표현:</strong> 마스킹된 부분은 학습 가능한 벡터(<code>마스크 임베딩</code>)로 대체된다. 이 벡터는 &ldquo;이 부분은 마스킹되었다&quot;라는 표시자 역할을 한다.</li>
+</ul>
+<p>예를 들어, 특징 벡터 시퀀스 <code>[z₁, z₂, z₃, z₄, z₅, z₆, z₇, z₈, z₉, z₁₀]</code>에서 <code>[z₄, z₅, z₆]</code>을 마스킹한다면, 시퀀스는 <code>[z₁, z₂, z₃, M, M, M, z₇, z₈, z₉, z₁₀]</code>(여기서 <code>M</code>은 마스크 임베딩)으로 변환된다.</p>
+<h3 id="3-quantization-연속적-표현을-이산적-코드로-변환">3. Quantization: 연속적 표현을 이산적 코드로 변환<a hidden class="anchor" aria-hidden="true" href="#3-quantization-연속적-표현을-이산적-코드로-변환">#</a></h3>
+<p>원래의 <code>Z</code>(마스킹되기 전)를 이산적인 표현 <code>Q</code>로 양자화한다. 이 과정은 실제로 음성의 의미 있는 단위(예: 음소)를 발견하는 데 중요하다.</p>
+<ul>
+<li><strong>코드북(Codebook) 구성:</strong> 논문에서는 <code>G=2</code>개의 코드북을 사용하며, 각 코드북은 <code>V=320</code>개의 항목(entry)을 갖는다. 이는 총 <code>G×V=640</code>개의 가능한 코드 조합을 제공한다. 코드북 시스템은 쉽게 <code>음소 사전</code>이라고 생각하면 된다. 그러니 <code>Q</code>로 양자화 했다는 것은 음성 신호를 정해진 음소 entry에 매핑됐다는 의미이다.</li>
+<li><strong>벡터 양자화 과정:</strong>
+<ol>
+<li>특징 벡터 <code>z</code>에 선형 투영(linear projection)을 적용하여 로짓(logit) 벡터를 얻는다.</li>
+<li>이 로짓으로부터 각 코드북에서 가장 가능성 높은 코드를 선택한다(Gumbel-Softmax 사용).</li>
+<li>선택된 각 코드에 해당하는 임베딩을 가져와 합산한다.</li>
+</ol>
+</li>
+<li><strong>효과:</strong> 이 양자화 과정을 통해 연속적인 음성 특징 공간을 유한한 수의 &lsquo;음소 단위&rsquo;로 매핑할 수 있다.</li>
+</ul>
+<p>예를 들어, 특정 음소 &ldquo;아&quot;에 해당하는 특징 벡터들은 비슷한 코드 조합(예: 코드북 1에서 코드 15[실제론 256차원 벡터], 코드북 2에서 코드 42[실제론 256차원 벡터])으로 양자화될 가능성이 높다.</p>
+<p>다음으로 넘어가기 전에 궁금증이 든다. 왜 처음보는 Gumbel-Softmax를 사용했을까?</p>
+<h4 id="gumbel-softmax-">Gumbel-Softmax ?<a hidden class="anchor" aria-hidden="true" href="#gumbel-softmax-">#</a></h4>
+<ol>
+<li>양자화 과정인 이산적 과정에서 argmax 연산이 들어가게 된다. 이 argmax는 미분이 불가능하므로 학습이 되지 않는다.</li>
+<li>일반 softmax는 미분이 가능하나 확률 분포만 출력할 뿐, 샘플을 뽑는 과정은 포함되어 있지 않다. 양자화에는 실제 이산적 선택(하나의 코드북 선택)이 필요하다.</li>
+<li>gumbel softmax는 미분 가능성을 유지하면서도 확률 분포에서 샘플을 뽑는 과정이 내장 되어 있다.</li>
+<li>gumbel noise를 통해 초기 학습 단계에서 다양한 코드북 항목을 탐색 하도록 한다.</li>
+</ol>
+<h3 id="4-context-network-문맥-정보-통합">4. Context Network: 문맥 정보 통합<a hidden class="anchor" aria-hidden="true" href="#4-context-network-문맥-정보-통합">#</a></h3>
+<p>마스킹된 특징 벡터들(일부가 마스크 임베딩으로 대체된 <code>Z</code>)을 <code>Transformer</code> 모델에 통과시켜 문맥화된 표현(<code>C</code>)을 얻는다.</p>
+<ul>
+<li><strong>Transformer 구조:</strong> 논문에서는 12개 또는 24개의 Transformer 블록을 사용한다. 각 블록은 자기 주의(self-attention) 메커니즘과 피드포워드 네트워크로 구성된다.</li>
+<li><strong>상대적 위치 인코딩:</strong> 절대적 위치 대신 상대적 위치 인코딩(relative positional encoding)을 사용하여 시퀀스 내 위치 정보를 제공한다.</li>
+<li><strong>문맥 통합 과정:</strong> Transformer는 각 타임스텝에서 주변 정보(마스킹되지 않은 부분)를 활용하여 마스킹된 부분에 대한 예측을 가능하게 하는 문맥화된 표현을 생성한다.</li>
+</ul>
+<p>예를 들어, &ldquo;안녕하_요&quot;에서 마스킹된 부분 &ldquo;_&ldquo;을 예측하기 위해, Transformer는 &ldquo;안녕하&quot;와 &ldquo;요&rdquo; 부분의 정보를 종합하여 &ldquo;세&quot;가 들어갈 가능성이 높다고 추론할 수 있다. transformer가 학습하는 &ldquo;세&quot;는 Q의 결과와 유사하게끔 학습된다.</p>
+<h3 id="5-contrastive-learning-비교를-통한-학습">5. Contrastive Learning: 비교를 통한 학습<a hidden class="anchor" aria-hidden="true" href="#5-contrastive-learning-비교를-통한-학습">#</a></h3>
+<p>Contrastive Learning이란 &ldquo;이것은 저것과 같다/다르다&quot;를 구별하는 방식으로 학습하는 방법이다.<br>
+몇번 들어본 cross entropy라든지, MSE 같은 loss 함수가 아닌 InfoNCE(Noise-Contrastive Estimation) loss 함수로 학습이 된다. 이 함수는 자기지도학습에서 주로 사용되는 요소로 &ldquo;올바른 쌍과 잘못된 쌍을 구별하는 능력&quot;을 학습하는 방법이라고 생각하면 된다.<br>
+한 마디로 하자면 모델은 실제 양자화 벡터(<code>Q</code>)와 다양한 &ldquo;false&rdquo; 양자화 벡터(negative samples)를 구별하는 법을 학습한다. 좀 더 구체적으로 설명해보겠다.</p>
+<h4 id="infonce의-loss-함수">InfoNCE의 Loss 함수<a hidden class="anchor" aria-hidden="true" href="#infonce의-loss-함수">#</a></h4>
+<p>핵심 아이디어는 &ldquo;같은 위치의 <code>C</code>와 <code>Q</code>는 가깝게, 다른 위치의 <code>C</code>와 <code>Q</code>는 멀게&rdquo; 이다.
+InfoNCE의 Loss 함수의 변형으로
+$$L_m = -\log\left[ \frac{\exp(\text{sim}(c_t, q_t)/\tau)}{\exp(\text{sim}(c_t, q_t)/\tau) + \sum \exp(\text{sim}(c_t, \tilde{q})/\tau)} \right]$$
+이런 식을 사용하며,<br></p>
+<ul>
+<li>$L$: 최소화하고자 하는 InfoNCE 손실 값</li>
+<li>$c_t$: 시간 스텝 $t$에서의 Transformer 출력 벡터 (문맥 표현)
+<ul>
+<li>마스킹된 위치에서 모델이 생성한 표현</li>
+<li>차원: Transformer의 은닉층 크기와 동일 (일반적으로 768 또는 1024)</li>
+</ul>
+</li>
+<li>$q_t$: 시간 스텝 $t$에서의 실제 양자화 벡터 (정답 타겟)
+<ul>
+<li>마스킹되기 전 원래 오디오 부분의 양자화된 표현</li>
+<li>차원: 모델의 은닉층 크기와 동일</li>
+</ul>
+</li>
+<li>$\tilde{q}$: 부정적 샘플들 (negative samples)
+<ul>
+<li>다른 시간 위치나 다른 오디오 파일에서 가져온 잘못된 양자화 벡터들</li>
+<li>wav2vec 2.0에서는 보통 100개의 부정적 샘플 사용</li>
+</ul>
+</li>
+<li>$\text{sim}(\cdot,\cdot)$: 유사도 함수
+<ul>
+<li>일반적으로 코사인 유사도 사용: $\text{sim}(a,b) = \frac{a \cdot b}{||a|| \cdot ||b||}$</li>
+<li>두 벡터가 얼마나 유사한지 -1에서 1 사이 값으로 측정</li>
+</ul>
+</li>
+<li>$\tau$: 온도 파라미터 (temperature)
+<ul>
+<li>일반적으로 wav2vec 2.0에서는 0.1 사용</li>
+<li>낮을수록 차이를 더 뚜렷하게 만들고, 높을수록 차이를 부드럽게 만듦</li>
+</ul>
+</li>
+<li>$\exp(\cdot)$: 지수 함수
+<ul>
+<li>유사도 점수를 항상 양수로 변환하고 차이를 강조</li>
+</ul>
+</li>
+<li>$\sum$: 모든 부정적 샘플에 대한 합계
+<ul>
+<li>분모에서 모든 부정적 샘플들의 점수를 합산</li>
+</ul>
+</li>
+</ul>
+<h4 id="단일-대조-학습-프레임워크">단일 대조 학습 프레임워크<a hidden class="anchor" aria-hidden="true" href="#단일-대조-학습-프레임워크">#</a></h4>
+<p><strong>Transformer의 출력 C가 Q를 직접 &ldquo;출력&quot;하도록 학습하는 것이 아니다.</strong>
+대신, C와 Q 사이의 유사성(similarity)을 최대화하도록 학습되고, 이 과정이 InfoNCE 손실 함수를 통해 이루어진다.</p>
+<ul>
+<li>총 손실 함수
+$$ L = L_m + αL_d$$
+$L_m$: 주요 대조 손실 (마스크 예측용)<br>
+$L_d$: 코드북 다양성 손실 (보조 목적) L_d = -H(q̄) = Σ_g Σ_v p(g,v) log p(g,v) <br>
+$α$: 다양성 손실의 가중치<br></li>
+</ul>
+<p>이렇게 총 loss 함수로 학습이 되며, 부정 샘플링을 100개씩 뽑아서 loss를 계산한다고 한다.<br>
+배치 내 부정 샘플을 뽑거나, 같은 오디오 안에서 다른 타입스텝의 양자화 벡터를 뽑거나 하는 방식을 사용한다고 한다.</p>
+<p>이러한 loss 함수 학습 과정을 통해, 모델은 점차적으로:</p>
+<ol>
+<li>음성의 시간적 패턴과 문맥적 관계를 이해하게 된다.</li>
+<li>의미 있는 음향 단위(음소 등)를 스스로 발견하게 된다.</li>
+<li>다양한 발화자, 환경, 언어적 변이에 강인한 표현을 학습하게 된다.</li>
+</ol>
+<p>그리고 이것이 바로 <code>wav2vec 2.0</code>이 레이블 없이도 강력한 음성 표현을 학습할 수 있는 비결이다!</p>
+<!-- wav2vec 2.0 사전 학습 상세 과정 그림 추천 -->
+<!-- 검색 키워드: "wav2vec 2.0 contrastive learning", "wav2vec 2.0 quantization process", "wav2vec 2.0 detailed architecture" -->
+<!-- 추천 그림 형태: 각 단계(Feature Extraction -> Masking -> Quantization -> Context Network -> Contrastive Learning)의 내부 작동 방식을 자세히 보여주는 그림 -->
+<h3 id="파인튜닝-전략과-궁금증">파인튜닝 전략과 궁금증!<a hidden class="anchor" aria-hidden="true" href="#파인튜닝-전략과-궁금증">#</a></h3>
+<p>이제 위에서 설명한 사전 학습 과정과 파인튜닝 전략이 어떻게 연결되는지 이해할 수 있다.</p>
+<ul>
+<li><strong>왜 <code>Feature Encoder</code>는 얼리는 걸까?</strong>
+<ul>
+<li><code>Feature Encoder</code>는 음성의 가장 기본적인 음향 특징(acoustic features)을 추출하는 역할을 한다. 이 특징은 특정 언어나 작업에 크게 구애받지 않는 <strong>범용적인(general)</strong> 정보일 가능성이 높다. 따라서 사전 학습된 상태를 유지하는 것이 오히려 다른 작업으로의 전이에 유리할 수 있다. 또한, 이 부분을 얼려두면 파인튜닝 시 업데이트해야 할 파라미터 수가 줄어들어 학습이 더 안정적이고 빨라질 수 있다.</li>
+</ul>
+</li>
+<li><strong>Transformer를 미세 조정하는 이유:</strong> <code>Transformer</code>는 문맥적 관계를 모델링하는데, 이는 특정 언어의 음소 순서나 단어 패턴 등과 연관될 수 있다. 따라서 목표 작업에 맞게 조정이 필요하다.</li>
+<li><strong>Classifier를 먼저 학습시키는 이유:</strong> 새로 추가된 <code>Classifier</code>는 특정 언어의 단어 집합에 맞게 최적화되어야 하고, 이 과정에서 발생하는 큰 오차가 사전 학습된 표현을 손상시키지 않도록 먼저 안정화시킬 필요가 있다.</li>
+<li><strong>왜 처음 10k 스텝 동안은 <code>Classifier</code>만 학습시킬까?</strong>
+<ul>
+<li>새로 추가된 <code>Classifier</code>는 가중치가 랜덤하게 초기화되어 있다. 만약 처음부터 사전 학습된 <code>Transformer</code>와 함께 학습시키면, 이 랜덤한 가중치에서 발생하는 큰 오차(<code>error</code>)가 <code>Transformer</code>에게 잘못된 방향으로 영향을 줄 수 있다 (<code>catastrophic forgetting</code> 현상과 유사). 따라서 <strong>새로운 <code>Classifier</code>를 먼저 어느 정도 안정화시킨 후</strong>, 전체 모델을 함께 미세 조정하는 것이 더 안정적인 학습 전략일 수 있다.</li>
+</ul>
+</li>
+<li><strong>그럼 <code>10k</code>라는 숫자는 절대적인 기준일까?</strong>
+<ul>
+<li>그렇지는 않다. <code>10k</code>는 해당 논문의 실험 조건에서 찾은 경험적인(empirical) 값일 가능성이 높다. 실제로는 사용하는 데이터셋의 크기, 태스크의 종류, 모델 구조 등에 따라 최적의 스텝 수는 달라질 수 있다. 중요한 것은 **&ldquo;새로운 레이어를 먼저 안정화시킨다&rdquo;**는 전략 그 자체다.</li>
+</ul>
+</li>
+<li><strong>사전 학습된 가중치는 초기값 역할만 할 뿐일까?</strong>
+<ul>
+<li>단순한 초기값 이상이다. 사전 학습은 모델이 데이터의 <strong>유의미한 구조나 특징을 이미 학습</strong>한 상태로 만들어준다. <code>fine-tuning</code>은 이 좋은 출발점에서 시작하여 목표 작업에 맞게 살짝 방향만 틀어주는 과정이다. 덕분에 적은 데이터로도 훨씬 빠르고 좋은 성능을 얻을 수 있다. 즉, 좋은 초기값을 제공할 뿐만 아니라, 학습 과정 전체에 긍정적인 영향을 미친다.</li>
+</ul>
+</li>
+</ul>
+<p>결국 <code>wav2vec 2.0</code>의 파인튜닝 전략은 사전 학습된 지식을 최대한 보존하면서 새로운 작업에 효과적으로 적응하기 위한 <strong>선택과 집중</strong>의 결과라고 볼 수 있다.</p>
+<h2 id="실전에서의-wav2vec-20-의미는">실전에서의 wav2vec 2.0 의미는?<a hidden class="anchor" aria-hidden="true" href="#실전에서의-wav2vec-20-의미는">#</a></h2>
+<p><code>wav2vec 2.0</code>이 단순히 학술적 성과로 끝났을까? 그렇지 않다. 실제로 이 모델은 저자원 언어 음성 인식 분야에 혁명을 가져왔다.</p>
+<h3 id="놀라운-성능-적은-데이터로도-">놀라운 성능, 적은 데이터로도! 📊<a hidden class="anchor" aria-hidden="true" href="#놀라운-성능-적은-데이터로도-">#</a></h3>
+<p>아래 논문의 실험 결과를 살펴보자.</p>
+<ul>
+<li><strong>LibriSpeech 100h</strong> (100시간 레이블 데이터)만으로 파인튜닝했을 때, 기존 지도 학습 방식보다 <strong>훨씬 낮은 오류율</strong>을 보였다.</li>
+<li>무려 <strong>10분(!)</strong> 분량의 레이블된 데이터만으로도 놀라울 정도로 작동하는 음성 인식기를 만들 수 있었다. 바닥부터 학습해도 이 정도 결과는 안 나온다는 게 논문의 요지다.</li>
+<li><strong>53개 언어</strong>에 대한 모델(XLSR-53)을 사전 학습하여 언어 간 전이가 가능함을 보여주었다.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>| 훈련 데이터량 | wav2vec 2.0 | 기존 지도 학습 |
+</span></span><span style="display:flex;"><span>|--------------|------------|--------------|
+</span></span><span style="display:flex;"><span>| 10분         | 4.8% WER   | 분석 불가능   |
+</span></span><span style="display:flex;"><span>| 1시간        | 3.5% WER   | 17.0% WER    |
+</span></span><span style="display:flex;"><span>| 10시간       | 2.9% WER   | 11.1% WER    |
+</span></span><span style="display:flex;"><span>| 100시간      | 2.2% WER   | 6.5% WER     |
+</span></span><span style="display:flex;"><span>| 960시간      | 1.9% WER   | 2.5% WER     |
+</span></span></code></pre></div><p>특히 저자원 상황(10분~10시간)에서의 성능 차이는 정말 극적이다. 이는 현실에서 학습 데이터를 구하기 어려운 많은 언어들에게 실질적인 희망이 되었다.</p>
+<h2 id="wav2vec-20의-미래-후속-모델들과-발전-방향">wav2vec 2.0의 미래: 후속 모델들과 발전 방향<a hidden class="anchor" aria-hidden="true" href="#wav2vec-20의-미래-후속-모델들과-발전-방향">#</a></h2>
+<p><code>wav2vec 2.0</code> 이후 음성 자기 지도 학습은 계속 발전하고 있다. 주요 후속 모델들을 간단히 살펴보자:</p>
+<h3 id="1-wav2vec-u-완전한-비지도-학습의-꿈">1. wav2vec-U: 완전한 비지도 학습의 꿈<a hidden class="anchor" aria-hidden="true" href="#1-wav2vec-u-완전한-비지도-학습의-꿈">#</a></h3>
+<p><code>wav2vec-U</code>(Unsupervised)는 한 걸음 더 나아가 파인튜닝 단계에서도 레이블이 전혀 필요 없는 완전한 비지도 학습 방식을 제안했다. 음성 데이터와 텍스트 데이터만 있고, 이들의 쌍(pair)은 없어도 모델을 학습시킬 수 있다는 놀라운 접근법이다.</p>
+<h3 id="2-hubert-마스킹에서-클러스터링으로">2. HuBERT: 마스킹에서 클러스터링으로<a hidden class="anchor" aria-hidden="true" href="#2-hubert-마스킹에서-클러스터링으로">#</a></h3>
+<p><code>HuBERT</code>(Hidden-Unit BERT)는 <code>wav2vec 2.0</code>의 양자화 방식 대신 클러스터링 기반 목표를 사용하여 더 안정적인 학습을 가능하게 했다. 또한 사전 학습과 파인튜닝의 차이를 줄여 더 좋은 성능을 얻을 수 있었다. 나중엔 HuBERT에 대해서도 포스팅을 해봐야 겠다.</p>
+<h3 id="3-wavlm-음향-이벤트까지-고려한-표현-학습">3. WavLM: 음향 이벤트까지 고려한 표현 학습<a hidden class="anchor" aria-hidden="true" href="#3-wavlm-음향-이벤트까지-고려한-표현-학습">#</a></h3>
+<p><code>WavLM</code>은 음성뿐만 아니라 다양한 음향 이벤트(배경 소음, 화자 중첩 등)까지 고려한 표현 학습을 제안했다. 이는 실제 환경에서의 강인한 음성 인식을 가능하게 한다.</p>
+<h3 id="4-다양한-도메인으로의-확장">4. 다양한 도메인으로의 확장<a hidden class="anchor" aria-hidden="true" href="#4-다양한-도메인으로의-확장">#</a></h3>
+<p>이러한 자기 지도 학습 방식은 음성 인식(ASR)을 넘어 다양한 영역으로 확장되고 있다:</p>
+<ul>
+<li><strong>음성 감정 인식:</strong> 화자의 감정 상태 파악</li>
+<li><strong>화자 식별:</strong> 누가 말하는지 구분</li>
+<li><strong>음성 합성:</strong> 자연스러운 음성 생성</li>
+<li><strong>다국어 음성 번역:</strong> 한 언어에서 다른 언어로 직접 번역</li>
+</ul>
+<h2 id="다시-파인튜닝으로-우리가-배울-수-있는-교훈">다시 파인튜닝으로: 우리가 배울 수 있는 교훈<a hidden class="anchor" aria-hidden="true" href="#다시-파인튜닝으로-우리가-배울-수-있는-교훈">#</a></h2>
+<p>지금까지 <code>wav2vec 2.0</code>의 사전 학습 방식, 파인튜닝 전략, 실제 응용, 그리고 후속 연구까지 살펴보았다. 이제 처음 던졌던 질문으로 돌아가보자: <strong>파인튜닝에서 모든 가중치가 업데이트되어야 할까?</strong></p>
+<p><code>wav2vec 2.0</code>의 사례는 &ldquo;아니오&quot;라고 명확히 답해준다. 오히려 더 중요한 질문은:</p>
+<ul>
+<li><strong>어떤 레이어가 일반적인 지식을 담고 있어 고정해도 될까?</strong></li>
+<li><strong>어떤 레이어가 태스크별로 특화된 정보를 학습해야 할까?</strong></li>
+<li><strong>학습 과정에서 안정성과 효율성을 위한 최적의 전략은 무엇일까?</strong></li>
+</ul>
+<p>이러한 질문들은 <code>wav2vec 2.0</code>에만 국한되지 않고, 최근 급증하고 있는 모든 거대 사전 학습 모델들(GPT, BERT, CLIP 등)의 효과적인 파인튜닝에도 적용될 수 있는 보편적인 고민이다.</p>
+<h2 id="결론-파인튜닝-아는-만큼-보인다">결론: 파인튜닝, 아는 만큼 보인다!<a hidden class="anchor" aria-hidden="true" href="#결론-파인튜닝-아는-만큼-보인다">#</a></h2>
+<p><code>fine-tuning</code> 작업을 할 때 모든 가중치가 업데이트될 것이라고 막연히 생각하기 쉽지만, <code>wav2vec 2.0</code>의 사례처럼 실제로는 <strong>어떤 레이어를 얼리고, 어떤 레이어를 학습시킬지 선택하는 전략</strong>이 매우 중요하다는 것을 알 수 있다.</p>
+<p>어떤 부분을 얼리고 어떤 부분을 학습시킬지는 모델의 구조, 사전 학습 방식, 목표 작업의 특성 등 다양한 요소를 고려하여 결정된다. 단순히 코드를 돌리는 것을 넘어, 이러한 전략적 선택의 이유를 이해하는 것이 모델의 성능을 최대한 끌어올리는 열쇠가 될 것이다.</p>
+<p>앞으로 <code>fine-tuning</code>을 할 때는 &ldquo;이 모델은 어떤 부분을 업데이트하고 있을까?&rdquo; 하고 한 번쯤 더 고민해보는 습관을 들여보는 것은 어떨까?</p>
+<h2 id="references">References<a hidden class="anchor" aria-hidden="true" href="#references">#</a></h2>
+<ul>
+<li>[1] wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations: <a href="https://arxiv.org/abs/2006.11477">https://arxiv.org/abs/2006.11477</a></li>
+<li>[2] Dive into Deep Learning - Fine-Tuning: <a href="https://d2l.ai/chapter_computer-vision/fine-tuning.html">https://d2l.ai/chapter_computer-vision/fine-tuning.html</a></li>
+</ul>
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="https://macsim2.github.io/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="https://macsim2.github.io/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>ONNX Graph의 내부 구조와 최적화 여정</span>
+  </a>
+  <a class="next" href="https://macsim2.github.io/posts/tech/machinelearning/classification_metric/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>분류 모델 성능 측정? Accuracy만 믿으면 큰일나는 이유 (Precision, Recall, F1)</span>
+  </a>
+</nav>
+
+
+<div class="share-buttons">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 가중치 업데이트에 관해서 with wav2vec 2.0 on twitter"
+       href="https://twitter.com/intent/tweet/?text=%ea%b0%80%ec%a4%91%ec%b9%98%20%ec%97%85%eb%8d%b0%ec%9d%b4%ed%8a%b8%ec%97%90%20%ea%b4%80%ed%95%b4%ec%84%9c%20with%20wav2vec%202.0&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdeeplearning%2ffine-tune_curious%2f&amp;hashtags=deeplearning%2cfine-tuning%2ctransferlearning%2cwav2vec2.0%2cASR%2cweightupdate">
+    <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-253.927,424.544c135.939,0 210.268,-112.643 210.268,-210.268c0,-3.218 0,-6.437 -0.153,-9.502c14.406,-10.421 26.973,-23.448 36.935,-38.314c-13.18,5.824 -27.433,9.809 -42.452,11.648c15.326,-9.196 26.973,-23.602 32.49,-40.92c-14.252,8.429 -30.038,14.56 -46.896,17.931c-13.487,-14.406 -32.644,-23.295 -53.946,-23.295c-40.767,0 -73.87,33.104 -73.87,73.87c0,5.824 0.613,11.494 1.992,16.858c-61.456,-3.065 -115.862,-32.49 -152.337,-77.241c-6.284,10.881 -9.962,23.601 -9.962,37.088c0,25.594 13.027,48.276 32.95,61.456c-12.107,-0.307 -23.448,-3.678 -33.41,-9.196l0,0.92c0,35.862 25.441,65.594 59.311,72.49c-6.13,1.686 -12.72,2.606 -19.464,2.606c-4.751,0 -9.348,-0.46 -13.946,-1.38c9.349,29.426 36.628,50.728 68.965,51.341c-25.287,19.771 -57.164,31.571 -91.8,31.571c-5.977,0 -11.801,-0.306 -17.625,-1.073c32.337,21.15 71.264,33.41 112.95,33.41Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 가중치 업데이트에 관해서 with wav2vec 2.0 on linkedin"
+       href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdeeplearning%2ffine-tune_curious%2f&amp;title=%ea%b0%80%ec%a4%91%ec%b9%98%20%ec%97%85%eb%8d%b0%ec%9d%b4%ed%8a%b8%ec%97%90%20%ea%b4%80%ed%95%b4%ec%84%9c%20with%20wav2vec%202.0&amp;summary=%ea%b0%80%ec%a4%91%ec%b9%98%20%ec%97%85%eb%8d%b0%ec%9d%b4%ed%8a%b8%ec%97%90%20%ea%b4%80%ed%95%b4%ec%84%9c%20with%20wav2vec%202.0&amp;source=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdeeplearning%2ffine-tune_curious%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 가중치 업데이트에 관해서 with wav2vec 2.0 on reddit"
+       href="https://reddit.com/submit?url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdeeplearning%2ffine-tune_curious%2f&title=%ea%b0%80%ec%a4%91%ec%b9%98%20%ec%97%85%eb%8d%b0%ec%9d%b4%ed%8a%b8%ec%97%90%20%ea%b4%80%ed%95%b4%ec%84%9c%20with%20wav2vec%202.0">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 가중치 업데이트에 관해서 with wav2vec 2.0 on facebook"
+       href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdeeplearning%2ffine-tune_curious%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 가중치 업데이트에 관해서 with wav2vec 2.0 on whatsapp"
+       href="https://api.whatsapp.com/send?text=%ea%b0%80%ec%a4%91%ec%b9%98%20%ec%97%85%eb%8d%b0%ec%9d%b4%ed%8a%b8%ec%97%90%20%ea%b4%80%ed%95%b4%ec%84%9c%20with%20wav2vec%202.0%20-%20https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdeeplearning%2ffine-tune_curious%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share 가중치 업데이트에 관해서 with wav2vec 2.0 on telegram"
+       href="https://telegram.me/share/url?text=%ea%b0%80%ec%a4%91%ec%b9%98%20%ec%97%85%eb%8d%b0%ec%9d%b4%ed%8a%b8%ec%97%90%20%ea%b4%80%ed%95%b4%ec%84%9c%20with%20wav2vec%202.0&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fdeeplearning%2ffine-tune_curious%2f">
+        <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28">
+            <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+        </svg>
+    </a>
+</div>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="https://macsim2.github.io/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>

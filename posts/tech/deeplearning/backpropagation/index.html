@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Backpropagation in Deep Learning | macsim&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="about Backpropagation">
+<meta name="author" content="macsim">
+<link rel="canonical" href="http://localhost:1313/posts/tech/deeplearning/backpropagation/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/img/Q.gif">
+<link rel="apple-touch-icon" href="http://localhost:1313/img/Q.gif">
+<link rel="mask-icon" href="http://localhost:1313/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="http://localhost:1313/posts/tech/deeplearning/backpropagation/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script defer src="https://unpkg.com/mermaid@8.8.1/dist/mermaid.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="Backpropagation in Deep Learning" />
+<meta property="og:description" content="about Backpropagation" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/posts/tech/deeplearning/backpropagation/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-03-18T01:17:26+09:00" />
+<meta property="article:modified_time" content="2025-03-18T01:17:26+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Backpropagation in Deep Learning"/>
+<meta name="twitter:description" content="about Backpropagation"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "http://localhost:1313/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "http://localhost:1313/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Backpropagation in Deep Learning",
+      "item": "http://localhost:1313/posts/tech/deeplearning/backpropagation/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Backpropagation in Deep Learning",
+  "name": "Backpropagation in Deep Learning",
+  "description": "about Backpropagation",
+  "keywords": [
+    ""
+  ],
+  "articleBody": "Backpropagation의 정체를 제대로 알게된 건 학부 4학년때 deep learning 수업 때문이었다. 당시 알파고 사건 이후로 머신러닝과 딥러닝을 통해 AI에 대한 관심이 대중으로부터도 커질 때 였건만, 지금 생각해보면 강건너 불구경하듯 그저 바라만 본 채 시간만 흘려 보내고 있었던 것 같다. 3학년때 퍼셉트론의 개념을 공부할 때도 머신러닝이 신기하다는 생각이 막연하게 자리하고 있었지만, backpropagation 처럼 이렇게 구체적인 수식으로 표현되는 줄은 몰랐다. 어찌되었든 직접 인공 신경망이 학습이 되는걸 계산하고 파라미터를 업데이트 하는 순간 받았던 신선한 충격은 아직도 생생하다. 오늘은 역전파에 대해서 글을 작성해보자.\n역전파(Backpropagation)의 기본 개념과 직관적 이해 역전파란 무엇인가? 역전파(Backpropagation)는 인공 신경망을 학습시키는 핵심 알고리즘으로, 손실 함수의 그래디언트(기울기)를 출력층에서 입력층 방향으로 ‘역으로 전파’하며 계산하는 효율적인 방법이다. 이 알고리즘은 1986년 Rumelhart, Hinton, Williams가 발표한 논문에서 대중화되었으며, 현대 딥러닝의 기반이 되는 알고리즘이다. hinton은 이때 부터 중요 알고리즘을 만든사람이 었구나 ㄷㄷ\n간단히 말하자면, 역전파는 신경망의 예측 오류를 최소화하기 위해 각 가중치가 최종 오류에 얼마나 기여했는지 계산하고, 이 정보를 바탕으로 가중치를 업데이트하는 과정이다.\n역전파의 직관적 이해 인공신경망의 학습 과정은 크게 두 단계로 이루어진다:\n순전파(Forward Propagation): 입력 데이터가 신경망을 통과하여 예측값을 생성 역전파(Backpropagation): 예측값과 실제값의 차이(오차)를 계산하고, 이 오차를 역으로 전파하여 각 가중치의 업데이트 방향과 크기를 결정 역전파가 작동하는 원리를 직관적으로 이해해 보자:\n네트워크는 마치 복잡한 함수와 같다: 입력 → [블랙박스] → 출력 우리의 목표는 원하는 출력이 나오도록 이 블랙박스의 내부 설정(가중치)을 조정하는 것 출력에서 발생한 오차를 내부 설정의 조정 방향으로 변환하는 것이 바로 역전파 신용 카드 부정 거래 탐지 시스템을 예로 들면:\n시스템이 정상 거래를 부정 거래로 잘못 분류함 (오류 발생) 역전파를 통해 “어떤 내부 연결(가중치)이 이 오분류에 가장 큰 영향을 미쳤는가?“를 찾아냄 해당 연결을 적절히 조정하여 다음에는 유사한 정상 거래를 올바르게 분류하도록 함 역전파의 수학적 정의와 작동 원리 기본 수식과 표기법 인공 신경망에서 역전파를 이해하기 위한 기본 수식을 알아보자. $L$개의 층으로 구성된 신경망을 가정할 때:\n$W^l$: $l$번째 층의 가중치 행렬 $b^l$: $l$번째 층의 편향 벡터 $z^l = W^l a^{l-1} + b^l$: $l$번째 층의 가중합(weighted sum) $a^l = \\sigma(z^l)$: $l$번째 층의 활성화 출력 $\\sigma$: 활성화 함수 (ReLU, sigmoid 등) $L$: 신경망의 총 층 수 $C$: 비용 함수 (예: 평균 제곱 오차) 역전파 알고리즘의 단계별 설명 역전파는 다음과 같은 단계로 진행된다:\n순전파 단계: 입력 데이터 $x = a^0$로 시작하여 모든 층을 통과시키며 최종 출력 $a^L$을 계산한다. $$a^l = \\sigma(W^l a^{l-1} + b^l) \\quad \\text{for } l = 1, 2, \\ldots, L$$\n출력층 오차 계산: 예측값 $a^L$과 실제값 $y$ 사이의 오차를 계산하고, 이를 비용 함수 $C$의 그래디언트로 표현한다. $$\\delta^L = \\nabla_a C \\odot \\sigma’(z^L)$$ 이 수식을 분해해서 살펴보면\n$\\nabla_a C$ : 출력층 활성화 값 $a^L$에 대한 비용 함수 $C$의 편미분이다. 즉, 출력값이 변할 때 오차가 어떻게 변하는지를 나타낸다.\n$\\sigma’(z^L)$ : 출력층의 활성화 함수의 미분값이다. 입력값 $z^L$에 대한 활성화 함수의 변화율을 나타낸다.\n$\\odot$ : 요소별 곱셈(element-wise multiplication)으로, 두 벡터의 대응되는 요소끼리 곱하는 연산이다.\n여기서 $\\odot$는 하다마르 곱이라고도 하며, 내적, 행렬곱과 다르다. 요소별 곱셈(element-wise multiplication)을 의미한다.\n오차 역전파: 출력층에서 계산된 오차를 이전 층으로 역으로 전파한다. $$\\delta^l = ((W^{l+1})^T \\delta^{l+1}) \\odot \\sigma’(z^l) \\quad \\text{for } l = L-1, L-2, \\ldots, 1$$\n그래디언트 계산: 각 층의 가중치와 편향에 대한 비용 함수의 그래디언트를 계산한다. $$\\nabla_{W^l} C = \\delta^l (a^{l-1})^T$$ $$\\nabla_{b^l} C = \\delta^l$$\n가중치 및 편향 업데이트: 계산된 그래디언트를 사용하여 가중치와 편향을 업데이트한다. $$W^l \\leftarrow W^l - \\eta \\nabla_{W^l} C$$ $$b^l \\leftarrow b^l - \\eta \\nabla_{b^l} C$$ 여기서 $\\eta$는 학습률이다.\n체인 룰(Chain Rule)의 중요성 역전파의 핵심은 미적분학의 체인 룰(chain rule)을 활용하는 것이다. 복잡한 합성 함수의 미분을 각 구성 함수의 미분의 곱으로 표현할 수 있다는 원리를 이용한다.\n예를 들어, $z = f(y)$와 $y = g(x)$라면, $\\frac{dz}{dx} = \\frac{dz}{dy} \\cdot \\frac{dy}{dx}$이다.\n신경망에서는 입력부터 출력까지 여러 층의 연산이 중첩되어 있으므로, 최종 오차가 각 가중치에 미치는 영향을 계산하기 위해 체인 룰을 반복적으로 적용한다.\n역전파 과정 수식 직관적 의미 출력층 오차 계산 $\\delta^L = \\nabla_a C \\odot \\sigma’(z^L)$ “최종 오차가 얼마인가?” 오차 역전파 $\\delta^l = ((W^{l+1})^T \\delta^{l+1}) \\odot \\sigma’(z^l)$ “이전 층의 각 뉴런이 최종 오차에 얼마나 기여했는가?” 그래디언트 계산 $\\nabla_{W^l} C = \\delta^l (a^{l-1})^T$ “각 가중치가 최종 오차에 얼마나 기여했는가?” 가중치 업데이트 $W^l \\leftarrow W^l - \\eta \\nabla_{W^l} C$ “최종 오차를 줄이기 위해 각 가중치를 어떻게 조정할 것인가?” 역전파 알고리즘의 실제 구현 간단한 신경망에서의 역전파 예시 2개의 입력 뉴런, 2개의 은닉층 뉴런, 1개의 출력 뉴런으로 구성된 간단한 신경망을 예로 들어 역전파를 단계별로 살펴보자.\n입력: $x = [x_1, x_2]^T$ 목표 출력: $y$\n순전파: 은닉층 입력: $z^1 = W^1 x + b^1$ 은닉층 출력: $a^1 = \\sigma(z^1)$ 출력층 입력: $z^2 = W^2 a^1 + b^2$ 출력층 출력: $a^2 = \\sigma(z^2)$ 오차 계산: $C = \\frac{1}{2}(a^2 - y)^2$ 역전파: 출력층 오차: $\\delta^2 = (a^2 - y) \\cdot \\sigma’(z^2)$ 출력층 가중치 그래디언트: $\\nabla_{W^2} C = \\delta^2 \\cdot (a^1)^T$ 출력층 편향 그래디언트: $\\nabla_{b^2} C = \\delta^2$ 은닉층 오차: $\\delta^1 = (W^2)^T \\delta^2 \\odot \\sigma’(z^1)$ 은닉층 가중치 그래디언트: $\\nabla_{W^1} C = \\delta^1 \\cdot x^T$ 은닉층 편향 그래디언트: $\\nabla_{b^1} C = \\delta^1$ 가중치 업데이트: $W^2 \\leftarrow W^2 - \\eta \\nabla_{W^2} C$ $b^2 \\leftarrow b^2 - \\eta \\nabla_{b^2} C$ $W^1 \\leftarrow W^1 - \\eta \\nabla_{W^1} C$ $b^1 \\leftarrow b^1 - \\eta \\nabla_{b^1} C$ 활성화 함수와 그 미분 역전파 과정에서는 활성화 함수의 미분 값이 필요하다. 주요 활성화 함수와 그 미분은 다음과 같다:\n활성화 함수 정의 미분 Sigmoid $\\sigma(x) = \\frac{1}{1 + e^{-x}}$ $\\sigma’(x) = \\sigma(x)(1 - \\sigma(x))$ ReLU $\\text{ReLU}(x) = \\max(0, x)$ $\\text{ReLU}’(x) = \\begin{cases} 1 \u0026 \\text{if } x \u003e 0 \\ 0 \u0026 \\text{if } x \\leq 0 \\end{cases}$ tanh $\\tanh(x) = \\frac{e^x - e^{-x}}{e^x + e^{-x}}$ $\\tanh’(x) = 1 - \\tanh^2(x)$ Leaky ReLU $\\text{LReLU}(x) = \\begin{cases} x \u0026 \\text{if } x \u003e 0 \\ \\alpha x \u0026 \\text{if } x \\leq 0 \\end{cases}$ $\\text{LReLU}’(x) = \\begin{cases} 1 \u0026 \\text{if } x \u003e 0 \\ \\alpha \u0026 \\text{if } x \\leq 0 \\end{cases}$ 실제 구현 시 고려사항 1. 수치적 안정성\n오버플로우/언더플로우 방지: 지수 함수나 로그 함수 사용 시 주의 로그-합 트릭(log-sum trick)과 같은 기법 활용 2. 배치 처리\n미니배치 경사 하강법 사용: 여러 샘플의 그래디언트 평균으로 가중치 업데이트 배치 정규화(Batch Normalization) 적용: 내부 공변량 이동(internal covariate shift) 감소 3. 그래디언트 소실/폭발 문제\n그래디언트 클리핑(gradient clipping) 적용 적절한 가중치 초기화 방법 선택(Xavier, He 초기화 등) 잔차 연결(residual connections) 사용 4. 계산 효율성\n행렬 연산 최적화 GPU 가속 활용 자동 미분(Automatic Differentiation) 라이브러리 사용 역전파의 한계와 최신 개선 기법 기존 역전파의 한계점 1. 깊은 신경망에서의 그래디언트 소실/폭발\n층이 깊어질수록 그래디언트가 0에 가까워지거나(소실) 매우 커지는(폭발) 문제 발생 결과적으로 깊은 층은 효과적으로 학습되지 않음 2. 비효율적인 메모리 사용\n순전파 과정의 모든 중간 결과를 저장해야 함 메모리 요구량이 네트워크 깊이에 비례하여 증가 3. 순차적 계산의 한계\n본질적으로 순차적인 알고리즘이므로 병렬화에 제한이 있음 특히 순환 신경망(RNN)에서 시퀀스 길이가 길 경우 비효율적 최신 개선 기법 1. 구조적 개선\n잔차 연결(Residual Connections): 그래디언트가 보다 직접적으로 이전 층으로 흐를 수 있는 지름길 제공 고속도로 네트워크(Highway Networks): 정보 흐름을 제어하는 게이팅 메커니즘 도입 밀집 연결(Dense Connections): 모든 층이 이전의 모든 층과 직접 연결되는 구조 2. 최적화 알고리즘 개선\nAdam, RMSprop: 적응적 학습률을 사용하여 수렴 속도 개선 Lookahead: 여러 최적화 방향을 동시에 탐색 3. 계산 효율성 개선\n그래디언트 체크포인팅(Gradient Checkpointing): 메모리 사용을 줄이기 위해 일부 중간 결과만 저장 역전파 없는 학습(Training without Backpropagation): 합성곱 신경망에서 역전파 대신 지역적 학습 규칙 사용 4. 병렬화 및 분산 학습\n모델 병렬화: 모델을 여러 디바이스에 분산 파이프라인 병렬화: 미니배치를 여러 부분으로 나누어 병렬 처리 결론 및 실용적 팁 역전파의 중요성 요약 역전파 알고리즘은 현대 딥러닝의 핵심 기술로, 복잡한 신경망의 효율적인 학습을 가능하게 했다. 체인 룰을 활용하여 출력층의 오차를 역으로 전파함으로써 각 가중치가 최종 오차에 기여하는 정도를 계산하고, 이를 바탕으로 가중치를 효과적으로 업데이트한다.\n실용적 팁 1. 디버깅 전략\n수치 미분(numerical differentiation)으로 역전파 구현 검증 그래디언트 노름(norm) 모니터링으로 학습 상태 확인 작은 네트워크부터 시작하여 점진적으로 복잡도 증가 2. 하이퍼파라미터 튜닝\n적절한 학습률 선택: 너무 크면 발산, 너무 작으면 느린 수렴 미니배치 크기 조정: 메모리 사용량과 일반화 성능 사이의 균형 가중치 초기화 방법 선택: 활성화 함수에 맞는 초기화 기법 활용 3. 모니터링 지표\n훈련/검증 손실 추이 관찰 각 층의 활성화 분포 및 그래디언트 분포 확인 가중치 및 편향의 변화량 모니터링 참고 문헌 Rumelhart, D. E., Hinton, G. E., \u0026 Williams, R. J. (1986). Learning representations by back-propagating errors. Nature, 323(6088), 533-536. LeCun, Y., Bengio, Y., \u0026 Hinton, G. (2015). Deep learning. Nature, 521(7553), 436-444. Goodfellow, I., Bengio, Y., \u0026 Courville, A. (2016). Deep Learning. MIT Press. ",
+  "wordCount" : "3663",
+  "inLanguage": "ko",
+  "datePublished": "2025-03-18T01:17:26+09:00",
+  "dateModified": "2025-03-18T01:17:26+09:00",
+  "author":[{
+    "@type": "Person",
+    "name": "macsim"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/tech/deeplearning/backpropagation/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="http://localhost:1313/">🏠 홈</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">posts</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                Backpropagation in Deep Learning<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+            </h1>
+            <div class="post-description">
+                about Backpropagation
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2025-03-18
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>3663 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>8 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="http://localhost:1313/tags/deeplearning/" style="color: var(--secondary)!important;">DeepLearning</a>
+                &nbsp;<a href="http://localhost:1313/tags/neural-network/" style="color: var(--secondary)!important;">Neural Network</a>
+                &nbsp;<a href="http://localhost:1313/tags/optimization/" style="color: var(--secondary)!important;">Optimization</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "http://localhost:1313/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8cbackpropagation%ec%9d%98-%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90%ea%b3%bc-%ec%a7%81%ea%b4%80%ec%a0%81-%ec%9d%b4%ed%95%b4" aria-label="역전파(Backpropagation)의 기본 개념과 직관적 이해">역전파(Backpropagation)의 기본 개념과 직관적 이해</a><ul>
+                        
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8c%eb%9e%80-%eb%ac%b4%ec%97%87%ec%9d%b8%ea%b0%80" aria-label="역전파란 무엇인가?">역전파란 무엇인가?</a></li>
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8c%ec%9d%98-%ec%a7%81%ea%b4%80%ec%a0%81-%ec%9d%b4%ed%95%b4" aria-label="역전파의 직관적 이해">역전파의 직관적 이해</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8c%ec%9d%98-%ec%88%98%ed%95%99%ec%a0%81-%ec%a0%95%ec%9d%98%ec%99%80-%ec%9e%91%eb%8f%99-%ec%9b%90%eb%a6%ac" aria-label="역전파의 수학적 정의와 작동 원리">역전파의 수학적 정의와 작동 원리</a><ul>
+                        
+                <li>
+                    <a href="#%ea%b8%b0%eb%b3%b8-%ec%88%98%ec%8b%9d%ea%b3%bc-%ed%91%9c%ea%b8%b0%eb%b2%95" aria-label="기본 수식과 표기법">기본 수식과 표기법</a></li>
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8c-%ec%95%8c%ea%b3%a0%eb%a6%ac%ec%a6%98%ec%9d%98-%eb%8b%a8%ea%b3%84%eb%b3%84-%ec%84%a4%eb%aa%85" aria-label="역전파 알고리즘의 단계별 설명">역전파 알고리즘의 단계별 설명</a></li>
+                <li>
+                    <a href="#%ec%b2%b4%ec%9d%b8-%eb%a3%b0chain-rule%ec%9d%98-%ec%a4%91%ec%9a%94%ec%84%b1" aria-label="체인 룰(Chain Rule)의 중요성">체인 룰(Chain Rule)의 중요성</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8c-%ec%95%8c%ea%b3%a0%eb%a6%ac%ec%a6%98%ec%9d%98-%ec%8b%a4%ec%a0%9c-%ea%b5%ac%ed%98%84" aria-label="역전파 알고리즘의 실제 구현">역전파 알고리즘의 실제 구현</a><ul>
+                        
+                <li>
+                    <a href="#%ea%b0%84%eb%8b%a8%ed%95%9c-%ec%8b%a0%ea%b2%bd%eb%a7%9d%ec%97%90%ec%84%9c%ec%9d%98-%ec%97%ad%ec%a0%84%ed%8c%8c-%ec%98%88%ec%8b%9c" aria-label="간단한 신경망에서의 역전파 예시">간단한 신경망에서의 역전파 예시</a><ul>
+                        
+                <li>
+                    <a href="#%ec%88%9c%ec%a0%84%ed%8c%8c" aria-label="순전파:">순전파:</a></li>
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8c" aria-label="역전파:">역전파:</a></li>
+                <li>
+                    <a href="#%ea%b0%80%ec%a4%91%ec%b9%98-%ec%97%85%eb%8d%b0%ec%9d%b4%ed%8a%b8" aria-label="가중치 업데이트:">가중치 업데이트:</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ed%99%9c%ec%84%b1%ed%99%94-%ed%95%a8%ec%88%98%ec%99%80-%ea%b7%b8-%eb%af%b8%eb%b6%84" aria-label="활성화 함수와 그 미분">활성화 함수와 그 미분</a></li>
+                <li>
+                    <a href="#%ec%8b%a4%ec%a0%9c-%ea%b5%ac%ed%98%84-%ec%8b%9c-%ea%b3%a0%eb%a0%a4%ec%82%ac%ed%95%ad" aria-label="실제 구현 시 고려사항">실제 구현 시 고려사항</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8c%ec%9d%98-%ed%95%9c%ea%b3%84%ec%99%80-%ec%b5%9c%ec%8b%a0-%ea%b0%9c%ec%84%a0-%ea%b8%b0%eb%b2%95" aria-label="역전파의 한계와 최신 개선 기법">역전파의 한계와 최신 개선 기법</a><ul>
+                        
+                <li>
+                    <a href="#%ea%b8%b0%ec%a1%b4-%ec%97%ad%ec%a0%84%ed%8c%8c%ec%9d%98-%ed%95%9c%ea%b3%84%ec%a0%90" aria-label="기존 역전파의 한계점">기존 역전파의 한계점</a></li>
+                <li>
+                    <a href="#%ec%b5%9c%ec%8b%a0-%ea%b0%9c%ec%84%a0-%ea%b8%b0%eb%b2%95" aria-label="최신 개선 기법">최신 개선 기법</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ea%b2%b0%eb%a1%a0-%eb%b0%8f-%ec%8b%a4%ec%9a%a9%ec%a0%81-%ed%8c%81" aria-label="결론 및 실용적 팁">결론 및 실용적 팁</a><ul>
+                        
+                <li>
+                    <a href="#%ec%97%ad%ec%a0%84%ed%8c%8c%ec%9d%98-%ec%a4%91%ec%9a%94%ec%84%b1-%ec%9a%94%ec%95%bd" aria-label="역전파의 중요성 요약">역전파의 중요성 요약</a></li>
+                <li>
+                    <a href="#%ec%8b%a4%ec%9a%a9%ec%a0%81-%ed%8c%81" aria-label="실용적 팁">실용적 팁</a></li>
+                <li>
+                    <a href="#%ec%b0%b8%ea%b3%a0-%eb%ac%b8%ed%97%8c" aria-label="참고 문헌">참고 문헌</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>Backpropagation의 정체를 제대로 알게된 건 학부 4학년때 deep learning 수업 때문이었다. 당시 알파고 사건 이후로 머신러닝과 딥러닝을 통해 AI에 대한 관심이 대중으로부터도 커질 때 였건만, 지금 생각해보면 강건너 불구경하듯 그저 바라만 본 채 시간만 흘려 보내고 있었던 것 같다. 3학년때 퍼셉트론의 개념을 공부할 때도 머신러닝이 신기하다는 생각이 막연하게 자리하고 있었지만, backpropagation 처럼 이렇게 구체적인 수식으로 표현되는 줄은 몰랐다. 어찌되었든 직접 인공 신경망이 학습이 되는걸 계산하고 파라미터를 업데이트 하는 순간 받았던 신선한 충격은 아직도 생생하다. 오늘은 역전파에 대해서 글을 작성해보자.</p>
+<h2 id="역전파backpropagation의-기본-개념과-직관적-이해">역전파(Backpropagation)의 기본 개념과 직관적 이해<a hidden class="anchor" aria-hidden="true" href="#역전파backpropagation의-기본-개념과-직관적-이해">#</a></h2>
+<h3 id="역전파란-무엇인가">역전파란 무엇인가?<a hidden class="anchor" aria-hidden="true" href="#역전파란-무엇인가">#</a></h3>
+<p>역전파(Backpropagation)는 인공 신경망을 학습시키는 핵심 알고리즘으로, 손실 함수의 그래디언트(기울기)를 출력층에서 입력층 방향으로 &lsquo;역으로 전파&rsquo;하며 계산하는 효율적인 방법이다. 이 알고리즘은 1986년 Rumelhart, Hinton, Williams가 발표한 논문에서 대중화되었으며, 현대 딥러닝의 기반이 되는 알고리즘이다. <strong>hinton은 이때 부터 중요 알고리즘을 만든사람이 었구나 ㄷㄷ</strong></p>
+<p>간단히 말하자면, 역전파는 신경망의 예측 오류를 최소화하기 위해 각 가중치가 최종 오류에 얼마나 기여했는지 계산하고, 이 정보를 바탕으로 가중치를 업데이트하는 과정이다.</p>
+<h3 id="역전파의-직관적-이해">역전파의 직관적 이해<a hidden class="anchor" aria-hidden="true" href="#역전파의-직관적-이해">#</a></h3>
+<p>인공신경망의 학습 과정은 크게 두 단계로 이루어진다:</p>
+<ol>
+<li><strong>순전파(Forward Propagation)</strong>: 입력 데이터가 신경망을 통과하여 예측값을 생성</li>
+<li><strong>역전파(Backpropagation)</strong>: 예측값과 실제값의 차이(오차)를 계산하고, 이 오차를 역으로 전파하여 각 가중치의 업데이트 방향과 크기를 결정</li>
+</ol>
+<p>역전파가 작동하는 원리를 직관적으로 이해해 보자:</p>
+<ul>
+<li>네트워크는 마치 복잡한 함수와 같다: 입력 → [블랙박스] → 출력</li>
+<li>우리의 목표는 원하는 출력이 나오도록 이 블랙박스의 내부 설정(가중치)을 조정하는 것</li>
+<li>출력에서 발생한 오차를 내부 설정의 조정 방향으로 변환하는 것이 바로 역전파</li>
+</ul>
+<p>신용 카드 부정 거래 탐지 시스템을 예로 들면:</p>
+<ol>
+<li>시스템이 정상 거래를 부정 거래로 잘못 분류함 (오류 발생)</li>
+<li>역전파를 통해 &ldquo;어떤 내부 연결(가중치)이 이 오분류에 가장 큰 영향을 미쳤는가?&ldquo;를 찾아냄</li>
+<li>해당 연결을 적절히 조정하여 다음에는 유사한 정상 거래를 올바르게 분류하도록 함</li>
+</ol>
+<h2 id="역전파의-수학적-정의와-작동-원리">역전파의 수학적 정의와 작동 원리<a hidden class="anchor" aria-hidden="true" href="#역전파의-수학적-정의와-작동-원리">#</a></h2>
+<h3 id="기본-수식과-표기법">기본 수식과 표기법<a hidden class="anchor" aria-hidden="true" href="#기본-수식과-표기법">#</a></h3>
+<p>인공 신경망에서 역전파를 이해하기 위한 기본 수식을 알아보자. $L$개의 층으로 구성된 신경망을 가정할 때:</p>
+<ul>
+<li>$W^l$: $l$번째 층의 가중치 행렬</li>
+<li>$b^l$: $l$번째 층의 편향 벡터</li>
+<li>$z^l = W^l a^{l-1} + b^l$: $l$번째 층의 가중합(weighted sum)</li>
+<li>$a^l = \sigma(z^l)$: $l$번째 층의 활성화 출력</li>
+<li>$\sigma$: 활성화 함수 (ReLU, sigmoid 등)</li>
+<li>$L$: 신경망의 총 층 수</li>
+<li>$C$: 비용 함수 (예: 평균 제곱 오차)</li>
+</ul>
+<h3 id="역전파-알고리즘의-단계별-설명">역전파 알고리즘의 단계별 설명<a hidden class="anchor" aria-hidden="true" href="#역전파-알고리즘의-단계별-설명">#</a></h3>
+<p>역전파는 다음과 같은 단계로 진행된다:</p>
+<ol>
+<li>
+<p><strong>순전파 단계</strong>:
+입력 데이터 $x = a^0$로 시작하여 모든 층을 통과시키며 최종 출력 $a^L$을 계산한다.
+$$a^l = \sigma(W^l a^{l-1} + b^l) \quad \text{for } l = 1, 2, \ldots, L$$</p>
+</li>
+<li>
+<p><strong>출력층 오차 계산</strong>:
+예측값 $a^L$과 실제값 $y$ 사이의 오차를 계산하고, 이를 비용 함수 $C$의 그래디언트로 표현한다.
+$$\delta^L = \nabla_a C \odot \sigma&rsquo;(z^L)$$
+이 수식을 분해해서 살펴보면<br>
+$\nabla_a C$ : 출력층 활성화 값 $a^L$에 대한 비용 함수 $C$의 편미분이다. 즉, 출력값이 변할 때 오차가 어떻게 변하는지를 나타낸다.<br>
+$\sigma&rsquo;(z^L)$ : 출력층의 활성화 함수의 미분값이다. 입력값 $z^L$에 대한 활성화 함수의 변화율을 나타낸다.<br>
+$\odot$ : 요소별 곱셈(element-wise multiplication)으로, 두 벡터의 대응되는 요소끼리 곱하는 연산이다.<br>
+여기서 $\odot$는 하다마르 곱이라고도 하며, 내적, 행렬곱과 다르다. 요소별 곱셈(element-wise multiplication)을 의미한다.</p>
+</li>
+<li>
+<p><strong>오차 역전파</strong>:
+출력층에서 계산된 오차를 이전 층으로 역으로 전파한다.
+$$\delta^l = ((W^{l+1})^T \delta^{l+1}) \odot \sigma&rsquo;(z^l) \quad \text{for } l = L-1, L-2, \ldots, 1$$</p>
+</li>
+<li>
+<p><strong>그래디언트 계산</strong>:
+각 층의 가중치와 편향에 대한 비용 함수의 그래디언트를 계산한다.
+$$\nabla_{W^l} C = \delta^l (a^{l-1})^T$$
+$$\nabla_{b^l} C = \delta^l$$</p>
+</li>
+<li>
+<p><strong>가중치 및 편향 업데이트</strong>:
+계산된 그래디언트를 사용하여 가중치와 편향을 업데이트한다.
+$$W^l \leftarrow W^l - \eta \nabla_{W^l} C$$
+$$b^l \leftarrow b^l - \eta \nabla_{b^l} C$$
+여기서 $\eta$는 학습률이다.</p>
+</li>
+</ol>
+<h3 id="체인-룰chain-rule의-중요성">체인 룰(Chain Rule)의 중요성<a hidden class="anchor" aria-hidden="true" href="#체인-룰chain-rule의-중요성">#</a></h3>
+<p>역전파의 핵심은 미적분학의 체인 룰(chain rule)을 활용하는 것이다. 복잡한 합성 함수의 미분을 각 구성 함수의 미분의 곱으로 표현할 수 있다는 원리를 이용한다.</p>
+<p>예를 들어, $z = f(y)$와 $y = g(x)$라면, $\frac{dz}{dx} = \frac{dz}{dy} \cdot \frac{dy}{dx}$이다.</p>
+<p>신경망에서는 입력부터 출력까지 여러 층의 연산이 중첩되어 있으므로, 최종 오차가 각 가중치에 미치는 영향을 계산하기 위해 체인 룰을 반복적으로 적용한다.</p>
+<table>
+<thead>
+<tr>
+<th>역전파 과정</th>
+<th>수식</th>
+<th>직관적 의미</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>출력층 오차 계산</td>
+<td>$\delta^L = \nabla_a C \odot \sigma&rsquo;(z^L)$</td>
+<td>&ldquo;최종 오차가 얼마인가?&rdquo;</td>
+</tr>
+<tr>
+<td>오차 역전파</td>
+<td>$\delta^l = ((W^{l+1})^T \delta^{l+1}) \odot \sigma&rsquo;(z^l)$</td>
+<td>&ldquo;이전 층의 각 뉴런이 최종 오차에 얼마나 기여했는가?&rdquo;</td>
+</tr>
+<tr>
+<td>그래디언트 계산</td>
+<td>$\nabla_{W^l} C = \delta^l (a^{l-1})^T$</td>
+<td>&ldquo;각 가중치가 최종 오차에 얼마나 기여했는가?&rdquo;</td>
+</tr>
+<tr>
+<td>가중치 업데이트</td>
+<td>$W^l \leftarrow W^l - \eta \nabla_{W^l} C$</td>
+<td>&ldquo;최종 오차를 줄이기 위해 각 가중치를 어떻게 조정할 것인가?&rdquo;</td>
+</tr>
+</tbody>
+</table>
+<h2 id="역전파-알고리즘의-실제-구현">역전파 알고리즘의 실제 구현<a hidden class="anchor" aria-hidden="true" href="#역전파-알고리즘의-실제-구현">#</a></h2>
+<h3 id="간단한-신경망에서의-역전파-예시">간단한 신경망에서의 역전파 예시<a hidden class="anchor" aria-hidden="true" href="#간단한-신경망에서의-역전파-예시">#</a></h3>
+<p>2개의 입력 뉴런, 2개의 은닉층 뉴런, 1개의 출력 뉴런으로 구성된 간단한 신경망을 예로 들어 역전파를 단계별로 살펴보자.</p>
+<p>입력: $x = [x_1, x_2]^T$
+목표 출력: $y$</p>
+<h4 id="순전파">순전파:<a hidden class="anchor" aria-hidden="true" href="#순전파">#</a></h4>
+<ol>
+<li>은닉층 입력: $z^1 = W^1 x + b^1$</li>
+<li>은닉층 출력: $a^1 = \sigma(z^1)$</li>
+<li>출력층 입력: $z^2 = W^2 a^1 + b^2$</li>
+<li>출력층 출력: $a^2 = \sigma(z^2)$</li>
+<li>오차 계산: $C = \frac{1}{2}(a^2 - y)^2$</li>
+</ol>
+<h4 id="역전파">역전파:<a hidden class="anchor" aria-hidden="true" href="#역전파">#</a></h4>
+<ol>
+<li>출력층 오차: $\delta^2 = (a^2 - y) \cdot \sigma&rsquo;(z^2)$</li>
+<li>출력층 가중치 그래디언트: $\nabla_{W^2} C = \delta^2 \cdot (a^1)^T$</li>
+<li>출력층 편향 그래디언트: $\nabla_{b^2} C = \delta^2$</li>
+<li>은닉층 오차: $\delta^1 = (W^2)^T \delta^2 \odot \sigma&rsquo;(z^1)$</li>
+<li>은닉층 가중치 그래디언트: $\nabla_{W^1} C = \delta^1 \cdot x^T$</li>
+<li>은닉층 편향 그래디언트: $\nabla_{b^1} C = \delta^1$</li>
+</ol>
+<h4 id="가중치-업데이트">가중치 업데이트:<a hidden class="anchor" aria-hidden="true" href="#가중치-업데이트">#</a></h4>
+<ol>
+<li>$W^2 \leftarrow W^2 - \eta \nabla_{W^2} C$</li>
+<li>$b^2 \leftarrow b^2 - \eta \nabla_{b^2} C$</li>
+<li>$W^1 \leftarrow W^1 - \eta \nabla_{W^1} C$</li>
+<li>$b^1 \leftarrow b^1 - \eta \nabla_{b^1} C$</li>
+</ol>
+<h3 id="활성화-함수와-그-미분">활성화 함수와 그 미분<a hidden class="anchor" aria-hidden="true" href="#활성화-함수와-그-미분">#</a></h3>
+<p>역전파 과정에서는 활성화 함수의 미분 값이 필요하다. 주요 활성화 함수와 그 미분은 다음과 같다:</p>
+<table>
+<thead>
+<tr>
+<th>활성화 함수</th>
+<th>정의</th>
+<th>미분</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sigmoid</td>
+<td>$\sigma(x) = \frac{1}{1 + e^{-x}}$</td>
+<td>$\sigma&rsquo;(x) = \sigma(x)(1 - \sigma(x))$</td>
+</tr>
+<tr>
+<td>ReLU</td>
+<td>$\text{ReLU}(x) = \max(0, x)$</td>
+<td>$\text{ReLU}&rsquo;(x) = \begin{cases} 1 &amp; \text{if } x &gt; 0 \ 0 &amp; \text{if } x \leq 0 \end{cases}$</td>
+</tr>
+<tr>
+<td>tanh</td>
+<td>$\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$</td>
+<td>$\tanh&rsquo;(x) = 1 - \tanh^2(x)$</td>
+</tr>
+<tr>
+<td>Leaky ReLU</td>
+<td>$\text{LReLU}(x) = \begin{cases} x &amp; \text{if } x &gt; 0 \ \alpha x &amp; \text{if } x \leq 0 \end{cases}$</td>
+<td>$\text{LReLU}&rsquo;(x) = \begin{cases} 1 &amp; \text{if } x &gt; 0 \ \alpha &amp; \text{if } x \leq 0 \end{cases}$</td>
+</tr>
+</tbody>
+</table>
+<h3 id="실제-구현-시-고려사항">실제 구현 시 고려사항<a hidden class="anchor" aria-hidden="true" href="#실제-구현-시-고려사항">#</a></h3>
+<p><strong>1. 수치적 안정성</strong></p>
+<ul>
+<li>오버플로우/언더플로우 방지: 지수 함수나 로그 함수 사용 시 주의</li>
+<li>로그-합 트릭(log-sum trick)과 같은 기법 활용</li>
+</ul>
+<p><strong>2. 배치 처리</strong></p>
+<ul>
+<li>미니배치 경사 하강법 사용: 여러 샘플의 그래디언트 평균으로 가중치 업데이트</li>
+<li>배치 정규화(Batch Normalization) 적용: 내부 공변량 이동(internal covariate shift) 감소</li>
+</ul>
+<p><strong>3. 그래디언트 소실/폭발 문제</strong></p>
+<ul>
+<li>그래디언트 클리핑(gradient clipping) 적용</li>
+<li>적절한 가중치 초기화 방법 선택(Xavier, He 초기화 등)</li>
+<li>잔차 연결(residual connections) 사용</li>
+</ul>
+<p><strong>4. 계산 효율성</strong></p>
+<ul>
+<li>행렬 연산 최적화</li>
+<li>GPU 가속 활용</li>
+<li>자동 미분(Automatic Differentiation) 라이브러리 사용</li>
+</ul>
+<h2 id="역전파의-한계와-최신-개선-기법">역전파의 한계와 최신 개선 기법<a hidden class="anchor" aria-hidden="true" href="#역전파의-한계와-최신-개선-기법">#</a></h2>
+<h3 id="기존-역전파의-한계점">기존 역전파의 한계점<a hidden class="anchor" aria-hidden="true" href="#기존-역전파의-한계점">#</a></h3>
+<p><strong>1. 깊은 신경망에서의 그래디언트 소실/폭발</strong></p>
+<ul>
+<li>층이 깊어질수록 그래디언트가 0에 가까워지거나(소실) 매우 커지는(폭발) 문제 발생</li>
+<li>결과적으로 깊은 층은 효과적으로 학습되지 않음</li>
+</ul>
+<p><strong>2. 비효율적인 메모리 사용</strong></p>
+<ul>
+<li>순전파 과정의 모든 중간 결과를 저장해야 함</li>
+<li>메모리 요구량이 네트워크 깊이에 비례하여 증가</li>
+</ul>
+<p><strong>3. 순차적 계산의 한계</strong></p>
+<ul>
+<li>본질적으로 순차적인 알고리즘이므로 병렬화에 제한이 있음</li>
+<li>특히 순환 신경망(RNN)에서 시퀀스 길이가 길 경우 비효율적</li>
+</ul>
+<h3 id="최신-개선-기법">최신 개선 기법<a hidden class="anchor" aria-hidden="true" href="#최신-개선-기법">#</a></h3>
+<p><strong>1. 구조적 개선</strong></p>
+<ul>
+<li><strong>잔차 연결(Residual Connections)</strong>: 그래디언트가 보다 직접적으로 이전 층으로 흐를 수 있는 지름길 제공</li>
+<li><strong>고속도로 네트워크(Highway Networks)</strong>: 정보 흐름을 제어하는 게이팅 메커니즘 도입</li>
+<li><strong>밀집 연결(Dense Connections)</strong>: 모든 층이 이전의 모든 층과 직접 연결되는 구조</li>
+</ul>
+<p><strong>2. 최적화 알고리즘 개선</strong></p>
+<ul>
+<li><strong>Adam, RMSprop</strong>: 적응적 학습률을 사용하여 수렴 속도 개선</li>
+<li><strong>Lookahead</strong>: 여러 최적화 방향을 동시에 탐색</li>
+</ul>
+<p><strong>3. 계산 효율성 개선</strong></p>
+<ul>
+<li><strong>그래디언트 체크포인팅(Gradient Checkpointing)</strong>: 메모리 사용을 줄이기 위해 일부 중간 결과만 저장</li>
+<li><strong>역전파 없는 학습(Training without Backpropagation)</strong>: 합성곱 신경망에서 역전파 대신 지역적 학습 규칙 사용</li>
+</ul>
+<p><strong>4. 병렬화 및 분산 학습</strong></p>
+<ul>
+<li><strong>모델 병렬화</strong>: 모델을 여러 디바이스에 분산</li>
+<li><strong>파이프라인 병렬화</strong>: 미니배치를 여러 부분으로 나누어 병렬 처리</li>
+</ul>
+<h2 id="결론-및-실용적-팁">결론 및 실용적 팁<a hidden class="anchor" aria-hidden="true" href="#결론-및-실용적-팁">#</a></h2>
+<h3 id="역전파의-중요성-요약">역전파의 중요성 요약<a hidden class="anchor" aria-hidden="true" href="#역전파의-중요성-요약">#</a></h3>
+<p>역전파 알고리즘은 현대 딥러닝의 핵심 기술로, 복잡한 신경망의 효율적인 학습을 가능하게 했다. 체인 룰을 활용하여 출력층의 오차를 역으로 전파함으로써 각 가중치가 최종 오차에 기여하는 정도를 계산하고, 이를 바탕으로 가중치를 효과적으로 업데이트한다.</p>
+<h3 id="실용적-팁">실용적 팁<a hidden class="anchor" aria-hidden="true" href="#실용적-팁">#</a></h3>
+<p><strong>1. 디버깅 전략</strong></p>
+<ul>
+<li>수치 미분(numerical differentiation)으로 역전파 구현 검증</li>
+<li>그래디언트 노름(norm) 모니터링으로 학습 상태 확인</li>
+<li>작은 네트워크부터 시작하여 점진적으로 복잡도 증가</li>
+</ul>
+<p><strong>2. 하이퍼파라미터 튜닝</strong></p>
+<ul>
+<li>적절한 학습률 선택: 너무 크면 발산, 너무 작으면 느린 수렴</li>
+<li>미니배치 크기 조정: 메모리 사용량과 일반화 성능 사이의 균형</li>
+<li>가중치 초기화 방법 선택: 활성화 함수에 맞는 초기화 기법 활용</li>
+</ul>
+<p><strong>3. 모니터링 지표</strong></p>
+<ul>
+<li>훈련/검증 손실 추이 관찰</li>
+<li>각 층의 활성화 분포 및 그래디언트 분포 확인</li>
+<li>가중치 및 편향의 변화량 모니터링</li>
+</ul>
+<h3 id="참고-문헌">참고 문헌<a hidden class="anchor" aria-hidden="true" href="#참고-문헌">#</a></h3>
+<ol>
+<li>Rumelhart, D. E., Hinton, G. E., &amp; Williams, R. J. (1986). Learning representations by back-propagating errors. Nature, 323(6088), 533-536.</li>
+<li>LeCun, Y., Bengio, Y., &amp; Hinton, G. (2015). Deep learning. Nature, 521(7553), 436-444.</li>
+<li>Goodfellow, I., Bengio, Y., &amp; Courville, A. (2016). Deep Learning. MIT Press.</li>
+</ol>
+<hr>
+
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="http://localhost:1313/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="http://localhost:1313/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/tech/deeplearning/cross_entropy/">
+    <span class="title">« 이전 페이지</span>
+    <br>
+    <span>Cross Entropy Loss in Deep Learning</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/tech/algorithm/leet/3472/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>Longest Palindromic Subsequence After at Most K Operations</span>
+  </a>
+</nav>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="http://localhost:1313/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>
