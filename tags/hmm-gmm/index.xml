@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>HMM-GMM on macsim&#39;s Blog</title>
-    <link>http://localhost:1313/tags/hmm-gmm/</link>
+    <link>https://macsim2.github.io/tags/hmm-gmm/</link>
     <description>Recent content in HMM-GMM on macsim&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ko-kr</language>
-    <lastBuildDate>Sat, 15 Mar 2025 01:17:26 +0900</lastBuildDate><atom:link href="http://localhost:1313/tags/hmm-gmm/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 15 Mar 2025 01:17:26 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/tags/hmm-gmm/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Viterbi in HMM-GMM</title>
-      <link>http://localhost:1313/posts/tech/asr/viterbi/</link>
+      <link>https://macsim2.github.io/posts/tech/asr/viterbi/</link>
       <pubDate>Sat, 15 Mar 2025 01:17:26 +0900</pubDate>
       
-      <guid>http://localhost:1313/posts/tech/asr/viterbi/</guid>
+      <guid>https://macsim2.github.io/posts/tech/asr/viterbi/</guid>
       <description>about Viterbi</description>
     </item>
     

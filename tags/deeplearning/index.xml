@@ -6,7 +6,16 @@
     <description>Recent content in Deeplearning on macsim&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ko-kr</language>
-    <lastBuildDate>Tue, 30 Jul 2024 15:30:00 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/tags/deeplearning/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 10 Aug 2024 10:30:00 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/tags/deeplearning/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리</title>
+      <link>https://macsim2.github.io/posts/tech/asr/ctc_loss/</link>
+      <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/asr/ctc_loss/</guid>
+      <description>자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다</description>
+    </item>
+    
     <item>
       <title>TensorRT와 Triton: 딥러닝 추론 최적화의 강력한 조합</title>
       <link>https://macsim2.github.io/posts/tech/inference_optimzation/tensorrt/</link>

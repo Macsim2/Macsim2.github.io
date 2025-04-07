@@ -26,6 +26,33 @@
     </item>
     
     <item>
+      <title>ASR</title>
+      <link>https://macsim2.github.io/tags/asr/</link>
+      <pubDate>Sat, 15 Mar 2025 01:17:26 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/tags/asr/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>HMM-GMM</title>
+      <link>https://macsim2.github.io/tags/hmm-gmm/</link>
+      <pubDate>Sat, 15 Mar 2025 01:17:26 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/tags/hmm-gmm/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Viterbi</title>
+      <link>https://macsim2.github.io/tags/viterbi/</link>
+      <pubDate>Sat, 15 Mar 2025 01:17:26 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/tags/viterbi/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Sound</title>
       <link>https://macsim2.github.io/tags/sound/</link>
       <pubDate>Sat, 01 Mar 2025 01:17:26 +0900</pubDate>
@@ -35,11 +62,47 @@
     </item>
     
     <item>
+      <title>CTC</title>
+      <link>https://macsim2.github.io/tags/ctc/</link>
+      <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/tags/ctc/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Deeplearning</title>
       <link>https://macsim2.github.io/tags/deeplearning/</link>
-      <pubDate>Tue, 30 Jul 2024 15:30:00 +0900</pubDate>
+      <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
       
       <guid>https://macsim2.github.io/tags/deeplearning/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>RNN-T</title>
+      <link>https://macsim2.github.io/tags/rnn-t/</link>
+      <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/tags/rnn-t/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Sequence Modeling</title>
+      <link>https://macsim2.github.io/tags/sequence-modeling/</link>
+      <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/tags/sequence-modeling/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Speech Recognition</title>
+      <link>https://macsim2.github.io/tags/speech-recognition/</link>
+      <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/tags/speech-recognition/</guid>
       <description></description>
     </item>
     
@@ -121,15 +184,6 @@
       <pubDate>Sun, 28 Jul 2024 15:30:00 +0900</pubDate>
       
       <guid>https://macsim2.github.io/tags/onnx/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>ASR</title>
-      <link>https://macsim2.github.io/tags/asr/</link>
-      <pubDate>Wed, 22 Feb 2023 21:13:51 +0900</pubDate>
-      
-      <guid>https://macsim2.github.io/tags/asr/</guid>
       <description></description>
     </item>
     

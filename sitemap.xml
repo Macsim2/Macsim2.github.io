@@ -3,13 +3,13 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://macsim2.github.io/posts/tech/</loc>
-    <lastmod>2025-03-21T00:09:29+09:00</lastmod>
+    <lastmod>2025-03-19T01:17:26+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/</loc>
-    <lastmod>2025-03-21T00:09:29+09:00</lastmod>
+    <lastmod>2025-03-19T01:17:26+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/posts/</loc>
-    <lastmod>2025-03-21T00:09:29+09:00</lastmod>
+    <lastmod>2025-03-19T01:17:26+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/categories/</loc>
     <lastmod>2025-03-17T01:17:26+09:00</lastmod>
@@ -29,6 +29,18 @@
     <loc>https://macsim2.github.io/tags/</loc>
     <lastmod>2025-03-17T01:17:26+09:00</lastmod>
   </url><url>
+    <loc>https://macsim2.github.io/tags/asr/</loc>
+    <lastmod>2025-03-15T01:17:26+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/hmm-gmm/</loc>
+    <lastmod>2025-03-15T01:17:26+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/viterbi/</loc>
+    <lastmod>2025-03-15T01:17:26+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/tech/asr/viterbi/</loc>
+    <lastmod>2025-03-15T01:17:26+09:00</lastmod>
+  </url><url>
     <loc>https://macsim2.github.io/tags/sound/</loc>
     <lastmod>2025-03-01T01:17:26+09:00</lastmod>
   </url><url>
@@ -44,11 +56,29 @@
     <loc>https://macsim2.github.io/posts/life/</loc>
     <lastmod>2024-08-10T15:08:58+09:00</lastmod>
   </url><url>
+    <loc>https://macsim2.github.io/categories/asr/</loc>
+    <lastmod>2024-08-10T10:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/ctc/</loc>
+    <lastmod>2024-08-10T10:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/posts/tech/asr/ctc_loss/</loc>
+    <lastmod>2024-08-10T10:30:00+09:00</lastmod>
+  </url><url>
     <loc>https://macsim2.github.io/tags/deeplearning/</loc>
-    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+    <lastmod>2024-08-10T10:30:00+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/categories/deeplearning/</loc>
-    <lastmod>2024-07-30T15:30:00+09:00</lastmod>
+    <lastmod>2024-08-10T10:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/rnn-t/</loc>
+    <lastmod>2024-08-10T10:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/sequence-modeling/</loc>
+    <lastmod>2024-08-10T10:30:00+09:00</lastmod>
+  </url><url>
+    <loc>https://macsim2.github.io/tags/speech-recognition/</loc>
+    <lastmod>2024-08-10T10:30:00+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/tags/gpu-acceleration/</loc>
     <lastmod>2024-07-30T15:30:00+09:00</lastmod>
@@ -82,9 +112,6 @@
   </url><url>
     <loc>https://macsim2.github.io/posts/tech/inference_optimzation/onnx_graph/</loc>
     <lastmod>2024-07-28T15:30:00+09:00</lastmod>
-  </url><url>
-    <loc>https://macsim2.github.io/tags/asr/</loc>
-    <lastmod>2024-07-27T00:00:00+09:00</lastmod>
   </url><url>
     <loc>https://macsim2.github.io/tags/fine-tuning/</loc>
     <lastmod>2024-07-27T00:00:00+09:00</lastmod>
@@ -211,8 +238,6 @@
   </url><url>
     <loc>https://macsim2.github.io/tags/web-server/</loc>
     <lastmod>2024-07-26T00:00:00+09:00</lastmod>
-  </url><url>
-    <loc>https://macsim2.github.io/posts/tech/asr/ctc_loss/</loc>
   </url><url>
     <loc>https://macsim2.github.io/search/</loc>
   </url><url>

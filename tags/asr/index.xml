@@ -6,7 +6,25 @@
     <description>Recent content in ASR on macsim&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ko-kr</language>
-    <lastBuildDate>Wed, 22 Feb 2023 21:13:51 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/tags/asr/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 15 Mar 2025 01:17:26 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/tags/asr/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Viterbi in HMM-GMM</title>
+      <link>https://macsim2.github.io/posts/tech/asr/viterbi/</link>
+      <pubDate>Sat, 15 Mar 2025 01:17:26 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/asr/viterbi/</guid>
+      <description>about Viterbi</description>
+    </item>
+    
+    <item>
+      <title>CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리</title>
+      <link>https://macsim2.github.io/posts/tech/asr/ctc_loss/</link>
+      <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/asr/ctc_loss/</guid>
+      <description>자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다</description>
+    </item>
+    
     <item>
       <title>가중치 업데이트에 관해서 with wav2vec 2.0</title>
       <link>https://macsim2.github.io/posts/tech/deeplearning/fine-tune_curious/</link>
