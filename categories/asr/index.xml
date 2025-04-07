@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>ASR on macsim&#39;s Blog</title>
+    <link>http://localhost:1313/categories/asr/</link>
+    <description>Recent content in ASR on macsim&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>ko-kr</language>
+    <lastBuildDate>Sat, 10 Aug 2024 10:30:00 +0900</lastBuildDate><atom:link href="http://localhost:1313/categories/asr/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리</title>
+      <link>http://localhost:1313/posts/tech/asr/ctc_loss/</link>
+      <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
+      
+      <guid>http://localhost:1313/posts/tech/asr/ctc_loss/</guid>
+      <description>자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다</description>
+    </item>
+    
+  </channel>
+</rss>

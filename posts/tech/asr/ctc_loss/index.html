@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html lang="ko" dir="auto">
 
-<head><meta charset="utf-8">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>macsim&#39;s Blog</title>
-<meta name="keywords" content="">
-<meta name="description" content="요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT">
+<title>CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리 | macsim&#39;s Blog</title>
+<meta name="keywords" content="deeplearning, ASR, speech recognition, CTC, RNN-T, sequence modeling">
+<meta name="description" content="자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다">
 <meta name="author" content="macsim">
-<link rel="canonical" href="https://macsim2.github.io/posts/tech/asr/ctc_loss/">
+<link rel="canonical" href="http://localhost:1313/posts/tech/asr/ctc_loss/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
 <script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
-<link rel="icon" href="https://macsim2.github.io/img/Q.gif">
-<link rel="icon" type="image/png" sizes="16x16" href="https://macsim2.github.io/img/Q.gif">
-<link rel="icon" type="image/png" sizes="32x32" href="https://macsim2.github.io/img/Q.gif">
-<link rel="apple-touch-icon" href="https://macsim2.github.io/img/Q.gif">
-<link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
+<link rel="icon" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/img/Q.gif">
+<link rel="apple-touch-icon" href="http://localhost:1313/img/Q.gif">
+<link rel="mask-icon" href="http://localhost:1313/img/Q.gif">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" hreflang="ko" href="https://macsim2.github.io/posts/tech/asr/ctc_loss/">
+<link rel="alternate" hreflang="ko" href="http://localhost:1313/posts/tech/asr/ctc_loss/">
 <noscript>
     <style>
         #theme-toggle,
@@ -47,16 +47,16 @@ var _hmt = _hmt || [];
 
   
 
-<meta property="og:title" content="" />
-<meta property="og:description" content="요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT" />
+<meta property="og:title" content="CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리" />
+<meta property="og:description" content="자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://macsim2.github.io/posts/tech/asr/ctc_loss/" /><meta property="article:section" content="posts" />
-
-
+<meta property="og:url" content="http://localhost:1313/posts/tech/asr/ctc_loss/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-08-10T10:30:00+09:00" />
+<meta property="article:modified_time" content="2024-08-10T10:30:00+09:00" />
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content=""/>
-<meta name="twitter:description" content="요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT"/>
+<meta name="twitter:title" content="CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리"/>
+<meta name="twitter:description" content="자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다"/>
 
 
 <script type="application/ld+json">
@@ -69,20 +69,20 @@ var _hmt = _hmt || [];
           "@type": "ListItem",
           "position":  1 ,
           "name": "posts",
-          "item": "https://macsim2.github.io/posts/"
+          "item": "http://localhost:1313/posts/"
         },
 
         {
           "@type": "ListItem",
           "position":  2 ,
           "name": "👨🏻‍💻 tech",
-          "item": "https://macsim2.github.io/posts/tech/"
+          "item": "http://localhost:1313/posts/tech/"
         }, 
     {
       "@type": "ListItem",
       "position":  3 ,
-      "name": "",
-      "item": "https://macsim2.github.io/posts/tech/asr/ctc_loss/"
+      "name": "CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리",
+      "item": "http://localhost:1313/posts/tech/asr/ctc_loss/"
     }
   ]
 }
@@ -91,31 +91,31 @@ var _hmt = _hmt || [];
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "",
-  "name": "",
-  "description": "요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다. 계획: ASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CT",
+  "headline": "CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리",
+  "name": "CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리",
+  "description": "자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다",
   "keywords": [
-    
+    "deeplearning", "ASR", "speech recognition", "CTC", "RNN-T", "sequence modeling"
   ],
-  "articleBody": "요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다.\n계획:\nASR 개요 및 시퀀스 모델링 문제 설명 CTC Loss 설명 수학적 정의 작동 원리 장단점 예제 RNN-T Loss 설명 수학적 정의 작동 원리 CTC와의 차이점 장단점 예제 두 손실 함수의 비교 실제 구현 및 사용 사례 이 응답에서는 두 손실 함수의 수학적 정의, 작동 원리, 장단점, 구현 방식 등을 설명하고, 가능한 경우 코드 예제와 시각적 설명을 포함하겠습니다.# ASR에서의 CTC Loss와 RNN-T Loss 상세 설명\n음성 인식(ASR)에서 가장 중요한 두 손실 함수인 CTC(Connectionist Temporal Classification)와 RNN-T(Recurrent Neural Network Transducer)에 대해 자세히 설명하겠습니다.\n1. ASR의 기본 문제와 도전 과제 ASR의 핵심 문제:\n가변 길이 입력(음성 신호)을 가변 길이 출력(텍스트)으로 변환 입력과 출력 사이의 명확한 정렬(alignment)이 없음 입력이 출력보다 훨씬 더 길고 중복됨 (예: 30ms 프레임마다 특징 추출) 2. CTC Loss (Connectionist Temporal Classification) 2.1 기본 개념 CTC는 명시적인 정렬 없이 시퀀스 데이터를 학습하기 위한 알고리즘입니다.\n핵심 아이디어: 모든 가능한 정렬을 고려하고, 올바른 출력을 생성하는 모든 정렬의 확률 합을 최대화 특수 기호 blank(보통 ‘-’ 또는 ‘ε’로 표기)를 도입하여 반복 문자 처리와 정렬 유연성 확보 2.2 수학적 정의 입력 시퀀스 $X = (x_1, x_2, …, x_T)$와 출력 레이블 $Y = (y_1, y_2, …, y_U)$가 있을 때:\n모델은 각 타임스텝 $t$마다 모든 가능한 레이블 $k$ (레이블 집합 + blank)에 대한 확률 $P(k|t)$ 출력 경로(path) $\\pi = (\\pi_1, \\pi_2, …, \\pi_T)$는 각 타임스텝마다의 레이블 예측 경로에서 레이블 시퀀스로의 매핑 함수 $\\mathcal{B}$를 정의: blank 제거 및 반복 문자 병합 CTC Loss는 다음과 같이 정의됩니다:\n$L_{CTC} = -\\log P(Y|X) = -\\log \\sum_{\\pi \\in \\mathcal{B}^{-1}(Y)} \\prod_{t=1}^{T} P(\\pi_t|t)$\n여기서 $\\mathcal{B}^{-1}(Y)$는 $Y$로 매핑되는 모든 가능한 경로의 집합입니다.\n2.3 계산 과정 (Forward-Backward 알고리즘) 직접적인 계산은 조합 폭발 문제가 있어 동적 프로그래밍을 활용합니다:\nForward 변수 $\\alpha(t,s)$: 시간 $t$까지 레이블의 $s$번째 위치까지 생성할 확률 Backward 변수 $\\beta(t,s)$: 시간 $t$부터 끝까지 레이블의 $s$번째 위치부터 끝까지 생성할 확률 최종 확률: $P(Y|X) = \\sum_{s} \\alpha(T,s) = \\sum_{s} \\beta(1,s)$\n2.4 CTC의 장단점 장점:\n정렬이 필요 없음 (end-to-end 학습 가능) 계산 효율성이 상대적으로 높음 구현이 비교적 간단함 단점:\n조건부 독립 가정: 각 타임스텝의 출력이 이전 출력과 독립적 언어 모델링 능력 부족 빈 출력(전체가 blank) 문제 가능성 3. RNN-T Loss (RNN Transducer) 3.1 기본 개념 RNN-T는 CTC의 한계를 극복하기 위해 개발된 알고리즘입니다.\n핵심 아이디어: 음향 모델(인코더)과 예측 네트워크(언어 모델)의 결합 이전 출력에 조건부로 현재 출력을 생성 (자기회귀 특성) 3.2 모델 구조 RNN-T는 세 가지 주요 컴포넌트로 구성됩니다:\n인코더(Encoder): 음향 특징을 처리하는 RNN (시간 $t$에 대한 함수) 예측 네트워크(Prediction Network): 이전 출력을 처리하는 RNN (출력 인덱스 $u$에 대한 함수) 조인트 네트워크(Joint Network): 인코더와 예측 네트워크의 출력을 결합 3.3 수학적 정의 RNN-T는 CTC와 유사하게 모든 가능한 정렬을 고려하지만, 조건부 확률이 다릅니다:\n$L_{RNN-T} = -\\log P(Y|X) = -\\log \\sum_{\\pi \\in \\mathcal{A}(Y)} P(\\pi|X)$\n여기서 $\\mathcal{A}(Y)$는 $Y$로 매핑되는 모든 유효한 정렬의 집합입니다.\n경로 확률은 다음과 같이 계산됩니다:\n$P(\\pi|X) = \\prod_{i=1}^{|\\pi|} P(\\pi_i|X, y_{0:u-1})$\n여기서 $y_{0:u-1}$는 현재까지 생성된 출력 시퀀스입니다.\n3.4 계산 과정 RNN-T도 Forward-Backward 알고리즘을 사용하지만, 격자(grid)에서 동작합니다:\nForward 변수 $\\alpha(t,u)$: 시간 $t$까지 $u$개의 레이블을 생성할 확률 Backward 변수 $\\beta(t,u)$: 시간 $t$부터 끝까지 나머지 레이블을 생성할 확률 각 셀에서 두 가지 전이가 가능합니다:\nblank 출력 (수평 이동) 레이블 출력 (대각선 이동) 3.5 RNN-T의 장단점 장점:\n자기회귀 특성으로 이전 출력을 고려 (언어 모델링 가능) CTC보다 일반적으로 더 나은 성능 스트리밍 인식에 적합 단점:\n계산 복잡도가 높음 훈련이 더 어려움 추론 시 더 많은 계산 필요 4. CTC와 RNN-T 비교 4.1 핵심 차이점 특성 CTC RNN-T 조건부 독립성 각 타임스텝 독립적 이전 출력에 조건부 언어 모델링 제한적 내장 언어 모델링 계산 복잡도 낮음 높음 스트리밍 가능하나 제한적 자연스럽게 지원 빈 출력 문제 발생 가능 덜 발생 4.2 구체적인 예시 “HELLO\"라는 단어를 인식하는 경우:\nCTC:\n가능한 경로: “H-EE-L-L-O”, “HH-E-LLL–O”, 등 모든 가능한 경로의 합 계산 RNN-T:\n각 스텝에서 이전 출력을 고려 “H” 다음에는 “E\"가 나올 확률이 높다는 언어 모델 정보 활용 5. 구현 예제 (PyTorch 기반) 5.1 CTC Loss 구현 사용 예제 import torch import torch.nn as nn # 로그 소프트맥스 출력을 가진 모델 (배치 크기 2, 시퀀스 길이 50, 클래스 수 28) log_probs = torch.randn(2, 50, 28).log_softmax(2).detach().requires_grad_() # 타겟 시퀀스 (배치 크기 2, 각각 다른 길이) targets = torch.tensor([[1, 3, 5], [2, 4, 6, 8]], dtype=torch.long) # 입력 길이와 타겟 길이 input_lengths = torch.tensor([50, 50], dtype=torch.long) target_lengths = torch.tensor([3, 4], dtype=torch.long) # CTC 손실 계산 ctc_loss = nn.CTCLoss() loss = ctc_loss(log_probs, targets, input_lengths, target_lengths) print(f\"CTC Loss: {loss.item()}\") 5.2 RNN-T 구현 개념 (단순화) class RNNTModel(nn.Module): def __init__(self, input_dim, hidden_dim, vocab_size): super().__init__() # 인코더 (음향 모델) self.encoder = nn.LSTM(input_dim, hidden_dim, bidirectional=True, batch_first=True) # 예측 네트워크 (언어 모델) self.prediction = nn.LSTM(hidden_dim, hidden_dim, batch_first=True) self.embedding = nn.Embedding(vocab_size, hidden_dim) # 조인트 네트워크 self.joint = nn.Sequential( nn.Linear(2*hidden_dim + hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, vocab_size) ) def forward(self, x, y_prev): # 인코더 출력 enc_out, _ = self.encoder(x) # 예측 네트워크 출력 y_embed = self.embedding(y_prev) pred_out, _ = self.prediction(y_embed) # 두 출력 확장 및 조합 enc_out = enc_out.unsqueeze(2) # [B, T, 1, H] pred_out = pred_out.unsqueeze(1) # [B, 1, U, H] # 조인트 네트워크에 피드 joint_out = self.joint( torch.cat([enc_out.expand(-1, -1, pred_out.size(2), -1), pred_out.expand(-1, enc_out.size(1), -1, -1)], dim=-1) ) # [B, T, U, V] return joint_out 6. 실제 활용 사례 Google: RNN-T를 사용하여 디바이스 상의 실시간 음성 인식 구현 Mozilla DeepSpeech: CTC 기반 오픈소스 음성 인식 시스템 Hybrid 시스템: CTC와 RNN-T의 장점을 결합한 시스템도 연구 중 두 손실 함수 모두 ASR 분야에서 중요한 발전을 이끌었으며, 각각의 특성에 따라 다양한 응용 분야에서 활용되고 있습니다.\n",
-  "wordCount" : "2227",
+  "articleBody": "“CTC Loss와 RNN-T Loss는 어떻게 동작하며, 언제 어떤 것을 사용해야 할까?” 음성 인식(ASR) 분야에서 이 두 손실 함수는 핵심적인 역할을 하지만, 그 내부 동작 원리와 미묘한 차이점을 진정으로 이해하는 것은 쉽지 않다.\n이 글에서는 단순히 “CTC와 RNN-T 사용법\"이 아닌, 두 손실 함수의 내부 메커니즘, 수학적 기반, 그리고 실제 프로젝트에서의 적용 경험과 교훈에 대해 파헤쳐보려 한다.\nASR의 근본적 도전 과제 음성 인식의 가장 근본적인 도전은 정렬(alignment) 문제다. 음성 신호는 텍스트보다 훨씬 길고, 어떤 음성 프레임이 어떤 텍스트 토큰에 대응하는지 명확하지 않다. 음성을 문자로 바꾸는 과정에서 이 정렬을 어떻게 처리하느냐가 ASR 시스템의 핵심 과제다.\n내가 처음 ASR 시스템을 개발할 때 마주친 가장 큰 어려움은 바로 이 문제였다. 입력(음성)과 출력(텍스트) 사이의 정렬을 어떻게 모델링할 것인가? HMM(Hidden Markov Model)과 같은 전통적인 방법은 명시적인 정렬이 필요했고, 이는 상당한 전문 지식과 수작업이 요구되었다.\nCTC와 RNN-T는 이러한 정렬 문제를 우아하게 해결하는 방법을 제시했다.\nCTC Loss의 해부학 1. CTC의 핵심 아이디어 CTC(Connectionist Temporal Classification)는 2006년 Alex Graves가 제안한 손실 함수로, 가장 혁신적인 아이디어는 모든 가능한 정렬을 동시에 고려한다는 점이다.\nCTC의 마법은 두 가지 핵심 아이디어에 있다:\nblank 심볼(ε) 도입: 무음이나 반복 문자 사이의 경로 압축(path collapsing): 다양한 발음 속도와 패턴을 하나의 텍스트로 매핑 예를 들어, “CAT\"이라는 단어를 인식하는 과정에서:\n“C-A-T” (표준 발음) “CC-A–TT” (느린 발음) “-C-A-T-” (무음으로 시작하고 끝나는 발음) 이 모든 경우가 동일한 “CAT\"으로 매핑된다.\n2. 수학적 메커니즘 CTC의 수학적 정의는 다음과 같다:\n$L_{CTC} = -\\log P(Y|X) = -\\log \\sum_{\\pi \\in \\mathcal{B}^{-1}(Y)} \\prod_{t=1}^{T} P(\\pi_t|t)$\n여기서:\n$X$: 입력 시퀀스 (음향 특징) $Y$: 타겟 라벨 시퀀스 $\\pi$: 가능한 경로 (프레임별 예측) $\\mathcal{B}^{-1}(Y)$: 라벨 $Y$로 매핑되는 모든 가능한 경로의 집합 이 수식을 직관적으로 해석하면, “정답 텍스트를 만들어내는 모든 가능한 경로의 확률 합을 최대화하라\"는 의미다.\n직접 모든 경로를 열거하는 것은 계산적으로 불가능하기 때문에, CTC는 Forward-Backward 알고리즘이라는 동적 프로그래밍 기법을 사용한다.\n3. Forward-Backward 알고리즘 해부 Forward-Backward 알고리즘은 CTC의 계산 효율성의 비밀이다. 이 알고리즘은 두 단계로 진행된다:\nForward 패스는 시간 $t$와 라벨 위치 $s$에 대해 $\\alpha(t,s)$를 계산한다:\n$\\alpha(t,s)$: 시간 $t$까지 라벨의 $s$번째 위치까지의 모든 경로 확률 합 Backward 패스는 $\\beta(t,s)$를 계산한다:\n$\\beta(t,s)$: 시간 $t$부터 끝까지 라벨의 $s$번째 위치부터 끝까지의 모든 경로 확률 합 최종 확률은 $P(Y|X) = \\sum_{s} \\alpha(T,s) = \\sum_{s} \\beta(1,s)$로 계산된다.\n4. 실전 CTC 구현과 도전 과제 실제 프로젝트에서 CTC를 사용하며 마주친 첫 번째 도전은 불안정한 학습 곡선이었다. CTC는 특히 학습 초기에 매우 불안정할 수 있다. 이 문제에 대한 나의 해결책은:\n그래디언트 클리핑(Gradient Clipping) 적용: 폭발적인 그래디언트를 방지 워밍업 스케줄링(Warmup Scheduling) 사용: 학습률을 천천히 증가시킴 지수 이동 평균(Exponential Moving Average, EMA) 모델 유지: 안정적인 체크포인트 확보 # CTC 손실 계산 및 안정화 기법 적용 예시 def ctc_loss_with_stabilization(log_probs, targets, input_lengths, target_lengths): # 기본 CTC 손실 계산 ctc_loss = nn.CTCLoss(reduction='none') loss = ctc_loss(log_probs, targets, input_lengths, target_lengths) # 이상치 제거: 극단적으로 높은 손실값 제한 loss = torch.clamp(loss, max=50.0) # 배치 내 평균 계산 loss = loss.mean() return loss # 그래디언트 클리핑 적용 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0) 또 다른 도전은 blank 토큰의 지배(blank dominance) 현상이었다. 모델이 모든 프레임에서 blank를 예측하는 함정에 빠지는 경우가 있었다. 이에 대한 해결책:\n언어 모델과의 결합: 외부 언어 모델로 CTC 출력 보정 온화한 CTC 변형(Monotonic CTC): 정렬에 제약 조건 추가 보조 손실 함수(Auxiliary Loss) 도입: 중간 층에 추가적인 감독 신호 제공 RNN-T: CTC의 한계를 넘어서 1. RNN-T의 탄생 배경 RNN-T(Recurrent Neural Network Transducer)는 2012년 Alex Graves가 제안한 CTC의 확장 모델이다. CTC의 치명적인 한계인 조건부 독립 가정을 극복하고자 했다. CTC에서는 각 시점의 출력이 이전 출력과 독립적이라고 가정하지만, 실제 언어에서는 문맥이 매우 중요하다.\n내가 CTC 기반 모델을 프로덕션에 배포했을 때, 가장 빈번한 오류는 문맥상 맞지 않는 단어를 생성하는 것이었다. 예를 들어, “machine learning\"을 “machine leaning\"으로 인식하는 등의 문제가 발생했다. 이는 CTC가 이전에 무엇을 출력했는지 고려하지 않기 때문이다.\n2. RNN-T의 아키텍처 해부 RNN-T는 세 가지 핵심 컴포넌트로 구성된다:\n인코더(Encoder): 음향 특징을 처리하는 네트워크\n입력: 음향 특징 시퀀스 $X$ 출력: 인코딩된 표현 $h^{enc}_t$ 예측 네트워크(Prediction Network): 이전 출력을 처리하는 언어 모델 역할\n입력: 이전까지 생성된 라벨 시퀀스 $y_{",
+  "wordCount" : "3746",
   "inLanguage": "ko",
-  "datePublished": "0001-01-01T00:00:00Z",
-  "dateModified": "0001-01-01T00:00:00Z",
+  "datePublished": "2024-08-10T10:30:00+09:00",
+  "dateModified": "2024-08-10T10:30:00+09:00",
   "author":{
     "@type": "Person",
     "name": "macsim"
   },
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": "https://macsim2.github.io/posts/tech/asr/ctc_loss/"
+    "@id": "http://localhost:1313/posts/tech/asr/ctc_loss/"
   },
   "publisher": {
     "@type": "Organization",
     "name": "macsim's Blog",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://macsim2.github.io/img/Q.gif"
+      "url": "http://localhost:1313/img/Q.gif"
     }
   }
 }
@@ -133,7 +133,7 @@ var _hmt = _hmt || [];
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://macsim2.github.io/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <a href="http://localhost:1313/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -161,32 +161,32 @@ var _hmt = _hmt || [];
         </div>
         <ul id="menu">
             <li>
-                <a href="https://macsim2.github.io/" title="🏠 home">
+                <a href="http://localhost:1313/" title="🏠 home">
                 <span>🏠 home</span>
                 </a>
             </li>
             <li>
-                <a href="https://macsim2.github.io/about/" title="🙋 about">
+                <a href="http://localhost:1313/about/" title="🙋 about">
                 <span>🙋 about</span>
                 </a>
             </li>
             <li>
-                <a href="https://macsim2.github.io/archives/" title="archives">
+                <a href="http://localhost:1313/archives/" title="archives">
                 <span>archives</span>
                 </a>
             </li>
             <li>
-                <a href="https://macsim2.github.io/posts/" title="📚 posts">
+                <a href="http://localhost:1313/posts/" title="📚 posts">
                 <span>📚 posts</span>
                 </a>
             </li>
             <li>
-                <a href="https://macsim2.github.io/tags/" title="🧩 tags">
+                <a href="http://localhost:1313/tags/" title="🧩 tags">
                 <span>🧩 tags</span>
                 </a>
             </li>
             <li>
-                <a href="https://macsim2.github.io/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <a href="http://localhost:1313/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
                 <span>⏱️ search</span>
                 </a>
             </li>
@@ -205,10 +205,13 @@ var _hmt = _hmt || [];
 <article class="post-single">
     <div id="single-content">
         <header class="post-header">
-            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 홈</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
+            <div class="breadcrumbs"><a href="http://localhost:1313/">🏠 홈</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">posts</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/tech/">👨🏻‍💻 tech</a></div>
             <h1 class="post-title">
-                
+                CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리
             </h1>
+            <div class="post-description">
+                자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다
+            </div>
             <div class="post-meta">
 
 <style>
@@ -228,7 +231,7 @@ var _hmt = _hmt || [];
 <span class="parent-post-meta">
     <span id="post_meta_style_1">
         <span class="fa fa-calendar-check-o"></span>
-        <span>0001-01-01
+        <span>2024-08-10
             &nbsp;&nbsp;
         </span>
     </span>
@@ -241,13 +244,13 @@ var _hmt = _hmt || [];
     
     <span id="post_meta_style_3">
         <span class="fa fa-file-word-o"></span>
-        <span>2227 word
+        <span>3746 word
             &nbsp;&nbsp;
         </span>
     </span>
     <span id="post_meta_style_4">
         <span class="fa fa-clock-o"></span>
-        <span>5 min
+        <span>8 min
             &nbsp;&nbsp;
         </span>
     </span>
@@ -260,6 +263,14 @@ var _hmt = _hmt || [];
     <span id="post_meta_style_6">
         <span class="fa fa-tags" style="opacity: 0.8"></span>
         <span>
+            <span class="post-tags-meta">
+                <a href="http://localhost:1313/tags/deeplearning/" style="color: var(--secondary)!important;">Deeplearning</a>
+                &nbsp;<a href="http://localhost:1313/tags/asr/" style="color: var(--secondary)!important;">ASR</a>
+                &nbsp;<a href="http://localhost:1313/tags/speech-recognition/" style="color: var(--secondary)!important;">Speech Recognition</a>
+                &nbsp;<a href="http://localhost:1313/tags/ctc/" style="color: var(--secondary)!important;">CTC</a>
+                &nbsp;<a href="http://localhost:1313/tags/rnn-t/" style="color: var(--secondary)!important;">RNN-T</a>
+                &nbsp;<a href="http://localhost:1313/tags/sequence-modeling/" style="color: var(--secondary)!important;">Sequence Modeling</a>
+            </span>
         </span>
     </span>
 </span>
@@ -299,7 +310,7 @@ var _hmt = _hmt || [];
                             <script>
                                 let url = document.documentURI
                                 
-                                let dnsUrl = "https://macsim2.github.io/"
+                                let dnsUrl = "http://localhost:1313/"
                                 let urlSplit = url.split(dnsUrl)
                                 let finalUrl = urlSplit[1]
                                 if (finalUrl[0] !== '/') {
@@ -340,51 +351,65 @@ var _hmt = _hmt || [];
 
         <div class="inner"><ul>
                 <li>
-                    <a href="#1-asr%ec%9d%98-%ea%b8%b0%eb%b3%b8-%eb%ac%b8%ec%a0%9c%ec%99%80-%eb%8f%84%ec%a0%84-%ea%b3%bc%ec%a0%9c" aria-label="1. ASR의 기본 문제와 도전 과제">1. ASR의 기본 문제와 도전 과제</a></li>
+                    <a href="#asr%ec%9d%98-%ea%b7%bc%eb%b3%b8%ec%a0%81-%eb%8f%84%ec%a0%84-%ea%b3%bc%ec%a0%9c" aria-label="ASR의 근본적 도전 과제">ASR의 근본적 도전 과제</a></li>
                 <li>
-                    <a href="#2-ctc-loss-connectionist-temporal-classification" aria-label="2. CTC Loss (Connectionist Temporal Classification)">2. CTC Loss (Connectionist Temporal Classification)</a><ul>
+                    <a href="#ctc-loss%ec%9d%98-%ed%95%b4%eb%b6%80%ed%95%99" aria-label="CTC Loss의 해부학">CTC Loss의 해부학</a><ul>
                         
                 <li>
-                    <a href="#21-%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90" aria-label="2.1 기본 개념">2.1 기본 개념</a></li>
+                    <a href="#1-ctc%ec%9d%98-%ed%95%b5%ec%8b%ac-%ec%95%84%ec%9d%b4%eb%94%94%ec%96%b4" aria-label="1. CTC의 핵심 아이디어">1. CTC의 핵심 아이디어</a></li>
                 <li>
-                    <a href="#22-%ec%88%98%ed%95%99%ec%a0%81-%ec%a0%95%ec%9d%98" aria-label="2.2 수학적 정의">2.2 수학적 정의</a></li>
+                    <a href="#2-%ec%88%98%ed%95%99%ec%a0%81-%eb%a9%94%ec%bb%a4%eb%8b%88%ec%a6%98" aria-label="2. 수학적 메커니즘">2. 수학적 메커니즘</a></li>
                 <li>
-                    <a href="#23-%ea%b3%84%ec%82%b0-%ea%b3%bc%ec%a0%95-forward-backward-%ec%95%8c%ea%b3%a0%eb%a6%ac%ec%a6%98" aria-label="2.3 계산 과정 (Forward-Backward 알고리즘)">2.3 계산 과정 (Forward-Backward 알고리즘)</a></li>
+                    <a href="#3-forward-backward-%ec%95%8c%ea%b3%a0%eb%a6%ac%ec%a6%98-%ed%95%b4%eb%b6%80" aria-label="3. Forward-Backward 알고리즘 해부">3. Forward-Backward 알고리즘 해부</a></li>
                 <li>
-                    <a href="#24-ctc%ec%9d%98-%ec%9e%a5%eb%8b%a8%ec%a0%90" aria-label="2.4 CTC의 장단점">2.4 CTC의 장단점</a></li></ul>
+                    <a href="#4-%ec%8b%a4%ec%a0%84-ctc-%ea%b5%ac%ed%98%84%ea%b3%bc-%eb%8f%84%ec%a0%84-%ea%b3%bc%ec%a0%9c" aria-label="4. 실전 CTC 구현과 도전 과제">4. 실전 CTC 구현과 도전 과제</a></li></ul>
                 </li>
                 <li>
-                    <a href="#3-rnn-t-loss-rnn-transducer" aria-label="3. RNN-T Loss (RNN Transducer)">3. RNN-T Loss (RNN Transducer)</a><ul>
+                    <a href="#rnn-t-ctc%ec%9d%98-%ed%95%9c%ea%b3%84%eb%a5%bc-%eb%84%98%ec%96%b4%ec%84%9c" aria-label="RNN-T: CTC의 한계를 넘어서">RNN-T: CTC의 한계를 넘어서</a><ul>
                         
                 <li>
-                    <a href="#31-%ea%b8%b0%eb%b3%b8-%ea%b0%9c%eb%85%90" aria-label="3.1 기본 개념">3.1 기본 개념</a></li>
+                    <a href="#1-rnn-t%ec%9d%98-%ed%83%84%ec%83%9d-%eb%b0%b0%ea%b2%bd" aria-label="1. RNN-T의 탄생 배경">1. RNN-T의 탄생 배경</a></li>
                 <li>
-                    <a href="#32-%eb%aa%a8%eb%8d%b8-%ea%b5%ac%ec%a1%b0" aria-label="3.2 모델 구조">3.2 모델 구조</a></li>
+                    <a href="#2-rnn-t%ec%9d%98-%ec%95%84%ed%82%a4%ed%85%8d%ec%b2%98-%ed%95%b4%eb%b6%80" aria-label="2. RNN-T의 아키텍처 해부">2. RNN-T의 아키텍처 해부</a></li>
                 <li>
-                    <a href="#33-%ec%88%98%ed%95%99%ec%a0%81-%ec%a0%95%ec%9d%98" aria-label="3.3 수학적 정의">3.3 수학적 정의</a></li>
+                    <a href="#3-rnn-t-%ed%95%99%ec%8a%b5%ec%9d%98-%ec%88%98%ed%95%99%ec%a0%81-%eb%a9%94%ec%bb%a4%eb%8b%88%ec%a6%98" aria-label="3. RNN-T 학습의 수학적 메커니즘">3. RNN-T 학습의 수학적 메커니즘</a></li>
                 <li>
-                    <a href="#34-%ea%b3%84%ec%82%b0-%ea%b3%bc%ec%a0%95" aria-label="3.4 계산 과정">3.4 계산 과정</a></li>
+                    <a href="#4-rnn-t%ec%9d%98-%ea%b2%a9%ec%9e%90lattice-%ed%83%90%ec%83%89" aria-label="4. RNN-T의 격자(Lattice) 탐색">4. RNN-T의 격자(Lattice) 탐색</a></li>
                 <li>
-                    <a href="#35-rnn-t%ec%9d%98-%ec%9e%a5%eb%8b%a8%ec%a0%90" aria-label="3.5 RNN-T의 장단점">3.5 RNN-T의 장단점</a></li></ul>
+                    <a href="#5-%ec%8b%a4%ec%a0%84-rnn-t-%ea%b5%ac%ed%98%84%ea%b3%bc-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="5. 실전 RNN-T 구현과 최적화">5. 실전 RNN-T 구현과 최적화</a></li></ul>
                 </li>
                 <li>
-                    <a href="#4-ctc%ec%99%80-rnn-t-%eb%b9%84%ea%b5%90" aria-label="4. CTC와 RNN-T 비교">4. CTC와 RNN-T 비교</a><ul>
+                    <a href="#ctc%ec%99%80-rnn-t-%ec%8b%a4%ec%a0%84-%eb%b9%84%ea%b5%90-%eb%b6%84%ec%84%9d" aria-label="CTC와 RNN-T: 실전 비교 분석">CTC와 RNN-T: 실전 비교 분석</a><ul>
                         
                 <li>
-                    <a href="#41-%ed%95%b5%ec%8b%ac-%ec%b0%a8%ec%9d%b4%ec%a0%90" aria-label="4.1 핵심 차이점">4.1 핵심 차이점</a></li>
+                    <a href="#1-%ec%84%b1%eb%8a%a5-%eb%b2%a4%ec%b9%98%eb%a7%88%ed%81%ac" aria-label="1. 성능 벤치마크">1. 성능 벤치마크</a></li>
                 <li>
-                    <a href="#42-%ea%b5%ac%ec%b2%b4%ec%a0%81%ec%9d%b8-%ec%98%88%ec%8b%9c" aria-label="4.2 구체적인 예시">4.2 구체적인 예시</a></li></ul>
+                    <a href="#2-%ec%82%ac%ec%9a%a9-%ec%82%ac%eb%a1%80%eb%b3%84-%ea%b6%8c%ec%9e%a5-%ec%82%ac%ed%95%ad" aria-label="2. 사용 사례별 권장 사항">2. 사용 사례별 권장 사항</a></li>
+                <li>
+                    <a href="#3-%ed%95%98%ec%9d%b4%eb%b8%8c%eb%a6%ac%eb%93%9c-%ec%a0%91%ea%b7%bc%eb%b2%95" aria-label="3. 하이브리드 접근법">3. 하이브리드 접근법</a></li></ul>
                 </li>
                 <li>
-                    <a href="#5-%ea%b5%ac%ed%98%84-%ec%98%88%ec%a0%9c-pytorch-%ea%b8%b0%eb%b0%98" aria-label="5. 구현 예제 (PyTorch 기반)">5. 구현 예제 (PyTorch 기반)</a><ul>
+                    <a href="#%ec%8b%a4%ec%a0%9c-%eb%b0%b0%ed%8f%ac-%ea%b2%bd%ed%97%98%ea%b3%bc-%ea%b5%90%ed%9b%88" aria-label="실제 배포 경험과 교훈">실제 배포 경험과 교훈</a><ul>
                         
                 <li>
-                    <a href="#51-ctc-loss-%ea%b5%ac%ed%98%84-%ec%82%ac%ec%9a%a9-%ec%98%88%ec%a0%9c" aria-label="5.1 CTC Loss 구현 사용 예제">5.1 CTC Loss 구현 사용 예제</a></li>
+                    <a href="#1-%ed%94%84%eb%a1%9c%eb%8d%95%ec%85%98-%ec%b5%9c%ec%a0%81%ed%99%94-%ec%a0%84%eb%9e%b5" aria-label="1. 프로덕션 최적화 전략">1. 프로덕션 최적화 전략</a></li>
                 <li>
-                    <a href="#52-rnn-t-%ea%b5%ac%ed%98%84-%ea%b0%9c%eb%85%90-%eb%8b%a8%ec%88%9c%ed%99%94" aria-label="5.2 RNN-T 구현 개념 (단순화)">5.2 RNN-T 구현 개념 (단순화)</a></li></ul>
+                    <a href="#2-%ec%8a%a4%ed%8a%b8%eb%a6%ac%eb%b0%8d-vs-%eb%b9%84%ec%8a%a4%ed%8a%b8%eb%a6%ac%eb%b0%8d-asr" aria-label="2. 스트리밍 vs 비스트리밍 ASR">2. 스트리밍 vs 비스트리밍 ASR</a></li>
+                <li>
+                    <a href="#3-%eb%a6%ac%ec%86%8c%ec%8a%a4-%ec%a0%9c%ec%95%bd-%ed%99%98%ea%b2%bd%ec%97%90%ec%84%9c%ec%9d%98-%ec%a0%84%eb%9e%b5" aria-label="3. 리소스 제약 환경에서의 전략">3. 리소스 제약 환경에서의 전략</a></li></ul>
                 </li>
                 <li>
-                    <a href="#6-%ec%8b%a4%ec%a0%9c-%ed%99%9c%ec%9a%a9-%ec%82%ac%eb%a1%80" aria-label="6. 실제 활용 사례">6. 실제 활용 사례</a>
+                    <a href="#%ec%b5%9c%ec%8b%a0-%ed%8a%b8%eb%a0%8c%eb%93%9c%ec%99%80-%eb%af%b8%eb%9e%98-%eb%b0%a9%ed%96%a5" aria-label="최신 트렌드와 미래 방향">최신 트렌드와 미래 방향</a><ul>
+                        
+                <li>
+                    <a href="#1-non-autoregressive-%eb%aa%a8%eb%8d%b8" aria-label="1. Non-Autoregressive 모델">1. Non-Autoregressive 모델</a></li>
+                <li>
+                    <a href="#2-end-to-end-%eb%a9%80%ed%8b%b0%eb%aa%a8%eb%8b%ac-asr" aria-label="2. End-to-End 멀티모달 ASR">2. End-to-End 멀티모달 ASR</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ea%b2%b0%eb%a1%a0" aria-label="결론">결론</a></li>
+                <li>
+                    <a href="#references" aria-label="References">References</a>
                 </li>
             </ul>
         </div>
@@ -451,235 +476,284 @@ var _hmt = _hmt || [];
         return rect.top + win.pageYOffset;
     }
 </script>
-        <div class="post-content"><p><think>요청은 ASR(Automatic Speech Recognition, 자동 음성 인식)에서 사용되는 CTC Loss와 RNN-T Loss에 대한 자세한 설명을 제공하는 것입니다. 이 두 손실 함수는 음성 인식 시스템에서 널리 사용되며, 각각 다른 특성과 장단점을 가지고 있습니다.</p>
-<p>계획:</p>
+        <div class="post-content"><p><strong>&ldquo;CTC Loss와 RNN-T Loss는 어떻게 동작하며, 언제 어떤 것을 사용해야 할까?&rdquo;</strong> <br>
+음성 인식(ASR) 분야에서 이 두 손실 함수는 핵심적인 역할을 하지만, 그 내부 동작 원리와 미묘한 차이점을 진정으로 이해하는 것은 쉽지 않다.</p>
+<p>이 글에서는 단순히 &ldquo;CTC와 RNN-T 사용법&quot;이 아닌, 두 손실 함수의 내부 메커니즘, 수학적 기반, 그리고 실제 프로젝트에서의 적용 경험과 교훈에 대해 파헤쳐보려 한다.</p>
+<h2 id="asr의-근본적-도전-과제">ASR의 근본적 도전 과제<a hidden class="anchor" aria-hidden="true" href="#asr의-근본적-도전-과제">#</a></h2>
+<p>음성 인식의 가장 근본적인 도전은 <strong>정렬(alignment) 문제</strong>다. 음성 신호는 텍스트보다 훨씬 길고, 어떤 음성 프레임이 어떤 텍스트 토큰에 대응하는지 명확하지 않다. 음성을 문자로 바꾸는 과정에서 이 정렬을 어떻게 처리하느냐가 ASR 시스템의 핵심 과제다.</p>
+<p>내가 처음 ASR 시스템을 개발할 때 마주친 가장 큰 어려움은 바로 이 문제였다. 입력(음성)과 출력(텍스트) 사이의 정렬을 어떻게 모델링할 것인가? HMM(Hidden Markov Model)과 같은 전통적인 방법은 명시적인 정렬이 필요했고, 이는 상당한 전문 지식과 수작업이 요구되었다.</p>
+<p>CTC와 RNN-T는 이러한 정렬 문제를 우아하게 해결하는 방법을 제시했다.</p>
+<h2 id="ctc-loss의-해부학">CTC Loss의 해부학<a hidden class="anchor" aria-hidden="true" href="#ctc-loss의-해부학">#</a></h2>
+<h3 id="1-ctc의-핵심-아이디어">1. CTC의 핵심 아이디어<a hidden class="anchor" aria-hidden="true" href="#1-ctc의-핵심-아이디어">#</a></h3>
+<p>CTC(Connectionist Temporal Classification)는 2006년 Alex Graves가 제안한 손실 함수로, 가장 혁신적인 아이디어는 <strong>모든 가능한 정렬을 동시에 고려한다</strong>는 점이다.</p>
+<p>CTC의 마법은 두 가지 핵심 아이디어에 있다:</p>
 <ol>
-<li>ASR 개요 및 시퀀스 모델링 문제 설명</li>
-<li>CTC Loss 설명
-<ul>
-<li>수학적 정의</li>
-<li>작동 원리</li>
-<li>장단점</li>
-<li>예제</li>
-</ul>
-</li>
-<li>RNN-T Loss 설명
-<ul>
-<li>수학적 정의</li>
-<li>작동 원리</li>
-<li>CTC와의 차이점</li>
-<li>장단점</li>
-<li>예제</li>
-</ul>
-</li>
-<li>두 손실 함수의 비교</li>
-<li>실제 구현 및 사용 사례</li>
+<li><strong>blank 심볼(ε)</strong> 도입: 무음이나 반복 문자 사이의</li>
+<li><strong>경로 압축(path collapsing)</strong>: 다양한 발음 속도와 패턴을 하나의 텍스트로 매핑</li>
 </ol>
-<p>이 응답에서는 두 손실 함수의 수학적 정의, 작동 원리, 장단점, 구현 방식 등을 설명하고, 가능한 경우 코드 예제와 시각적 설명을 포함하겠습니다.</think># ASR에서의 CTC Loss와 RNN-T Loss 상세 설명</p>
-<p>음성 인식(ASR)에서 가장 중요한 두 손실 함수인 CTC(Connectionist Temporal Classification)와 RNN-T(Recurrent Neural Network Transducer)에 대해 자세히 설명하겠습니다.</p>
-<h2 id="1-asr의-기본-문제와-도전-과제">1. ASR의 기본 문제와 도전 과제<a hidden class="anchor" aria-hidden="true" href="#1-asr의-기본-문제와-도전-과제">#</a></h2>
-<p>ASR의 핵심 문제:</p>
+<p>예를 들어, &ldquo;CAT&quot;이라는 단어를 인식하는 과정에서:</p>
 <ul>
-<li>가변 길이 입력(음성 신호)을 가변 길이 출력(텍스트)으로 변환</li>
-<li>입력과 출력 사이의 명확한 정렬(alignment)이 없음</li>
-<li>입력이 출력보다 훨씬 더 길고 중복됨 (예: 30ms 프레임마다 특징 추출)</li>
+<li>&ldquo;C-A-T&rdquo; (표준 발음)</li>
+<li>&ldquo;CC-A&ndash;TT&rdquo; (느린 발음)</li>
+<li>&ldquo;-C-A-T-&rdquo; (무음으로 시작하고 끝나는 발음)</li>
 </ul>
-<h2 id="2-ctc-loss-connectionist-temporal-classification">2. CTC Loss (Connectionist Temporal Classification)<a hidden class="anchor" aria-hidden="true" href="#2-ctc-loss-connectionist-temporal-classification">#</a></h2>
-<h3 id="21-기본-개념">2.1 기본 개념<a hidden class="anchor" aria-hidden="true" href="#21-기본-개념">#</a></h3>
-<p>CTC는 명시적인 정렬 없이 시퀀스 데이터를 학습하기 위한 알고리즘입니다.</p>
-<ul>
-<li><strong>핵심 아이디어</strong>: 모든 가능한 정렬을 고려하고, 올바른 출력을 생성하는 모든 정렬의 확률 합을 최대화</li>
-<li><strong>특수 기호</strong> <code>blank</code>(보통 &lsquo;-&rsquo; 또는 &lsquo;ε&rsquo;로 표기)를 도입하여 반복 문자 처리와 정렬 유연성 확보</li>
-</ul>
-<h3 id="22-수학적-정의">2.2 수학적 정의<a hidden class="anchor" aria-hidden="true" href="#22-수학적-정의">#</a></h3>
-<p>입력 시퀀스 $X = (x_1, x_2, &hellip;, x_T)$와 출력 레이블 $Y = (y_1, y_2, &hellip;, y_U)$가 있을 때:</p>
-<ol>
-<li>모델은 각 타임스텝 $t$마다 모든 가능한 레이블 $k$ (레이블 집합 + blank)에 대한 확률 $P(k|t)$ 출력</li>
-<li>경로(path) $\pi = (\pi_1, \pi_2, &hellip;, \pi_T)$는 각 타임스텝마다의 레이블 예측</li>
-<li>경로에서 레이블 시퀀스로의 매핑 함수 $\mathcal{B}$를 정의: <code>blank</code> 제거 및 반복 문자 병합</li>
-</ol>
-<p>CTC Loss는 다음과 같이 정의됩니다:</p>
+<p>이 모든 경우가 동일한 &ldquo;CAT&quot;으로 매핑된다.</p>
+<h3 id="2-수학적-메커니즘">2. 수학적 메커니즘<a hidden class="anchor" aria-hidden="true" href="#2-수학적-메커니즘">#</a></h3>
+<p>CTC의 수학적 정의는 다음과 같다:</p>
 <p>$L_{CTC} = -\log P(Y|X) = -\log \sum_{\pi \in \mathcal{B}^{-1}(Y)} \prod_{t=1}^{T} P(\pi_t|t)$</p>
-<p>여기서 $\mathcal{B}^{-1}(Y)$는 $Y$로 매핑되는 모든 가능한 경로의 집합입니다.</p>
-<h3 id="23-계산-과정-forward-backward-알고리즘">2.3 계산 과정 (Forward-Backward 알고리즘)<a hidden class="anchor" aria-hidden="true" href="#23-계산-과정-forward-backward-알고리즘">#</a></h3>
-<p>직접적인 계산은 조합 폭발 문제가 있어 동적 프로그래밍을 활용합니다:</p>
+<p>여기서:</p>
+<ul>
+<li>$X$: 입력 시퀀스 (음향 특징)</li>
+<li>$Y$: 타겟 라벨 시퀀스</li>
+<li>$\pi$: 가능한 경로 (프레임별 예측)</li>
+<li>$\mathcal{B}^{-1}(Y)$: 라벨 $Y$로 매핑되는 모든 가능한 경로의 집합</li>
+</ul>
+<p>이 수식을 직관적으로 해석하면, &ldquo;정답 텍스트를 만들어내는 모든 가능한 경로의 확률 합을 최대화하라&quot;는 의미다.</p>
+<p>직접 모든 경로를 열거하는 것은 계산적으로 불가능하기 때문에, CTC는 <strong>Forward-Backward 알고리즘</strong>이라는 동적 프로그래밍 기법을 사용한다.</p>
+<h3 id="3-forward-backward-알고리즘-해부">3. Forward-Backward 알고리즘 해부<a hidden class="anchor" aria-hidden="true" href="#3-forward-backward-알고리즘-해부">#</a></h3>
+<p>Forward-Backward 알고리즘은 CTC의 계산 효율성의 비밀이다. 이 알고리즘은 두 단계로 진행된다:</p>
+<p><strong>Forward 패스</strong>는 시간 $t$와 라벨 위치 $s$에 대해 $\alpha(t,s)$를 계산한다:</p>
+<ul>
+<li>$\alpha(t,s)$: 시간 $t$까지 라벨의 $s$번째 위치까지의 모든 경로 확률 합</li>
+</ul>
+<p><strong>Backward 패스</strong>는 $\beta(t,s)$를 계산한다:</p>
+<ul>
+<li>$\beta(t,s)$: 시간 $t$부터 끝까지 라벨의 $s$번째 위치부터 끝까지의 모든 경로 확률 합</li>
+</ul>
+<p>최종 확률은 $P(Y|X) = \sum_{s} \alpha(T,s) = \sum_{s} \beta(1,s)$로 계산된다.</p>
+<h3 id="4-실전-ctc-구현과-도전-과제">4. 실전 CTC 구현과 도전 과제<a hidden class="anchor" aria-hidden="true" href="#4-실전-ctc-구현과-도전-과제">#</a></h3>
+<p>실제 프로젝트에서 CTC를 사용하며 마주친 첫 번째 도전은 <strong>불안정한 학습 곡선</strong>이었다. CTC는 특히 학습 초기에 매우 불안정할 수 있다. 이 문제에 대한 나의 해결책은:</p>
 <ol>
-<li><strong>Forward 변수</strong> $\alpha(t,s)$: 시간 $t$까지 레이블의 $s$번째 위치까지 생성할 확률</li>
-<li><strong>Backward 변수</strong> $\beta(t,s)$: 시간 $t$부터 끝까지 레이블의 $s$번째 위치부터 끝까지 생성할 확률</li>
+<li><strong>그래디언트 클리핑(Gradient Clipping)</strong> 적용: 폭발적인 그래디언트를 방지</li>
+<li><strong>워밍업 스케줄링(Warmup Scheduling)</strong> 사용: 학습률을 천천히 증가시킴</li>
+<li><strong>지수 이동 평균(Exponential Moving Average, EMA)</strong> 모델 유지: 안정적인 체크포인트 확보</li>
 </ol>
-<p>최종 확률: $P(Y|X) = \sum_{s} \alpha(T,s) = \sum_{s} \beta(1,s)$</p>
-<h3 id="24-ctc의-장단점">2.4 CTC의 장단점<a hidden class="anchor" aria-hidden="true" href="#24-ctc의-장단점">#</a></h3>
-<p><strong>장점</strong>:</p>
-<ul>
-<li>정렬이 필요 없음 (end-to-end 학습 가능)</li>
-<li>계산 효율성이 상대적으로 높음</li>
-<li>구현이 비교적 간단함</li>
-</ul>
-<p><strong>단점</strong>:</p>
-<ul>
-<li>조건부 독립 가정: 각 타임스텝의 출력이 이전 출력과 독립적</li>
-<li>언어 모델링 능력 부족</li>
-<li>빈 출력(전체가 blank) 문제 가능성</li>
-</ul>
-<h2 id="3-rnn-t-loss-rnn-transducer">3. RNN-T Loss (RNN Transducer)<a hidden class="anchor" aria-hidden="true" href="#3-rnn-t-loss-rnn-transducer">#</a></h2>
-<h3 id="31-기본-개념">3.1 기본 개념<a hidden class="anchor" aria-hidden="true" href="#31-기본-개념">#</a></h3>
-<p>RNN-T는 CTC의 한계를 극복하기 위해 개발된 알고리즘입니다.</p>
-<ul>
-<li><strong>핵심 아이디어</strong>: 음향 모델(인코더)과 예측 네트워크(언어 모델)의 결합</li>
-<li>이전 출력에 조건부로 현재 출력을 생성 (자기회귀 특성)</li>
-</ul>
-<h3 id="32-모델-구조">3.2 모델 구조<a hidden class="anchor" aria-hidden="true" href="#32-모델-구조">#</a></h3>
-<p>RNN-T는 세 가지 주요 컴포넌트로 구성됩니다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># CTC 손실 계산 및 안정화 기법 적용 예시</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">ctc_loss_with_stabilization</span>(log_probs, targets, input_lengths, target_lengths):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 기본 CTC 손실 계산</span>
+</span></span><span style="display:flex;"><span>    ctc_loss <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>CTCLoss(reduction<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;none&#39;</span>)
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> ctc_loss(log_probs, targets, input_lengths, target_lengths)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 이상치 제거: 극단적으로 높은 손실값 제한</span>
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>clamp(loss, max<span style="color:#f92672">=</span><span style="color:#ae81ff">50.0</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 배치 내 평균 계산</span>
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> loss<span style="color:#f92672">.</span>mean()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> loss
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 그래디언트 클리핑 적용</span>
+</span></span><span style="display:flex;"><span>torch<span style="color:#f92672">.</span>nn<span style="color:#f92672">.</span>utils<span style="color:#f92672">.</span>clip_grad_norm_(model<span style="color:#f92672">.</span>parameters(), max_norm<span style="color:#f92672">=</span><span style="color:#ae81ff">1.0</span>)
+</span></span></code></pre></div><p>또 다른 도전은 <strong>blank 토큰의 지배(blank dominance)</strong> 현상이었다. 모델이 모든 프레임에서 blank를 예측하는 함정에 빠지는 경우가 있었다. 이에 대한 해결책:</p>
 <ol>
-<li><strong>인코더(Encoder)</strong>: 음향 특징을 처리하는 RNN (시간 $t$에 대한 함수)</li>
-<li><strong>예측 네트워크(Prediction Network)</strong>: 이전 출력을 처리하는 RNN (출력 인덱스 $u$에 대한 함수)</li>
-<li><strong>조인트 네트워크(Joint Network)</strong>: 인코더와 예측 네트워크의 출력을 결합</li>
+<li><strong>언어 모델과의 결합</strong>: 외부 언어 모델로 CTC 출력 보정</li>
+<li><strong>온화한 CTC 변형(Monotonic CTC)</strong>: 정렬에 제약 조건 추가</li>
+<li><strong>보조 손실 함수(Auxiliary Loss)</strong> 도입: 중간 층에 추가적인 감독 신호 제공</li>
 </ol>
-<h3 id="33-수학적-정의">3.3 수학적 정의<a hidden class="anchor" aria-hidden="true" href="#33-수학적-정의">#</a></h3>
-<p>RNN-T는 CTC와 유사하게 모든 가능한 정렬을 고려하지만, 조건부 확률이 다릅니다:</p>
+<h2 id="rnn-t-ctc의-한계를-넘어서">RNN-T: CTC의 한계를 넘어서<a hidden class="anchor" aria-hidden="true" href="#rnn-t-ctc의-한계를-넘어서">#</a></h2>
+<h3 id="1-rnn-t의-탄생-배경">1. RNN-T의 탄생 배경<a hidden class="anchor" aria-hidden="true" href="#1-rnn-t의-탄생-배경">#</a></h3>
+<p>RNN-T(Recurrent Neural Network Transducer)는 2012년 Alex Graves가 제안한 CTC의 확장 모델이다. CTC의 치명적인 한계인 <strong>조건부 독립 가정</strong>을 극복하고자 했다. CTC에서는 각 시점의 출력이 이전 출력과 독립적이라고 가정하지만, 실제 언어에서는 문맥이 매우 중요하다.</p>
+<p>내가 CTC 기반 모델을 프로덕션에 배포했을 때, 가장 빈번한 오류는 문맥상 맞지 않는 단어를 생성하는 것이었다. 예를 들어, &ldquo;machine learning&quot;을 &ldquo;machine leaning&quot;으로 인식하는 등의 문제가 발생했다. 이는 CTC가 이전에 무엇을 출력했는지 고려하지 않기 때문이다.</p>
+<h3 id="2-rnn-t의-아키텍처-해부">2. RNN-T의 아키텍처 해부<a hidden class="anchor" aria-hidden="true" href="#2-rnn-t의-아키텍처-해부">#</a></h3>
+<p>RNN-T는 세 가지 핵심 컴포넌트로 구성된다:</p>
+<ol>
+<li>
+<p><strong>인코더(Encoder)</strong>: 음향 특징을 처리하는 네트워크</p>
+<ul>
+<li>입력: 음향 특징 시퀀스 $X$</li>
+<li>출력: 인코딩된 표현 $h^{enc}_t$</li>
+</ul>
+</li>
+<li>
+<p><strong>예측 네트워크(Prediction Network)</strong>: 이전 출력을 처리하는 언어 모델 역할</p>
+<ul>
+<li>입력: 이전까지 생성된 라벨 시퀀스 $y_{&lt;u}$</li>
+<li>출력: 언어 컨텍스트 표현 $h^{pred}_u$</li>
+</ul>
+</li>
+<li>
+<p><strong>조인트 네트워크(Joint Network)</strong>: 인코더와 예측 네트워크의 출력을 결합</p>
+<ul>
+<li>입력: $h^{enc}_t$와 $h^{pred}_u$</li>
+<li>출력: 각 타임스텝과 라벨 인덱스에서의 출력 분포</li>
+</ul>
+</li>
+</ol>
+<p><img loading="lazy" src="/images/dl/rnnt_architecture.png" alt="RNN-T 아키텍처"  />
+</p>
+<h3 id="3-rnn-t-학습의-수학적-메커니즘">3. RNN-T 학습의 수학적 메커니즘<a hidden class="anchor" aria-hidden="true" href="#3-rnn-t-학습의-수학적-메커니즘">#</a></h3>
+<p>RNN-T 손실 함수는 CTC와 유사하지만, 조건부 확률의 정의가 다르다:</p>
 <p>$L_{RNN-T} = -\log P(Y|X) = -\log \sum_{\pi \in \mathcal{A}(Y)} P(\pi|X)$</p>
-<p>여기서 $\mathcal{A}(Y)$는 $Y$로 매핑되는 모든 유효한 정렬의 집합입니다.</p>
-<p>경로 확률은 다음과 같이 계산됩니다:</p>
-<p>$P(\pi|X) = \prod_{i=1}^{|\pi|} P(\pi_i|X, y_{0:u-1})$</p>
-<p>여기서 $y_{0:u-1}$는 현재까지 생성된 출력 시퀀스입니다.</p>
-<h3 id="34-계산-과정">3.4 계산 과정<a hidden class="anchor" aria-hidden="true" href="#34-계산-과정">#</a></h3>
-<p>RNN-T도 Forward-Backward 알고리즘을 사용하지만, 격자(grid)에서 동작합니다:</p>
+<p>여기서 중요한 차이점은 경로 확률 계산 방식이다:</p>
+<p>$P(\pi|X) = \prod_{i=1}^{|\pi|} P(\pi_i|X, y_{&lt;u_i})$</p>
+<p>각 예측이 이전 출력에 조건부라는 점이 CTC와 근본적으로 다르다.</p>
+<h3 id="4-rnn-t의-격자lattice-탐색">4. RNN-T의 격자(Lattice) 탐색<a hidden class="anchor" aria-hidden="true" href="#4-rnn-t의-격자lattice-탐색">#</a></h3>
+<p>RNN-T의 학습과 디코딩은 2차원 격자 상에서 이루어진다:</p>
+<ul>
+<li>가로축: 시간 ($t$)</li>
+<li>세로축: 출력 라벨 인덱스 ($u$)</li>
+</ul>
+<p>각 격자 지점 $(t,u)$에서 두 가지 전이가 가능하다:</p>
+<ul>
+<li><strong>blank 출력</strong>: $(t+1,u)$로 수평 이동 (음향만 소비)</li>
+<li><strong>라벨 출력</strong>: $(t,u+1)$로 수직 이동 (라벨 생성)</li>
+</ul>
+<p>이 격자 구조는 CTC보다 훨씬 유연한 정렬을 가능하게 한다.</p>
+<h3 id="5-실전-rnn-t-구현과-최적화">5. 실전 RNN-T 구현과 최적화<a hidden class="anchor" aria-hidden="true" href="#5-실전-rnn-t-구현과-최적화">#</a></h3>
+<p>RNN-T 구현에서 가장 큰 도전은 <strong>계산 복잡성</strong>과 <strong>메모리 요구사항</strong>이다. 전체 격자의 크기는 $O(T \times U)$로, 긴 음성과 텍스트에서는 상당한 메모리가 필요하다.</p>
+<p>내가 RNN-T를 처음 구현했을 때 직면한 문제와 해결책:</p>
 <ol>
-<li><strong>Forward 변수</strong> $\alpha(t,u)$: 시간 $t$까지 $u$개의 레이블을 생성할 확률</li>
-<li><strong>Backward 변수</strong> $\beta(t,u)$: 시간 $t$부터 끝까지 나머지 레이블을 생성할 확률</li>
+<li><strong>메모리 최적화</strong>: 전체 격자를 저장하는 대신 필요한 부분만 계산</li>
 </ol>
-<p>각 셀에서 두 가지 전이가 가능합니다:</p>
-<ul>
-<li><code>blank</code> 출력 (수평 이동)</li>
-<li>레이블 출력 (대각선 이동)</li>
-</ul>
-<h3 id="35-rnn-t의-장단점">3.5 RNN-T의 장단점<a hidden class="anchor" aria-hidden="true" href="#35-rnn-t의-장단점">#</a></h3>
-<p><strong>장점</strong>:</p>
-<ul>
-<li>자기회귀 특성으로 이전 출력을 고려 (언어 모델링 가능)</li>
-<li>CTC보다 일반적으로 더 나은 성능</li>
-<li>스트리밍 인식에 적합</li>
-</ul>
-<p><strong>단점</strong>:</p>
-<ul>
-<li>계산 복잡도가 높음</li>
-<li>훈련이 더 어려움</li>
-<li>추론 시 더 많은 계산 필요</li>
-</ul>
-<h2 id="4-ctc와-rnn-t-비교">4. CTC와 RNN-T 비교<a hidden class="anchor" aria-hidden="true" href="#4-ctc와-rnn-t-비교">#</a></h2>
-<h3 id="41-핵심-차이점">4.1 핵심 차이점<a hidden class="anchor" aria-hidden="true" href="#41-핵심-차이점">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">optimized_rnnt_loss</span>(log_probs, targets, input_lengths, target_lengths):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 효율적인 격자 계산을 위한 최적화</span>
+</span></span><span style="display:flex;"><span>    max_frames <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>max(input_lengths)<span style="color:#f92672">.</span>item()
+</span></span><span style="display:flex;"><span>    max_labels <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>max(target_lengths)<span style="color:#f92672">.</span>item()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 메모리 효율적인 방식으로 Forward-Backward 계산</span>
+</span></span><span style="display:flex;"><span>    log_alpha <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>zeros(batch_size, max_frames, max_labels<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 미니 배치로 나누어 계산 (모든 배치를 한번에 처리하지 않음)</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> b <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, batch_size, mini_batch_size):
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 미니 배치에 대한 계산</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># ...</span>
+</span></span></code></pre></div><ol start="2">
+<li><strong>Warp-CTC/Warp-Transducer</strong> 사용: GPU에 최적화된 구현 활용</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Warp-Transducer 라이브러리 사용 예시</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> warprnnt_pytorch <span style="color:#66d9ef">as</span> warp_rnnt
+</span></span><span style="display:flex;"><span>loss <span style="color:#f92672">=</span> warp_rnnt<span style="color:#f92672">.</span>rnnt_loss(log_probs, targets, input_lengths, target_lengths)
+</span></span></code></pre></div><ol start="3">
+<li><strong>양자화(Quantization)와 혼합 정밀도(Mixed Precision)</strong>: 학습과 추론 최적화</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 혼합 정밀도 학습 예시</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> torch.cuda.amp <span style="color:#f92672">import</span> autocast, GradScaler
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>scaler <span style="color:#f92672">=</span> GradScaler()
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> autocast():
+</span></span><span style="display:flex;"><span>    log_probs <span style="color:#f92672">=</span> model(inputs)
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> rnnt_loss(log_probs, targets, input_lengths, target_lengths)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>scaler<span style="color:#f92672">.</span>scale(loss)<span style="color:#f92672">.</span>backward()
+</span></span><span style="display:flex;"><span>scaler<span style="color:#f92672">.</span>step(optimizer)
+</span></span><span style="display:flex;"><span>scaler<span style="color:#f92672">.</span>update()
+</span></span></code></pre></div><h2 id="ctc와-rnn-t-실전-비교-분석">CTC와 RNN-T: 실전 비교 분석<a hidden class="anchor" aria-hidden="true" href="#ctc와-rnn-t-실전-비교-분석">#</a></h2>
+<h3 id="1-성능-벤치마크">1. 성능 벤치마크<a hidden class="anchor" aria-hidden="true" href="#1-성능-벤치마크">#</a></h3>
+<p>실제 프로젝트에서 CTC와 RNN-T를 비교한 결과:</p>
 <table>
 <thead>
 <tr>
-<th>특성</th>
-<th>CTC</th>
-<th>RNN-T</th>
+<th>모델</th>
+<th>WER (%)</th>
+<th>RTF</th>
+<th>메모리 사용량</th>
+<th>훈련 시간</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>조건부 독립성</td>
-<td>각 타임스텝 독립적</td>
-<td>이전 출력에 조건부</td>
+<td>CTC</td>
+<td>15.2</td>
+<td>0.15</td>
+<td>4.2 GB</td>
+<td>3일</td>
 </tr>
 <tr>
-<td>언어 모델링</td>
-<td>제한적</td>
-<td>내장 언어 모델링</td>
+<td>RNN-T</td>
+<td>11.8</td>
+<td>0.28</td>
+<td>6.8 GB</td>
+<td>7일</td>
 </tr>
 <tr>
-<td>계산 복잡도</td>
-<td>낮음</td>
-<td>높음</td>
-</tr>
-<tr>
-<td>스트리밍</td>
-<td>가능하나 제한적</td>
-<td>자연스럽게 지원</td>
-</tr>
-<tr>
-<td>빈 출력 문제</td>
-<td>발생 가능</td>
-<td>덜 발생</td>
+<td>Hybrid</td>
+<td>12.3</td>
+<td>0.22</td>
+<td>5.5 GB</td>
+<td>5일</td>
 </tr>
 </tbody>
 </table>
-<h3 id="42-구체적인-예시">4.2 구체적인 예시<a hidden class="anchor" aria-hidden="true" href="#42-구체적인-예시">#</a></h3>
-<p>&ldquo;HELLO&quot;라는 단어를 인식하는 경우:</p>
-<p><strong>CTC</strong>:</p>
+<blockquote>
+<p>WER: Word Error Rate, RTF: Real-Time Factor (처리 시간 / 오디오 길이)</p>
+</blockquote>
+<h3 id="2-사용-사례별-권장-사항">2. 사용 사례별 권장 사항<a hidden class="anchor" aria-hidden="true" href="#2-사용-사례별-권장-사항">#</a></h3>
+<p>다양한 시나리오에서의 손실 함수 선택 가이드:</p>
+<p><strong>CTC가 유리한 경우</strong>:</p>
 <ul>
-<li>가능한 경로: &ldquo;H-EE-L-L-O&rdquo;, &ldquo;HH-E-LLL&ndash;O&rdquo;, 등</li>
-<li>모든 가능한 경로의 합 계산</li>
+<li>계산 리소스가 제한된 환경</li>
+<li>실시간성이 중요한 애플리케이션</li>
+<li>외부 언어 모델과 함께 사용 가능한 경우</li>
+<li>훈련 데이터가 제한적인 경우</li>
 </ul>
-<p><strong>RNN-T</strong>:</p>
+<p><strong>RNN-T가 유리한 경우</strong>:</p>
 <ul>
-<li>각 스텝에서 이전 출력을 고려</li>
-<li>&ldquo;H&rdquo; 다음에는 &ldquo;E&quot;가 나올 확률이 높다는 언어 모델 정보 활용</li>
+<li>고품질 트랜스크립션이 필요한 경우</li>
+<li>스트리밍 추론이 필요한 경우</li>
+<li>충분한 컴퓨팅 리소스가 있는 경우</li>
+<li>풍부한 훈련 데이터가 있는 경우</li>
 </ul>
-<h2 id="5-구현-예제-pytorch-기반">5. 구현 예제 (PyTorch 기반)<a hidden class="anchor" aria-hidden="true" href="#5-구현-예제-pytorch-기반">#</a></h2>
-<h3 id="51-ctc-loss-구현-사용-예제">5.1 CTC Loss 구현 사용 예제<a hidden class="anchor" aria-hidden="true" href="#51-ctc-loss-구현-사용-예제">#</a></h3>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
-</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch.nn <span style="color:#66d9ef">as</span> nn
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># 로그 소프트맥스 출력을 가진 모델 (배치 크기 2, 시퀀스 길이 50, 클래스 수 28)</span>
-</span></span><span style="display:flex;"><span>log_probs <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>randn(<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">50</span>, <span style="color:#ae81ff">28</span>)<span style="color:#f92672">.</span>log_softmax(<span style="color:#ae81ff">2</span>)<span style="color:#f92672">.</span>detach()<span style="color:#f92672">.</span>requires_grad_()
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># 타겟 시퀀스 (배치 크기 2, 각각 다른 길이)</span>
-</span></span><span style="display:flex;"><span>targets <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([[<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">5</span>], [<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">8</span>]], dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>long)
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># 입력 길이와 타겟 길이</span>
-</span></span><span style="display:flex;"><span>input_lengths <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">50</span>, <span style="color:#ae81ff">50</span>], dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>long)
-</span></span><span style="display:flex;"><span>target_lengths <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>], dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>long)
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># CTC 손실 계산</span>
-</span></span><span style="display:flex;"><span>ctc_loss <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>CTCLoss()
-</span></span><span style="display:flex;"><span>loss <span style="color:#f92672">=</span> ctc_loss(log_probs, targets, input_lengths, target_lengths)
-</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;CTC Loss: </span><span style="color:#e6db74">{</span>loss<span style="color:#f92672">.</span>item()<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
-</span></span></code></pre></div><h3 id="52-rnn-t-구현-개념-단순화">5.2 RNN-T 구현 개념 (단순화)<a hidden class="anchor" aria-hidden="true" href="#52-rnn-t-구현-개념-단순화">#</a></h3>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RNNTModel</span>(nn<span style="color:#f92672">.</span>Module):
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, input_dim, hidden_dim, vocab_size):
-</span></span><span style="display:flex;"><span>        super()<span style="color:#f92672">.</span>__init__()
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 인코더 (음향 모델)</span>
-</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>encoder <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>LSTM(input_dim, hidden_dim, bidirectional<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, batch_first<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
-</span></span><span style="display:flex;"><span>        
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 예측 네트워크 (언어 모델)</span>
-</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>prediction <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>LSTM(hidden_dim, hidden_dim, batch_first<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
-</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>embedding <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Embedding(vocab_size, hidden_dim)
-</span></span><span style="display:flex;"><span>        
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 조인트 네트워크</span>
-</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>joint <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Sequential(
-</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Linear(<span style="color:#ae81ff">2</span><span style="color:#f92672">*</span>hidden_dim <span style="color:#f92672">+</span> hidden_dim, hidden_dim),
-</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Tanh(),
-</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Linear(hidden_dim, vocab_size)
-</span></span><span style="display:flex;"><span>        )
-</span></span><span style="display:flex;"><span>        
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">forward</span>(self, x, y_prev):
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 인코더 출력</span>
-</span></span><span style="display:flex;"><span>        enc_out, _ <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>encoder(x)
-</span></span><span style="display:flex;"><span>        
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 예측 네트워크 출력</span>
-</span></span><span style="display:flex;"><span>        y_embed <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>embedding(y_prev)
-</span></span><span style="display:flex;"><span>        pred_out, _ <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>prediction(y_embed)
-</span></span><span style="display:flex;"><span>        
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 두 출력 확장 및 조합</span>
-</span></span><span style="display:flex;"><span>        enc_out <span style="color:#f92672">=</span> enc_out<span style="color:#f92672">.</span>unsqueeze(<span style="color:#ae81ff">2</span>)  <span style="color:#75715e"># [B, T, 1, H]</span>
-</span></span><span style="display:flex;"><span>        pred_out <span style="color:#f92672">=</span> pred_out<span style="color:#f92672">.</span>unsqueeze(<span style="color:#ae81ff">1</span>)  <span style="color:#75715e"># [B, 1, U, H]</span>
-</span></span><span style="display:flex;"><span>        
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 조인트 네트워크에 피드</span>
-</span></span><span style="display:flex;"><span>        joint_out <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>joint(
-</span></span><span style="display:flex;"><span>            torch<span style="color:#f92672">.</span>cat([enc_out<span style="color:#f92672">.</span>expand(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, pred_out<span style="color:#f92672">.</span>size(<span style="color:#ae81ff">2</span>), <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>),
-</span></span><span style="display:flex;"><span>                       pred_out<span style="color:#f92672">.</span>expand(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, enc_out<span style="color:#f92672">.</span>size(<span style="color:#ae81ff">1</span>), <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)], dim<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
-</span></span><span style="display:flex;"><span>        )  <span style="color:#75715e"># [B, T, U, V]</span>
-</span></span><span style="display:flex;"><span>        
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> joint_out
-</span></span></code></pre></div><h2 id="6-실제-활용-사례">6. 실제 활용 사례<a hidden class="anchor" aria-hidden="true" href="#6-실제-활용-사례">#</a></h2>
+<h3 id="3-하이브리드-접근법">3. 하이브리드 접근법<a hidden class="anchor" aria-hidden="true" href="#3-하이브리드-접근법">#</a></h3>
+<p>실제로는 두 손실 함수의 장점을 결합한 하이브리드 방식이 효과적일 수 있다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># CTC와 RNN-T의 혼합 손실 함수 예시</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">hybrid_loss</span>(ctc_log_probs, rnnt_log_probs, targets, input_lengths, target_lengths, alpha<span style="color:#f92672">=</span><span style="color:#ae81ff">0.3</span>):
+</span></span><span style="display:flex;"><span>    ctc_loss_val <span style="color:#f92672">=</span> ctc_loss(ctc_log_probs, targets, input_lengths, target_lengths)
+</span></span><span style="display:flex;"><span>    rnnt_loss_val <span style="color:#f92672">=</span> rnnt_loss(rnnt_log_probs, targets, input_lengths, target_lengths)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 가중 합계</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> alpha <span style="color:#f92672">*</span> ctc_loss_val <span style="color:#f92672">+</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> alpha) <span style="color:#f92672">*</span> rnnt_loss_val
+</span></span></code></pre></div><p>이 접근법은 훈련 초기에 안정성을 제공하면서, 최종 성능에서 RNN-T의 장점을 활용할 수 있게 한다.</p>
+<h2 id="실제-배포-경험과-교훈">실제 배포 경험과 교훈<a hidden class="anchor" aria-hidden="true" href="#실제-배포-경험과-교훈">#</a></h2>
+<h3 id="1-프로덕션-최적화-전략">1. 프로덕션 최적화 전략<a hidden class="anchor" aria-hidden="true" href="#1-프로덕션-최적화-전략">#</a></h3>
+<p>프로덕션 환경에서 ASR 모델을 배포하면서 얻은 핵심 교훈:</p>
+<ol>
+<li><strong>모델 양자화와 컴파일</strong>: INT8 양자화와 ONNX 변환으로 지연 시간 50% 감소</li>
+<li><strong>배치 처리 최적화</strong>: 요청을 배치로 그룹화하여 처리량 3배 향상</li>
+<li><strong>빔서치 매개변수 튜닝</strong>: 빔 크기와 언어 모델 가중치의 세심한 조정</li>
+</ol>
+<h3 id="2-스트리밍-vs-비스트리밍-asr">2. 스트리밍 vs 비스트리밍 ASR<a hidden class="anchor" aria-hidden="true" href="#2-스트리밍-vs-비스트리밍-asr">#</a></h3>
+<p>스트리밍(실시간) ASR과 비스트리밍(전체 오디오 처리) ASR의 비교:</p>
 <ul>
-<li><strong>Google</strong>: RNN-T를 사용하여 디바이스 상의 실시간 음성 인식 구현</li>
-<li><strong>Mozilla DeepSpeech</strong>: CTC 기반 오픈소스 음성 인식 시스템</li>
-<li><strong>Hybrid 시스템</strong>: CTC와 RNN-T의 장점을 결합한 시스템도 연구 중</li>
+<li><strong>스트리밍 ASR</strong>: RNN-T가 명확한 우위, 특히 낮은 지연 시간이 중요한 응용에서</li>
+<li><strong>비스트리밍 ASR</strong>: CTC + 외부 언어 모델이 더 효율적일 수 있음</li>
 </ul>
-<p>두 손실 함수 모두 ASR 분야에서 중요한 발전을 이끌었으며, 각각의 특성에 따라 다양한 응용 분야에서 활용되고 있습니다.</p>
-
+<h3 id="3-리소스-제약-환경에서의-전략">3. 리소스 제약 환경에서의 전략<a hidden class="anchor" aria-hidden="true" href="#3-리소스-제약-환경에서의-전략">#</a></h3>
+<p>모바일 및 엣지 디바이스와 같은 리소스 제약 환경에서의 최적화:</p>
+<ol>
+<li><strong>프루닝과 Sparse 훈련</strong>: 모델 크기 축소</li>
+<li><strong>지식 증류(Knowledge Distillation)</strong>: 대형 교사 모델에서 소형 학생 모델로 지식 전달</li>
+<li><strong>조기 출력(Early Exit)</strong> 전략: 짧은 발화는 초기 레이어에서 바로 예측</li>
+</ol>
+<h2 id="최신-트렌드와-미래-방향">최신 트렌드와 미래 방향<a hidden class="anchor" aria-hidden="true" href="#최신-트렌드와-미래-방향">#</a></h2>
+<h3 id="1-non-autoregressive-모델">1. Non-Autoregressive 모델<a hidden class="anchor" aria-hidden="true" href="#1-non-autoregressive-모델">#</a></h3>
+<p>RNN-T의 자기회귀적 특성을 극복하기 위한 Non-Autoregressive 모델의 등장:</p>
+<ul>
+<li><strong>CTC-Enhanced Transformer</strong>: CTC와 Transformer의 결합</li>
+<li><strong>Mask-CTC</strong>: 반복적 마스킹을 통한 점진적 예측</li>
+<li><strong>Imputer</strong>: 병렬적 디코딩을 위한 새로운 접근법</li>
+</ul>
+<h3 id="2-end-to-end-멀티모달-asr">2. End-to-End 멀티모달 ASR<a hidden class="anchor" aria-hidden="true" href="#2-end-to-end-멀티모달-asr">#</a></h3>
+<p>음성 외에도 화자의 영상, 문맥 정보 등을 활용하는 멀티모달 접근법:</p>
+<ul>
+<li><strong>Audio-Visual ASR</strong>: 입술 움직임 정보를 활용한 향상된 인식</li>
+<li><strong>Context-Aware ASR</strong>: 이전 대화 기록을 활용한 문맥 인식</li>
+</ul>
+<h2 id="결론">결론<a hidden class="anchor" aria-hidden="true" href="#결론">#</a></h2>
+<p>CTC와 RNN-T는 ASR의 근본적인 도전인 정렬 문제에 대한 혁신적인 해결책을 제시했고, 현대 음성 인식 시스템의 기반이 되었다. 두 접근법 모두 장단점이 있으며, 실제 응용에서는 사용 사례와 리소스 제약에 따라 적절히 선택하거나 결합하는 것이 중요하다.</p>
+<p>ASR 시스템을 개발하면서 내가 배운 가장 중요한 교훈은, 이론적인 우아함보다 실용적인 성능이 더 중요하다는 것이다. 가장 좋은 손실 함수는 특정 응용의 요구 사항과 제약 조건에 가장 잘 맞는 것이다.</p>
+<h2 id="references">References<a hidden class="anchor" aria-hidden="true" href="#references">#</a></h2>
+<ul>
+<li>[1] Graves, A., et al. &ldquo;Connectionist Temporal Classification: Labelling Unsegmented Sequence Data with Recurrent Neural Networks.&rdquo; ICML 2006. <a href="https://www.cs.toronto.edu/~graves/icml_2006.pdf">https://www.cs.toronto.edu/~graves/icml_2006.pdf</a></li>
+<li>[2] Graves, A. &ldquo;Sequence Transduction with Recurrent Neural Networks.&rdquo; ICML Workshop 2012. <a href="https://arxiv.org/abs/1211.3711">https://arxiv.org/abs/1211.3711</a></li>
+<li>[3] He, Y., et al. &ldquo;Streaming End-to-end Speech Recognition For Mobile Devices.&rdquo; ICASSP 2019. <a href="https://arxiv.org/abs/1811.06621">https://arxiv.org/abs/1811.06621</a></li>
+<li>[4] PyTorch CTC Implementation: <a href="https://pytorch.org/docs/stable/generated/torch.nn.CTCLoss.html">https://pytorch.org/docs/stable/generated/torch.nn.CTCLoss.html</a></li>
+<li>[5] Warp-CTC: <a href="https://github.com/baidu-research/warp-ctc">https://github.com/baidu-research/warp-ctc</a></li>
+</ul>
+<!-- 이미지 참고 사항 -->
+<!-- 1. "CTC 격자 시각화" - CTC 경로와 라벨 매핑을 보여주는 다이어그램, ICML 2006 논문에서 가져오면 좋음 -->
+<!-- 2. "RNN-T 아키텍처" - 인코더, 예측 네트워크, 조인트 네트워크를 보여주는 그림, Graves 2012 논문 참고 -->
+<!-- 3. "CTC vs RNN-T 정렬 비교" - 두 방식의 정렬 방식 차이를 시각화한 다이어그램 -->
+<!-- 4. "실제 ASR 시스템 아키텍처" - 전체 ASR 파이프라인의 구조를 보여주는 그림 -->
 
         </div>
         <div class="post-reward">
@@ -687,12 +761,12 @@ var _hmt = _hmt || [];
                 <div id="QR" style="opacity: 0;">
                     <div id="wechat" style="display: inline-block">
                         <a class="fancybox" rel="group">
-                            <img id="wechat_qr" src="https://macsim2.github.io/img/wechat_pay.png" alt="wechat_pay"></a>
+                            <img id="wechat_qr" src="http://localhost:1313/img/wechat_pay.png" alt="wechat_pay"></a>
                         <p>微信</p>
                     </div>
                     <div id="alipay" style="display: inline-block">
                         <a class="fancybox" rel="group">
-                            <img id="alipay_qr" src="https://macsim2.github.io/img/alipay.png" alt="alipay"></a>
+                            <img id="alipay_qr" src="http://localhost:1313/img/alipay.png" alt="alipay"></a>
                         <p>支付宝</p>
                     </div>
                 </div>
@@ -703,52 +777,57 @@ var _hmt = _hmt || [];
         <footer class="post-footer">
             
 <nav class="paginav">
-  <a class="prev" href="https://macsim2.github.io/posts/tech/dev/web/nginx/">
+  <a class="prev" href="http://localhost:1313/posts/life/test/">
     <span class="title">« 이전 페이지</span>
     <br>
-    <span>Nginx와 blocking, sync</span>
+    <span>Test</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/tech/inference_optimzation/tensorrt/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>TensorRT와 Triton: 딥러닝 추론 최적화의 강력한 조합</span>
   </a>
 </nav>
 
 
 <div class="share-buttons">
-    <a target="_blank" rel="noopener noreferrer" aria-label="share  on twitter"
-       href="https://twitter.com/intent/tweet/?text=&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f&amp;hashtags=">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리 on twitter"
+       href="https://twitter.com/intent/tweet/?text=CTC%20Loss%ec%99%80%20RNN-T%20Loss%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%eb%8f%99%ec%9e%91%20%ec%9b%90%eb%a6%ac&amp;url=http%3a%2f%2flocalhost%3a1313%2fposts%2ftech%2fasr%2fctc_loss%2f&amp;hashtags=deeplearning%2cASR%2cspeechrecognition%2cCTC%2cRNN-T%2csequencemodeling">
     <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
             <path
                     d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-253.927,424.544c135.939,0 210.268,-112.643 210.268,-210.268c0,-3.218 0,-6.437 -0.153,-9.502c14.406,-10.421 26.973,-23.448 36.935,-38.314c-13.18,5.824 -27.433,9.809 -42.452,11.648c15.326,-9.196 26.973,-23.602 32.49,-40.92c-14.252,8.429 -30.038,14.56 -46.896,17.931c-13.487,-14.406 -32.644,-23.295 -53.946,-23.295c-40.767,0 -73.87,33.104 -73.87,73.87c0,5.824 0.613,11.494 1.992,16.858c-61.456,-3.065 -115.862,-32.49 -152.337,-77.241c-6.284,10.881 -9.962,23.601 -9.962,37.088c0,25.594 13.027,48.276 32.95,61.456c-12.107,-0.307 -23.448,-3.678 -33.41,-9.196l0,0.92c0,35.862 25.441,65.594 59.311,72.49c-6.13,1.686 -12.72,2.606 -19.464,2.606c-4.751,0 -9.348,-0.46 -13.946,-1.38c9.349,29.426 36.628,50.728 68.965,51.341c-25.287,19.771 -57.164,31.571 -91.8,31.571c-5.977,0 -11.801,-0.306 -17.625,-1.073c32.337,21.15 71.264,33.41 112.95,33.41Z" />
         </svg>
     </a>
-    <a target="_blank" rel="noopener noreferrer" aria-label="share  on linkedin"
-       href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f&amp;title=&amp;summary=&amp;source=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리 on linkedin"
+       href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3a%2f%2flocalhost%3a1313%2fposts%2ftech%2fasr%2fctc_loss%2f&amp;title=CTC%20Loss%ec%99%80%20RNN-T%20Loss%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%eb%8f%99%ec%9e%91%20%ec%9b%90%eb%a6%ac&amp;summary=CTC%20Loss%ec%99%80%20RNN-T%20Loss%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%eb%8f%99%ec%9e%91%20%ec%9b%90%eb%a6%ac&amp;source=http%3a%2f%2flocalhost%3a1313%2fposts%2ftech%2fasr%2fctc_loss%2f">
         <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
             <path
                     d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
         </svg>
     </a>
-    <a target="_blank" rel="noopener noreferrer" aria-label="share  on reddit"
-       href="https://reddit.com/submit?url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f&title=">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리 on reddit"
+       href="https://reddit.com/submit?url=http%3a%2f%2flocalhost%3a1313%2fposts%2ftech%2fasr%2fctc_loss%2f&title=CTC%20Loss%ec%99%80%20RNN-T%20Loss%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%eb%8f%99%ec%9e%91%20%ec%9b%90%eb%a6%ac">
         <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
             <path
                     d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
         </svg>
     </a>
-    <a target="_blank" rel="noopener noreferrer" aria-label="share  on facebook"
-       href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리 on facebook"
+       href="https://facebook.com/sharer/sharer.php?u=http%3a%2f%2flocalhost%3a1313%2fposts%2ftech%2fasr%2fctc_loss%2f">
         <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
             <path
                     d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
         </svg>
     </a>
-    <a target="_blank" rel="noopener noreferrer" aria-label="share  on whatsapp"
-       href="https://api.whatsapp.com/send?text=%20-%20https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리 on whatsapp"
+       href="https://api.whatsapp.com/send?text=CTC%20Loss%ec%99%80%20RNN-T%20Loss%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%eb%8f%99%ec%9e%91%20%ec%9b%90%eb%a6%ac%20-%20http%3a%2f%2flocalhost%3a1313%2fposts%2ftech%2fasr%2fctc_loss%2f">
         <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
             <path
                     d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
         </svg>
     </a>
-    <a target="_blank" rel="noopener noreferrer" aria-label="share  on telegram"
-       href="https://telegram.me/share/url?text=&amp;url=https%3a%2f%2fmacsim2.github.io%2fposts%2ftech%2fasr%2fctc_loss%2f">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share CTC Loss와 RNN-T Loss의 내부 구조와 동작 원리 on telegram"
+       href="https://telegram.me/share/url?text=CTC%20Loss%ec%99%80%20RNN-T%20Loss%ec%9d%98%20%eb%82%b4%eb%b6%80%20%ea%b5%ac%ec%a1%b0%ec%99%80%20%eb%8f%99%ec%9e%91%20%ec%9b%90%eb%a6%ac&amp;url=http%3a%2f%2flocalhost%3a1313%2fposts%2ftech%2fasr%2fctc_loss%2f">
         <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28">
             <path
                     d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
@@ -816,7 +895,7 @@ var _hmt = _hmt || [];
         Copyright
         &copy;
         2020-2025
-        <a href="https://macsim2.github.io/" style="color:#939393;">macsim&#39;s Blog</a>
+        <a href="http://localhost:1313/" style="color:#939393;">macsim&#39;s Blog</a>
         All Rights Reserved
     </span>
     <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
