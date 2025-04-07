@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="auto">
+<html lang="ko" dir="auto">
 
 <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -19,7 +19,7 @@
 <link rel="mask-icon" href="https://macsim2.github.io/img/Q.gif">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" hreflang="en" href="https://macsim2.github.io/posts/tech/algorithm/boj/lcs2/">
+<link rel="alternate" hreflang="ko" href="https://macsim2.github.io/posts/tech/algorithm/boj/lcs2/">
 <noscript>
     <style>
         #theme-toggle,
@@ -101,7 +101,7 @@ var _hmt = _hmt || [];
   ],
   "articleBody": "BOJ 9252 문제 LCS(Longest Common Subsequence, 최장 공통 부분 수열)문제는 두 수열이 주어졌을 때, 모두의 부분 수열이 되는 수열 중 가장 긴 것을 찾는 문제이다. 예를 들어, ACAYKP와 CAPCAK의 LCS는 ACAK가 된다.\n입력 첫째 줄과 둘째 줄에 두 문자열이 주어진다. 문자열은 알파벳 대문자로만 이루어져 있으며, 최대 1000글자로 이루어져 있다.\n출력 첫째 줄에 입력으로 주어진 두 문자열의 LCS의 길이를, 둘째 줄에 LCS를 출력한다. LCS가 여러 가지인 경우에는 아무거나 출력하고, LCS의 길이가 0인 경우에는 둘째 줄을 출력하지 않는다.\n풀이 LCS과 다르게 LCS로 정해진 수열의 길이를 출력하는 것이 아닌 아무거나 하나를 구하는 조건이 더해졌다.\n문제를 보고 어떻게 할지 고민을 조금 했는데 더 간단한 풀이방법이 있어서 기록한다. LCS 문제는 2차원 배열을 만들고, 원소의 data type은 int형을 사용하여 LCS 길이를 구할 수 있었다. 그런데 LCS2는 2차원 배열을 사용하되, 원소의 data type를 string 을 사용해 LCS를 직접 구하는 방법을 사용할 수 있다.\n$$\\f\\relax{x} = \\int_{-\\infty}^\\infty \\f\\hat\\xi,e^{2 \\pi i \\xi x} ,d\\xi$$\n$$A=\\begin{bmatrix} 0 \u0026 1 \u0026 2 \\\\ 3 \u0026 4 \u0026 5 \\\\ 6 \u0026 7 \u0026 8 \\end{bmatrix} $$\n$$\\exp_a b = a^b$$ $\\sum\\nolimits_{k=1}^N k^2$\n$$\\begin{equation} f(x) = x^2+4x+16 \\end{equation}$$\n",
   "wordCount" : "445",
-  "inLanguage": "en",
+  "inLanguage": "ko",
   "datePublished": "2024-08-28T01:17:26+09:00",
   "dateModified": "2024-08-28T01:17:26+09:00",
   "author":[{
@@ -207,9 +207,9 @@ var _hmt = _hmt || [];
 <article class="post-single">
     <div id="single-content">
         <header class="post-header">
-            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 Home</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
+            <div class="breadcrumbs"><a href="https://macsim2.github.io/">🏠 홈</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/">posts</a>&nbsp;»&nbsp;<a href="https://macsim2.github.io/posts/tech/">👨🏻‍💻 tech</a></div>
             <h1 class="post-title">
-                LCS2<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+                LCS2
             </h1>
             <div class="post-meta">
 
@@ -339,7 +339,7 @@ var _hmt = _hmt || [];
     <div class="toc">
         <details  open>
         <summary accesskey="c" title="(Alt + C)">
-            <span class="details">Table of Contents</span>
+            <span class="details">목차</span>
         </summary>
 
         <div class="inner"><ul>
@@ -472,13 +472,13 @@ f(x) = x^2+4x+16
         <footer class="post-footer">
             
 <nav class="paginav">
-  <a class="prev" href="https://macsim2.github.io/posts/tech/algorithm/boj/%EC%9A%A9%EC%95%A1/">
-    <span class="title">« Prev Page</span>
+  <a class="prev" href="https://macsim2.github.io/posts/tech/signal/sound/">
+    <span class="title">« 이전 페이지</span>
     <br>
-    <span>용액</span>
+    <span>Sound</span>
   </a>
   <a class="next" href="https://macsim2.github.io/posts/life/test/">
-    <span class="title">Next Page »</span>
+    <span class="title">다음 페이지 »</span>
     <br>
     <span>Test</span>
   </a>
@@ -660,12 +660,12 @@ f(x) = x^2+4x+16
         const container = codeblock.parentNode.parentNode;
         const copybutton = document.createElement('button');
         copybutton.classList.add('copy-code');
-        copybutton.innerText = 'copy';
+        copybutton.innerText = '복사';
 
         function copyingDone() {
-            copybutton.innerText = 'copied!';
+            copybutton.innerText = '복사 완료!';
             setTimeout(() => {
-                copybutton.innerText = 'copy';
+                copybutton.innerText = '복사';
             }, 2000);
         }
 

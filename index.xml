@@ -8,6 +8,33 @@
     <language>ko-kr</language>
     <lastBuildDate>Fri, 21 Mar 2025 00:09:29 +0900</lastBuildDate><atom:link href="https://macsim2.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>Longest Palindromic Subsequence After at Most K Operations</title>
+      <link>https://macsim2.github.io/posts/tech/algorithm/leet/3472/</link>
+      <pubDate>Mon, 17 Mar 2025 01:17:26 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/algorithm/leet/3472/</guid>
+      <description>WC439</description>
+    </item>
+    
+    <item>
+      <title>Sound</title>
+      <link>https://macsim2.github.io/posts/tech/signal/sound/</link>
+      <pubDate>Sat, 01 Mar 2025 01:17:26 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/signal/sound/</guid>
+      <description>about sound</description>
+    </item>
+    
+    <item>
+      <title>LCS2</title>
+      <link>https://macsim2.github.io/posts/tech/algorithm/boj/lcs2/</link>
+      <pubDate>Wed, 28 Aug 2024 01:17:26 +0900</pubDate>
+      
+      <guid>https://macsim2.github.io/posts/tech/algorithm/boj/lcs2/</guid>
+      <description>BOJ 9252 문제 LCS(Longest Common Subsequence, 최장 공통 부분 수열)문제는 두 수열이 주어졌을 때, 모두의 부분 수열이 되는 수열 중 가장 긴 것을 찾는 문제이다. 예를 들어, ACAYKP와 CAPCAK의 LCS는 ACAK가 된다. 입력 첫째 줄과 둘째 줄에 두 문자열이 주어진다. 문자열은 알파벳 대문자로만 이루어져 있으며, 최대 1000글자로 이루어져 있다</description>
+    </item>
+    
+    <item>
       <title>Test</title>
       <link>https://macsim2.github.io/posts/life/test/</link>
       <pubDate>Sat, 10 Aug 2024 15:08:58 +0900</pubDate>
@@ -104,6 +131,15 @@
       
       <guid>https://macsim2.github.io/links/</guid>
       <description>Sulv&amp;#39;s Blog 一个记录技术、阅读、生活的博客 👉友链格式 名称： Sulv&amp;rsquo;s Blog 网址： https://www.sulvblog.cn 图标： https://www.sulvblog.cn/img/Q.gif 描述： 一个记录技术、阅读、生活的博客 👉友链申请要求 秉承互换友链原则、文章定期更新、不能有太多广告、个人描述字数控制在15字内 👉Hugo博客交流群 787018782</description>
+    </item>
+    
+    <item>
+      <title>archives</title>
+      <link>https://macsim2.github.io/archives/</link>
+      <pubDate>Sat, 06 Nov 2021 14:57:28 +0800</pubDate>
+      
+      <guid>https://macsim2.github.io/archives/</guid>
+      <description>Archives of some posts</description>
     </item>
     
     <item>
