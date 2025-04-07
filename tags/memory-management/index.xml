@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Memory Management on macsim&#39;s Blog</title>
+    <link>http://localhost:51470/tags/memory-management/</link>
+    <description>Recent content in Memory Management on macsim&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>ko-kr</language>
+    <lastBuildDate>Tue, 10 Sep 2024 15:30:00 +0900</lastBuildDate><atom:link href="http://localhost:51470/tags/memory-management/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심</title>
+      <link>http://localhost:51470/posts/tech/training_and_inference_optimization/nvidia_gpu_utilization/</link>
+      <pubDate>Tue, 10 Sep 2024 15:30:00 +0900</pubDate>
+      
+      <guid>http://localhost:51470/posts/tech/training_and_inference_optimization/nvidia_gpu_utilization/</guid>
+      <description>NVIDIA GPU 활용률의 개념과 최적화 방법을 통해 딥러닝 워크로드의 성능을 향상시키는 방법을 알아봅니다</description>
+    </item>
+    
+  </channel>
+</rss>

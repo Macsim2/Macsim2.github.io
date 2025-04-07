@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="ko" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51470&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심 | macsim&#39;s Blog</title>
+<meta name="keywords" content="deeplearning, nvidia, gpu, performance optimization, cuda, memory management">
+<meta name="description" content="NVIDIA GPU 활용률의 개념과 최적화 방법을 통해 딥러닝 워크로드의 성능을 향상시키는 방법을 알아봅니다">
+<meta name="author" content="macsim">
+<link rel="canonical" href="http://localhost:51470/posts/tech/training_and_inference_optimization/nvidia_gpu_utilization/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.js" onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="http://localhost:51470/img/Q.gif">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:51470/img/Q.gif">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:51470/img/Q.gif">
+<link rel="apple-touch-icon" href="http://localhost:51470/img/Q.gif">
+<link rel="mask-icon" href="http://localhost:51470/img/Q.gif">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="ko" href="http://localhost:51470/posts/tech/training_and_inference_optimization/nvidia_gpu_utilization/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = ""; 
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+  
+
+<meta property="og:title" content="NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심" />
+<meta property="og:description" content="NVIDIA GPU 활용률의 개념과 최적화 방법을 통해 딥러닝 워크로드의 성능을 향상시키는 방법을 알아봅니다" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:51470/posts/tech/training_and_inference_optimization/nvidia_gpu_utilization/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-10T15:30:00+09:00" />
+<meta property="article:modified_time" content="2024-09-10T15:30:00+09:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심"/>
+<meta name="twitter:description" content="NVIDIA GPU 활용률의 개념과 최적화 방법을 통해 딥러닝 워크로드의 성능을 향상시키는 방법을 알아봅니다"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+
+        {
+          "@type": "ListItem",
+          "position":  1 ,
+          "name": "posts",
+          "item": "http://localhost:51470/posts/"
+        },
+
+        {
+          "@type": "ListItem",
+          "position":  2 ,
+          "name": "👨🏻‍💻 tech",
+          "item": "http://localhost:51470/posts/tech/"
+        }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심",
+      "item": "http://localhost:51470/posts/tech/training_and_inference_optimization/nvidia_gpu_utilization/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심",
+  "name": "NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심",
+  "description": "NVIDIA GPU 활용률의 개념과 최적화 방법을 통해 딥러닝 워크로드의 성능을 향상시키는 방법을 알아봅니다",
+  "keywords": [
+    "deeplearning", "nvidia", "gpu", "performance optimization", "cuda", "memory management"
+  ],
+  "articleBody": "딥러닝 모델을 개발하거나 배포해본 엔지니어라면 누구나 이런 경험이 있을 것이다. “GPU 활용률이 왜 이렇게 낮지? 내 모델이 GPU 성능을 제대로 활용하지 못하고 있는 걸까?” 처음 이런 상황을 마주했을 때는 단순히 배치 크기를 키우거나 더 큰 모델을 사용하면 해결될 거라 생각했다. 그러나 실제 상황은 훨씬 복잡하며, GPU 활용률은 여러 요인에 의해 영향을 받는다는 것을 깨닫게 된다.\n이 글에서는 단순히 “GPU 활용률을 높이는 방법\"이 아닌, NVIDIA GPU 활용률의 개념, 측정 방법, 그리고 딥러닝 워크로드에서 발생하는 실제 문제와 해결책에 대해 깊이 있게 알아보고자 한다.\nGPU 활용률이란 무엇인가? GPU 활용률(Utilization)은 간단히 말해 GPU가 얼마나 바쁘게 일하고 있는지를 나타내는 지표다. 그러나 이것은 흔히 오해되는 개념이기도 하다. NVIDIA의 nvidia-smi 도구를 통해 보는 GPU 활용률은 단순히 GPU가 얼마나 많은 시간 동안 커널을 실행하고 있는지를 백분율로, 즉 시간적 활용률(temporal utilization)을 보여준다.\n$ nvidia-smi Tue Sep 10 15:35:22 2024 +-----------------------------------------------------------------------------+ | NVIDIA-SMI 535.104.05 Driver Version: 535.104.05 CUDA Version: 12.2 | |-------------------------------+----------------------+----------------------+ | GPU Name Persistence-M| Bus-Id Disp.A | Volatile Uncorr. ECC | | Fan Temp Perf Pwr:Usage/Cap| Memory-Usage | GPU-Util Compute M. | | | | MIG M. | |===============================+======================+======================| | 0 NVIDIA A100-SXM... On | 00000000:00:1E.0 Off | 0 | | N/A 32C P0 62W / 400W | 1024MiB / 40960MiB | 8% Default | | | | Disabled | +-------------------------------+----------------------+----------------------+ 이 예에서 GPU-Util은 8%로, GPU가 측정 주기 동안 시간의 8%만 커널을 실행하고 있다는 것을 의미한다. 그러나 이것만으로는 왜 GPU 활용률이 낮은지, 또는 GPU의 계산 자원이 효율적으로 사용되고 있는지를 알기 어렵다.\n활용률(Utilization)과 포화도(Saturation)의 차이 GPU 성능을 이해하기 위한 핵심은 활용률과 포화도를 구분하는 것이다:\n활용률(Utilization): GPU가 얼마나 많은 시간 동안 활성화되어 있는지 측정 포화도(Saturation): GPU의 계산 리소스가 얼마나 효율적으로 사용되고 있는지 측정 예를 들어, GPU 활용률이 100%라 하더라도 포화도가 낮을 수 있다. 이는 GPU가 계속 일하고 있지만, 그 작업이 GPU의 모든 계산 능력을 활용하지 못하는 경우다. 반대로, 활용률이 낮더라도 GPU가 활성화된 동안 최대 효율로 작동할 수 있다.\nGPU 성능의 두 가지 병목 요인: 계산과 메모리 대부분의 딥러닝 워크로드는 두 가지 주요 병목 중 하나에 의해 제한된다:\n1. 계산 병목(Compute Bound) GPU의 계산 능력이 병목이 되는 경우다. 이는 주로:\n복잡한 수학 연산이 많은 경우 모델이 충분히 큰 경우 배치 크기가 적절히 큰 경우 계산 병목 상태에서는 GPU의 CUDA 코어나 Tensor 코어가 100% 가까이 활용되며, 활용률과 포화도가 모두 높게 나타난다.\n# 계산 집약적 연산의 예 import torch # 큰 행렬 곱셈 - 대표적인 계산 집약적 연산 a = torch.randn(8192, 8192, device='cuda') b = torch.randn(8192, 8192, device='cuda') # GPU 활용률 높음, 계산 병목 for _ in range(100): c = torch.matmul(a, b) torch.cuda.synchronize() 2. 메모리 병목(Memory Bound) GPU의 메모리 대역폭이 병목이 되는 경우다. 이는 주로:\n모델이 많은 메모리 액세스를 필요로 하는 경우 데이터 이동이 빈번한 경우 메모리 레이아웃이 비효율적인 경우 메모리 병목 상태에서는 GPU 계산 유닛들이 데이터를 기다리느라 유휴 상태가 되어, 활용률은 낮지만 메모리 대역폭 포화도는 높게 나타날 수 있다.\n# 메모리 집약적 연산의 예 import torch # 큰 텐서의 요소별 연산 - 메모리 집약적 a = torch.randn(1024*1024*100, device='cuda') # 약 400MB # GPU 활용률 낮음, 메모리 병목 for _ in range(100): b = torch.sin(a) + torch.cos(a) # 단순 요소별 연산 torch.cuda.synchronize() 실제 세계의 딥러닝 모델들은 이 두 가지 유형의 병목을 모두 경험하며, 레이어나 작업에 따라 달라진다. 예를 들어:\n컨볼루션 레이어는 주로 계산 병목 활성화 함수는 주로 메모리 병목 어텐션 메커니즘은 작업에 따라 다양함 CUDA 메모리 할당 재시도(Memory Allocation Retries) 이해하기 딥러닝 작업 중 자주 마주치는 문제 중 하나는 “CUDA memory allocation retries” 경고 메시지다. 이 메시지는 CUDA가 GPU 메모리 할당을 여러 번 시도하고 있음을 나타낸다.\nCUDA memory allocation retries: 3. Tried to allocate 2.00 GiB. CUDA 메모리 할당 과정 CUDA 런타임이 메모리를 할당하는 과정을 이해하는 것이 중요하다:\n할당 요청이 들어오면, CUDA는 먼저 빈 메모리 블록을 찾는다. 적절한 크기의 빈 블록이 없으면, 가비지 컬렉션(메모리 정리)을 시도한다. 그래도 충분한 메모리가 확보되지 않으면, 메모리 단편화를 줄이기 위해 **압축(compaction)**을 시도한다. 여러 번 재시도 후에도 실패하면 최종적으로 OOM(Out of Memory) 오류가 발생한다. 이 재시도 과정은 PyTorch, DeepSpeed와 같은 프레임워크에서 로그로 표시되며, GPU 성능에 부정적인 영향을 미칠 수 있다.\n메모리 단편화와 할당 재시도의 원인 메모리 할당 재시도의 주요 원인은 **메모리 단편화(Memory Fragmentation)**다. 이는 메모리 공간이 작은 조각으로 나뉘어 있어, 총 가용 메모리는 충분하지만 연속된 큰 블록을 할당할 수 없는 상태를 말한다.\n메모리 단편화의 주요 원인:\n다양한 크기의 텐서 할당과 해제: 특히 동적 형상을 가진 모델에서 자주 발생 배치 크기 변동: 처리하는 배치 크기가 자주 변경되는 경우 비효율적인 메모리 관리: 불필요한 중간 텐서 생성 또는 유지 # 메모리 단편화를 유발할 수 있는 패턴 import torch for i in range(1000): # 매번 다른 크기의 텐서 생성 및 해제 size = np.random.randint(100, 10000) temp = torch.randn(size, size, device='cuda') # 계산 후 명시적 해제 없음 (Python GC에 의존) result = temp.mean() DeepSpeed와 PyTorch의 메모리 관리 메커니즘 DeepSpeed와 PyTorch는 각각 GPU 메모리 관리를 위한 고유한 메커니즘을 제공한다.\nPyTorch CUDA 메모리 캐싱 할당자 PyTorch는 메모리 할당 오버헤드를 줄이기 위해 **캐싱 할당자(Caching Allocator)**를 사용한다:\n해제된 메모리 블록을 바로 반환하지 않고 캐시에 보관 유사한 크기의 메모리 요청이 오면 캐시에서 재사용 필요시 단편화 감소를 위한 압축 작업 수행 # PyTorch 메모리 통계 및 관리 import torch # 현재 메모리 사용량 확인 print(torch.cuda.memory_summary()) # 메모리 할당자 설정 조정 torch.cuda.memory_stats() # 세부 메모리 통계 확인 # 캐시 비우기 torch.cuda.empty_cache() # 사용되지 않는 캐시 메모리 해제 DeepSpeed Zero-3 메모리 플러시 DeepSpeed의 ZeRO-3는 대규모 모델 학습을 위해 메모리를 적극적으로 관리한다:\n파라미터 샤딩: 모델 파라미터를 여러 GPU에 분산 옵티마이저 상태 샤딩: 옵티마이저 상태도 분산 메모리 플러시: 필요할 때만 파라미터를 로드하고 사용 후 해제 이 전략은 특히 큰 모델에서 메모리 단편화를 크게 줄일 수 있다.\n# DeepSpeed ZeRO-3 설정 예시 ds_config = { \"zero_optimization\": { \"stage\": 3, \"memory_efficient_linear\": True, \"contiguous_gradients\": True, \"overlap_comm\": True, \"reduce_bucket_size\": 5e8, \"stage3_prefetch_bucket_size\": 5e8, \"stage3_param_persistence_threshold\": 1e6 } } GPU 활용률 최적화 전략 이제 GPU 활용률에 영향을 미치는 요인을 이해했으니, 이를 최적화하기 위한 실질적인 전략을 살펴보자.\n1. 배치 크기 최적화 배치 크기는 GPU 활용률에 직접적인 영향을 미치는 가장 중요한 요소 중 하나다:\n너무 작은 배치: GPU 계산 능력 활용 부족, 커널 호출 오버헤드 증가 너무 큰 배치: 메모리 부족, 할당 재시도 증가, 학습 불안정성 최적의 배치 크기를 찾는 방법:\n메모리 한계 내에서 가능한 최대 배치로 시작 점진적으로 조정하며 성능과 메모리 사용량 모니터링 그래디언트 누적을 활용하여 효과적인 배치 크기 증가 # 그래디언트 누적을 통한 효과적인 배치 크기 증가 accumulation_steps = 4 # 실제 배치 크기 = batch_size * accumulation_steps optimizer.zero_grad() for i in range(accumulation_steps): # 더 작은 미니배치로 포워드/백워드 패스 outputs = model(inputs[i*mini_batch_size:(i+1)*mini_batch_size]) loss = criterion(outputs, targets[i*mini_batch_size:(i+1)*mini_batch_size]) loss = loss / accumulation_steps # 손실 스케일링 loss.backward() # 누적된 그래디언트로 한 번만 업데이트 optimizer.step() 2. 커널 융합 및 최적화 GPU 연산은 작은 커널들이 연속적으로 실행되는 방식으로 이루어진다. 이러한 커널 호출 사이에는 오버헤드가 발생한다:\n연산 융합(Operation Fusion): 여러 작은 연산을 하나의 큰 커널로 결합 커스텀 CUDA 커널: 특정 워크로드에 최적화된 커널 구현 JIT 컴파일러 활용: TorchScript, JAX, Numba와 같은 JIT 컴파일러로 연산 최적화 # PyTorch의 컴파일 기능 활용 (PyTorch 2.0+) import torch from torch import nn class Model(nn.Module): # 모델 정의... pass model = Model().cuda() # 모델 컴파일로 자동 최적화 compiled_model = torch.compile(model, mode=\"reduce-overhead\") output = compiled_model(input_data) 3. 메모리 관리 최적화 효과적인 메모리 관리는 불필요한 할당 재시도를 줄이고 GPU 활용률을 개선한다:\n체크포인팅(Checkpointing): 중간 활성화를 저장하지 않고 역전파 시 재계산 메모리 효율적인 연산자: 제자리(in-place) 연산으로 메모리 사용량 감소 선형 메모리 액세스 패턴: 연속적인 메모리 액세스로 캐시 효율성 향상 # PyTorch에서 체크포인팅 활용 from torch.utils.checkpoint import checkpoint # 중간 활성화를 저장하지 않고 역전파 시 재계산 def forward(self, x): # layer1과 layer2 사이의 중간 활성화 저장 안 함 x = checkpoint(self.layer1, x) x = self.layer2(x) return x # 메모리 효율적인 제자리 연산 x.add_(y) # x = x + y (제자리 연산) 4. 데이터 로딩 파이프라인 최적화 GPU가 데이터를 기다리느라 유휴 상태가 되지 않도록 데이터 로딩 파이프라인을 최적화해야 한다:\n비동기 데이터 로딩: CPU에서 다음 배치를 미리 준비 데이터 프리페치: GPU 계산 중에 다음 배치를 미리 GPU 메모리로 전송 데이터 변환 최적화: CPU 병목을 줄이기 위한 빠른 데이터 전처리 # PyTorch DataLoader 최적화 train_loader = DataLoader( dataset, batch_size=batch_size, num_workers=8, # CPU 코어 수에 맞게 조정 pin_memory=True, # 페이지 잠금 메모리 사용으로 CPU-GPU 전송 가속화 prefetch_factor=2, # 각 워커마다 미리 로드할 배치 수 persistent_workers=True # 에포크 간 워커 유지 ) GPU 활용률 모니터링 및 프로파일링 도구 GPU 활용률을 개선하려면 먼저 현재 상태를 정확히 측정하고 병목을 식별해야 한다. 유용한 도구들을 살펴보자:\n1. nvidia-smi와 기본 모니터링 가장 기본적인 모니터링 도구인 nvidia-smi는 GPU 활용률, 메모리 사용량, 전력 소비 등의 정보를 제공한다:\n# 실시간 갱신되는 GPU 상태 모니터링 nvidia-smi dmon -i 0 -s u # 특정 프로세스의 GPU 사용량 확인 nvidia-smi pmon -i 0 -c 10 2. NVIDIA Nsight Systems와 Compute 더 상세한 프로파일링을 위해 NVIDIA 전문 도구를 활용할 수 있다:\nNsight Systems: 전체 애플리케이션의 타임라인 분석, CPU-GPU 상호작용 파악 Nsight Compute: 개별 CUDA 커널의 세부 성능 지표 분석 # Nsight Systems로 애플리케이션 프로파일링 nsys profile -t cuda,nvtx,osrt,cudnn,cublas -o profile_output python train.py # Nsight Compute로 특정 커널 상세 분석 ncu --set full -o kernel_analysis --kernel-id ::regex:matmul python train.py 3. PyTorch 프로파일러 PyTorch는 내장 프로파일링 도구를 제공하여 모델 실행 중 CPU 및 GPU 활동을 추적할 수 있다:\n# PyTorch 프로파일러 사용 예시 from torch.profiler import profile, record_function, ProfilerActivity with profile( activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], schedule=torch.profiler.schedule(wait=1, warmup=1, active=3, repeat=1), on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/profile'), record_shapes=True, profile_memory=True, with_stack=True ) as prof: for step, data in enumerate(train_loader): if step \u003e= 5: break with record_function(\"train_step\"): train_step(data) prof.step() # 프로파일링의 다음 단계로 진행 # 결과 출력 print(prof.key_averages().table(sort_by=\"cuda_time_total\", row_limit=10)) 실전 사례: 딥러닝 모델의 GPU 활용률 최적화 실제 프로젝트에서 GPU 활용률 최적화가 어떻게 이루어지는지 몇 가지 사례를 통해 살펴보자.\n사례 1: 대규모 언어 모델(LLM) 학습 최적화 대규모 언어 모델 학습은 많은 계산과 메모리를 필요로 하며, 효율적인 GPU 활용이 중요하다:\n문제점:\nGPU 메모리 부족으로 작은 배치 크기 사용 메모리 단편화로 인한 빈번한 할당 재시도 어텐션 연산에서 낮은 GPU 활용률 해결책:\nZeRO-3와 같은 메모리 최적화 기술 적용 FlashAttention과 같은 최적화된 어텐션 구현 사용 그래디언트 체크포인팅으로 메모리 사용량 감소 혼합 정밀도 학습(Mixed Precision)으로 계산 및 메모리 효율성 향상 # DeepSpeed ZeRO + 그래디언트 체크포인팅 + 혼합 정밀도 예시 model = AutoModelForCausalLM.from_pretrained(\"gpt2-large\") model.gradient_checkpointing_enable() # 체크포인팅 활성화 # DeepSpeed 설정 ds_config = { \"fp16\": { \"enabled\": True }, \"zero_optimization\": { \"stage\": 3, \"offload_optimizer\": { \"device\": \"cpu\" } } } # DeepSpeed 엔진 초기화 model_engine, optimizer, _, _ = deepspeed.initialize( model=model, model_parameters=model.parameters(), config=ds_config ) # 최적화된 학습 루프 for batch in dataloader: outputs = model_engine(batch['input_ids']) loss = outputs.loss model_engine.backward(loss) model_engine.step() 사례 2: 컴퓨터 비전 모델 추론 최적화 실시간 비전 애플리케이션에서는 낮은 지연시간과 높은 처리량이 중요하다:\n문제점:\n작은 배치 크기로 인한 낮은 GPU 활용률 데이터 전처리 병목 다양한 입력 크기로 인한 메모리 단편화 해결책:\nTensorRT 변환으로 커널 최적화 CUDA 스트림을 활용한 비동기 처리 배치 요청 버퍼링으로 효과적인 배치 크기 확보 입력 크기 표준화로 메모리 단편화 감소 # TensorRT + 비동기 스트림 처리 예시 import tensorrt as trt import pycuda.driver as cuda import pycuda.autoinit # TensorRT 엔진 로드 TRT_LOGGER = trt.Logger(trt.Logger.WARNING) with open(\"model.trt\", \"rb\") as f, trt.Runtime(TRT_LOGGER) as runtime: engine = runtime.deserialize_cuda_engine(f.read()) # CUDA 스트림과 컨텍스트 생성 stream = cuda.Stream() context = engine.create_execution_context() # 비동기 추론 처리 def process_batch(input_batch): # 입력 데이터 준비 input_buffer = cuda.mem_alloc(input_batch.nbytes) output_buffer = cuda.mem_alloc(output_size) cuda.memcpy_htod_async(input_buffer, input_batch, stream) # 비동기 추론 실행 context.execute_async_v2( bindings=[int(input_buffer), int(output_buffer)], stream_handle=stream.handle ) # 결과 비동기 복사 output = np.empty(output_shape, dtype=np.float32) cuda.memcpy_dtoh_async(output, output_buffer, stream) stream.synchronize() return output 결론 GPU 활용률은 단순한 숫자 이상의 의미를 가진다. 이는 딥러닝 워크로드가 GPU 하드웨어와 어떻게 상호작용하는지를 보여주는 창이며, 최적화의 기회를 식별하는 중요한 지표다.\n이 글에서 살펴본 바와 같이, 높은 GPU 활용률 달성은 다양한 요소의 균형을 필요로 한다:\n계산 집약적 작업과 메모리 집약적 작업의 이해 메모리 관리와 단편화 방지 배치 크기, 모델 아키텍처, 데이터 로딩 파이프라인의 최적화 적절한 모니터링 및 프로파일링 도구 활용 특히 대규모 모델 학습과 배포가 표준이 되어가는 현재, 효율적인 GPU 활용은 비용 효율성과 학습/추론 속도 모두에 직접적인 영향을 미친다. 단순히 더 큰 GPU나 더 많은 GPU를 추가하기보다는, 현재 하드웨어의 잠재력을 최대한 활용하는 방법을 고민해보는 것이 중요하다.\n결국, GPU 활용률 최적화는 기술적 도전이자 예술이다. 이는 하드웨어, 소프트웨어, 그리고 워크로드의 특성을 깊이 이해하고 조화시키는 과정이며, 효율적인 딥러닝 시스템 구축의 핵심 요소다.\nReferences [1] NVIDIA Developer Blog: Understanding GPU Performance: Utilization vs. Saturation [2] PyTorch Documentation: Memory Management [3] DeepSpeed: Zero Redundancy Optimizer [4] NVIDIA Tools: Nsight Systems and Nsight Compute [5] Paper: “Why Utilizing The Maximum Amount Of Memory (Almost) Never Leads To A Better Training Throughput”, MLSys 2023 [6] GitHub: lessw2020/transformer_central [7] Article: DeepSpeed Memory Flush Warning Logic ",
+  "wordCount" : "4856",
+  "inLanguage": "ko",
+  "datePublished": "2024-09-10T15:30:00+09:00",
+  "dateModified": "2024-09-10T15:30:00+09:00",
+  "author":{
+    "@type": "Person",
+    "name": "macsim"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:51470/posts/tech/training_and_inference_optimization/nvidia_gpu_utilization/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "macsim's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:51470/img/Q.gif"
+    }
+  }
+}
+</script>
+</head>
+
+<body class=" dark" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:51470/" accesskey="h" title="Macsim&#39;s Blog (Alt + H)">Macsim&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <ul class="lang-switch"><li>|</li>
+                </ul>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:51470/" title="🏠 home">
+                <span>🏠 home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:51470/about/" title="🙋 about">
+                <span>🙋 about</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:51470/archives/" title="archives">
+                <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:51470/posts/" title="📚 posts">
+                <span>📚 posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:51470/tags/" title="🧩 tags">
+                <span>🧩 tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:51470/search/" title="⏱️ search (Alt &#43; /)" accesskey=/>
+                <span>⏱️ search</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main page">
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+</style>
+
+<article class="post-single">
+    <div id="single-content">
+        <header class="post-header">
+            <div class="breadcrumbs"><a href="http://localhost:51470/">🏠 홈</a>&nbsp;»&nbsp;<a href="http://localhost:51470/posts/">posts</a>&nbsp;»&nbsp;<a href="http://localhost:51470/posts/tech/">👨🏻‍💻 tech</a></div>
+            <h1 class="post-title">
+                NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심
+            </h1>
+            <div class="post-description">
+                NVIDIA GPU 활용률의 개념과 최적화 방법을 통해 딥러닝 워크로드의 성능을 향상시키는 방법을 알아봅니다
+            </div>
+            <div class="post-meta">
+
+<style>
+    i[id*="post_meta_style"] {
+        display: flex;
+        align-items: center;
+        margin: 0 0 10px 0;
+    }
+
+    .parent-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        opacity: 0.8;
+    }
+</style>
+
+<span class="parent-post-meta">
+    <span id="post_meta_style_1">
+        <span class="fa fa-calendar-check-o"></span>
+        <span>2024-09-10
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    <span id="post_meta_style_3">
+        <span class="fa fa-file-word-o"></span>
+        <span>4856 word
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_4">
+        <span class="fa fa-clock-o"></span>
+        <span>10 min
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_5">
+        <span class="fa fa-user-o"></span>
+        <span>macsim
+            &nbsp;&nbsp;
+        </span>
+    </span>
+    <span id="post_meta_style_6">
+        <span class="fa fa-tags" style="opacity: 0.8"></span>
+        <span>
+            <span class="post-tags-meta">
+                <a href="http://localhost:51470/tags/deeplearning/" style="color: var(--secondary)!important;">Deeplearning</a>
+                &nbsp;<a href="http://localhost:51470/tags/nvidia/" style="color: var(--secondary)!important;">Nvidia</a>
+                &nbsp;<a href="http://localhost:51470/tags/gpu/" style="color: var(--secondary)!important;">Gpu</a>
+                &nbsp;<a href="http://localhost:51470/tags/performance-optimization/" style="color: var(--secondary)!important;">Performance Optimization</a>
+                &nbsp;<a href="http://localhost:51470/tags/cuda/" style="color: var(--secondary)!important;">Cuda</a>
+                &nbsp;<a href="http://localhost:51470/tags/memory-management/" style="color: var(--secondary)!important;">Memory Management</a>
+            </span>
+        </span>
+    </span>
+</span>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+                <span style="opacity: 0.8;">
+                    <span id="post_meta_style_7">
+                        &nbsp;&nbsp;
+                        <span class="fa fa-eye" ></span>
+                        <span>
+                            <span id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv"></span></span>
+                            &nbsp;&nbsp;
+                        </span>
+                    </span>
+                    <span id="post_meta_style_8">
+                        <span class="fa fa-commenting-o"></span>
+                        <span>
+                            <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js"></script>
+                            <script>
+                                let url = document.documentURI
+                                
+                                let dnsUrl = "http://localhost:51470/"
+                                let urlSplit = url.split(dnsUrl)
+                                let finalUrl = urlSplit[1]
+                                if (finalUrl[0] !== '/') {
+                                    finalUrl = '/'+finalUrl
+                                }
+                                twikoo.getCommentsCount({
+                                    envId:  null , 
+                                region:  null , 
+                                urls: [ 
+                                    
+                                    finalUrl,
+                                ],
+                                    includeReply: false 
+                                }).then(function (res) {
+                                    let count = res[0].count
+                                    const obj = document.getElementById("comment_count");
+                                    obj.innerText = count
+                                    
+                                    
+                                    
+                                }).catch(function (err) {
+                                    
+                                    console.error(err);
+                                });
+                            </script>
+                            <span id="comment_count"></span>
+                        </span>
+                    </span>
+                </span>
+
+</div>
+        </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">목차</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#gpu-%ed%99%9c%ec%9a%a9%eb%a5%a0%ec%9d%b4%eb%9e%80-%eb%ac%b4%ec%97%87%ec%9d%b8%ea%b0%80" aria-label="GPU 활용률이란 무엇인가?">GPU 활용률이란 무엇인가?</a><ul>
+                        
+                <li>
+                    <a href="#%ed%99%9c%ec%9a%a9%eb%a5%a0utilization%ea%b3%bc-%ed%8f%ac%ed%99%94%eb%8f%84saturation%ec%9d%98-%ec%b0%a8%ec%9d%b4" aria-label="활용률(Utilization)과 포화도(Saturation)의 차이">활용률(Utilization)과 포화도(Saturation)의 차이</a></li></ul>
+                </li>
+                <li>
+                    <a href="#gpu-%ec%84%b1%eb%8a%a5%ec%9d%98-%eb%91%90-%ea%b0%80%ec%a7%80-%eb%b3%91%eb%aa%a9-%ec%9a%94%ec%9d%b8-%ea%b3%84%ec%82%b0%ea%b3%bc-%eb%a9%94%eb%aa%a8%eb%a6%ac" aria-label="GPU 성능의 두 가지 병목 요인: 계산과 메모리">GPU 성능의 두 가지 병목 요인: 계산과 메모리</a><ul>
+                        
+                <li>
+                    <a href="#1-%ea%b3%84%ec%82%b0-%eb%b3%91%eb%aa%a9compute-bound" aria-label="1. 계산 병목(Compute Bound)">1. 계산 병목(Compute Bound)</a></li>
+                <li>
+                    <a href="#2-%eb%a9%94%eb%aa%a8%eb%a6%ac-%eb%b3%91%eb%aa%a9memory-bound" aria-label="2. 메모리 병목(Memory Bound)">2. 메모리 병목(Memory Bound)</a></li></ul>
+                </li>
+                <li>
+                    <a href="#cuda-%eb%a9%94%eb%aa%a8%eb%a6%ac-%ed%95%a0%eb%8b%b9-%ec%9e%ac%ec%8b%9c%eb%8f%84memory-allocation-retries-%ec%9d%b4%ed%95%b4%ed%95%98%ea%b8%b0" aria-label="CUDA 메모리 할당 재시도(Memory Allocation Retries) 이해하기">CUDA 메모리 할당 재시도(Memory Allocation Retries) 이해하기</a><ul>
+                        
+                <li>
+                    <a href="#cuda-%eb%a9%94%eb%aa%a8%eb%a6%ac-%ed%95%a0%eb%8b%b9-%ea%b3%bc%ec%a0%95" aria-label="CUDA 메모리 할당 과정">CUDA 메모리 할당 과정</a></li>
+                <li>
+                    <a href="#%eb%a9%94%eb%aa%a8%eb%a6%ac-%eb%8b%a8%ed%8e%b8%ed%99%94%ec%99%80-%ed%95%a0%eb%8b%b9-%ec%9e%ac%ec%8b%9c%eb%8f%84%ec%9d%98-%ec%9b%90%ec%9d%b8" aria-label="메모리 단편화와 할당 재시도의 원인">메모리 단편화와 할당 재시도의 원인</a></li></ul>
+                </li>
+                <li>
+                    <a href="#deepspeed%ec%99%80-pytorch%ec%9d%98-%eb%a9%94%eb%aa%a8%eb%a6%ac-%ea%b4%80%eb%a6%ac-%eb%a9%94%ec%bb%a4%eb%8b%88%ec%a6%98" aria-label="DeepSpeed와 PyTorch의 메모리 관리 메커니즘">DeepSpeed와 PyTorch의 메모리 관리 메커니즘</a><ul>
+                        
+                <li>
+                    <a href="#pytorch-cuda-%eb%a9%94%eb%aa%a8%eb%a6%ac-%ec%ba%90%ec%8b%b1-%ed%95%a0%eb%8b%b9%ec%9e%90" aria-label="PyTorch CUDA 메모리 캐싱 할당자">PyTorch CUDA 메모리 캐싱 할당자</a></li>
+                <li>
+                    <a href="#deepspeed-zero-3-%eb%a9%94%eb%aa%a8%eb%a6%ac-%ed%94%8c%eb%9f%ac%ec%8b%9c" aria-label="DeepSpeed Zero-3 메모리 플러시">DeepSpeed Zero-3 메모리 플러시</a></li></ul>
+                </li>
+                <li>
+                    <a href="#gpu-%ed%99%9c%ec%9a%a9%eb%a5%a0-%ec%b5%9c%ec%a0%81%ed%99%94-%ec%a0%84%eb%9e%b5" aria-label="GPU 활용률 최적화 전략">GPU 활용률 최적화 전략</a><ul>
+                        
+                <li>
+                    <a href="#1-%eb%b0%b0%ec%b9%98-%ed%81%ac%ea%b8%b0-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="1. 배치 크기 최적화">1. 배치 크기 최적화</a></li>
+                <li>
+                    <a href="#2-%ec%bb%a4%eb%84%90-%ec%9c%b5%ed%95%a9-%eb%b0%8f-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="2. 커널 융합 및 최적화">2. 커널 융합 및 최적화</a></li>
+                <li>
+                    <a href="#3-%eb%a9%94%eb%aa%a8%eb%a6%ac-%ea%b4%80%eb%a6%ac-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="3. 메모리 관리 최적화">3. 메모리 관리 최적화</a></li>
+                <li>
+                    <a href="#4-%eb%8d%b0%ec%9d%b4%ed%84%b0-%eb%a1%9c%eb%94%a9-%ed%8c%8c%ec%9d%b4%ed%94%84%eb%9d%bc%ec%9d%b8-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="4. 데이터 로딩 파이프라인 최적화">4. 데이터 로딩 파이프라인 최적화</a></li></ul>
+                </li>
+                <li>
+                    <a href="#gpu-%ed%99%9c%ec%9a%a9%eb%a5%a0-%eb%aa%a8%eb%8b%88%ed%84%b0%eb%a7%81-%eb%b0%8f-%ed%94%84%eb%a1%9c%ed%8c%8c%ec%9d%bc%eb%a7%81-%eb%8f%84%ea%b5%ac" aria-label="GPU 활용률 모니터링 및 프로파일링 도구">GPU 활용률 모니터링 및 프로파일링 도구</a><ul>
+                        
+                <li>
+                    <a href="#1-nvidia-smi%ec%99%80-%ea%b8%b0%eb%b3%b8-%eb%aa%a8%eb%8b%88%ed%84%b0%eb%a7%81" aria-label="1. nvidia-smi와 기본 모니터링">1. nvidia-smi와 기본 모니터링</a></li>
+                <li>
+                    <a href="#2-nvidia-nsight-systems%ec%99%80-compute" aria-label="2. NVIDIA Nsight Systems와 Compute">2. NVIDIA Nsight Systems와 Compute</a></li>
+                <li>
+                    <a href="#3-pytorch-%ed%94%84%eb%a1%9c%ed%8c%8c%ec%9d%bc%eb%9f%ac" aria-label="3. PyTorch 프로파일러">3. PyTorch 프로파일러</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ec%8b%a4%ec%a0%84-%ec%82%ac%eb%a1%80-%eb%94%a5%eb%9f%ac%eb%8b%9d-%eb%aa%a8%eb%8d%b8%ec%9d%98-gpu-%ed%99%9c%ec%9a%a9%eb%a5%a0-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="실전 사례: 딥러닝 모델의 GPU 활용률 최적화">실전 사례: 딥러닝 모델의 GPU 활용률 최적화</a><ul>
+                        
+                <li>
+                    <a href="#%ec%82%ac%eb%a1%80-1-%eb%8c%80%ea%b7%9c%eb%aa%a8-%ec%96%b8%ec%96%b4-%eb%aa%a8%eb%8d%b8llm-%ed%95%99%ec%8a%b5-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="사례 1: 대규모 언어 모델(LLM) 학습 최적화">사례 1: 대규모 언어 모델(LLM) 학습 최적화</a></li>
+                <li>
+                    <a href="#%ec%82%ac%eb%a1%80-2-%ec%bb%b4%ed%93%a8%ed%84%b0-%eb%b9%84%ec%a0%84-%eb%aa%a8%eb%8d%b8-%ec%b6%94%eb%a1%a0-%ec%b5%9c%ec%a0%81%ed%99%94" aria-label="사례 2: 컴퓨터 비전 모델 추론 최적화">사례 2: 컴퓨터 비전 모델 추론 최적화</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%ea%b2%b0%eb%a1%a0" aria-label="결론">결론</a></li>
+                <li>
+                    <a href="#references" aria-label="References">References</a>
+                </li>
+            </ul>
+        </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        if (elements) {
+            activeElement = Array.from(elements).find((element) => {
+                if ((getOffsetTop(element) - window.pageYOffset) > 0 &&
+                    (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                    return element;
+                }
+            }) || activeElement
+
+            elements.forEach(element => {
+                const id = encodeURI(element.getAttribute('id')).toLowerCase();
+                if (element === activeElement){
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+                }
+            })
+        }
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;
+    }
+</script>
+        <div class="post-content"><p>딥러닝 모델을 개발하거나 배포해본 엔지니어라면 누구나 이런 경험이 있을 것이다. <strong>&ldquo;GPU 활용률이 왜 이렇게 낮지? 내 모델이 GPU 성능을 제대로 활용하지 못하고 있는 걸까?&rdquo;</strong> <br>
+처음 이런 상황을 마주했을 때는 단순히 배치 크기를 키우거나 더 큰 모델을 사용하면 해결될 거라 생각했다. 그러나 실제 상황은 훨씬 복잡하며, GPU 활용률은 여러 요인에 의해 영향을 받는다는 것을 깨닫게 된다.</p>
+<p>이 글에서는 단순히 &ldquo;GPU 활용률을 높이는 방법&quot;이 아닌, NVIDIA GPU 활용률의 개념, 측정 방법, 그리고 딥러닝 워크로드에서 발생하는 실제 문제와 해결책에 대해 깊이 있게 알아보고자 한다.</p>
+<h2 id="gpu-활용률이란-무엇인가">GPU 활용률이란 무엇인가?<a hidden class="anchor" aria-hidden="true" href="#gpu-활용률이란-무엇인가">#</a></h2>
+<p>GPU 활용률(Utilization)은 간단히 말해 GPU가 얼마나 바쁘게 일하고 있는지를 나타내는 지표다. 그러나 이것은 흔히 오해되는 개념이기도 하다. NVIDIA의 <code>nvidia-smi</code> 도구를 통해 보는 GPU 활용률은 단순히 GPU가 얼마나 많은 시간 동안 커널을 실행하고 있는지를 백분율로, 즉 시간적 활용률(temporal utilization)을 보여준다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ nvidia-smi
+</span></span><span style="display:flex;"><span>Tue Sep <span style="color:#ae81ff">10</span> 15:35:22 <span style="color:#ae81ff">2024</span>       
+</span></span><span style="display:flex;"><span>+-----------------------------------------------------------------------------+
+</span></span><span style="display:flex;"><span>| NVIDIA-SMI 535.104.05   Driver Version: 535.104.05   CUDA Version: 12.2     |
+</span></span><span style="display:flex;"><span>|-------------------------------+----------------------+----------------------+
+</span></span><span style="display:flex;"><span>| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+</span></span><span style="display:flex;"><span>| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+</span></span><span style="display:flex;"><span>|                               |                      |               MIG M. |
+</span></span><span style="display:flex;"><span>|<span style="color:#f92672">===============================</span>+<span style="color:#f92672">======================</span>+<span style="color:#f92672">======================</span>|
+</span></span><span style="display:flex;"><span>|   <span style="color:#ae81ff">0</span>  NVIDIA A100-SXM...  On   | 00000000:00:1E.0 Off |                    <span style="color:#ae81ff">0</span> |
+</span></span><span style="display:flex;"><span>| N/A   32C    P0    62W / 400W |   1024MiB / 40960MiB |      8%      Default |
+</span></span><span style="display:flex;"><span>|                               |                      |             Disabled |
+</span></span><span style="display:flex;"><span>+-------------------------------+----------------------+----------------------+
+</span></span></code></pre></div><p>이 예에서 GPU-Util은 8%로, GPU가 측정 주기 동안 시간의 8%만 커널을 실행하고 있다는 것을 의미한다. 그러나 이것만으로는 <strong>왜</strong> GPU 활용률이 낮은지, 또는 GPU의 계산 자원이 효율적으로 사용되고 있는지를 알기 어렵다.</p>
+<h3 id="활용률utilization과-포화도saturation의-차이">활용률(Utilization)과 포화도(Saturation)의 차이<a hidden class="anchor" aria-hidden="true" href="#활용률utilization과-포화도saturation의-차이">#</a></h3>
+<p>GPU 성능을 이해하기 위한 핵심은 활용률과 포화도를 구분하는 것이다:</p>
+<ul>
+<li><strong>활용률(Utilization)</strong>: GPU가 얼마나 많은 시간 동안 활성화되어 있는지 측정</li>
+<li><strong>포화도(Saturation)</strong>: GPU의 계산 리소스가 얼마나 효율적으로 사용되고 있는지 측정</li>
+</ul>
+<p>예를 들어, GPU 활용률이 100%라 하더라도 포화도가 낮을 수 있다. 이는 GPU가 계속 일하고 있지만, 그 작업이 GPU의 모든 계산 능력을 활용하지 못하는 경우다. 반대로, 활용률이 낮더라도 GPU가 활성화된 동안 최대 효율로 작동할 수 있다.</p>
+<!-- 검색 키워드: "GPU utilization vs saturation graph", "NVIDIA GPU utilization metrics visualization", "GPU compute vs memory bound comparison"  
+   이상적인 이미지는 GPU 활용률과 포화도의 차이를 시각적으로 보여주는 그래프나 다이어그램입니다. 시간에 따른 GPU 활용률과 포화도를 대조하고, 다양한 워크로드 유형(계산 집약적, 메모리 집약적)에 따른 차이를 보여주는 이미지가 좋습니다. -->
+<p><img loading="lazy" src="/images/dl/gpu_utilization_vs_saturation.png" alt="GPU 활용률과 포화도의 차이"  />
+</p>
+<h2 id="gpu-성능의-두-가지-병목-요인-계산과-메모리">GPU 성능의 두 가지 병목 요인: 계산과 메모리<a hidden class="anchor" aria-hidden="true" href="#gpu-성능의-두-가지-병목-요인-계산과-메모리">#</a></h2>
+<p>대부분의 딥러닝 워크로드는 두 가지 주요 병목 중 하나에 의해 제한된다:</p>
+<h3 id="1-계산-병목compute-bound">1. 계산 병목(Compute Bound)<a hidden class="anchor" aria-hidden="true" href="#1-계산-병목compute-bound">#</a></h3>
+<p>GPU의 계산 능력이 병목이 되는 경우다. 이는 주로:</p>
+<ul>
+<li>복잡한 수학 연산이 많은 경우</li>
+<li>모델이 충분히 큰 경우</li>
+<li>배치 크기가 적절히 큰 경우</li>
+</ul>
+<p>계산 병목 상태에서는 GPU의 CUDA 코어나 Tensor 코어가 100% 가까이 활용되며, 활용률과 포화도가 모두 높게 나타난다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 계산 집약적 연산의 예</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 큰 행렬 곱셈 - 대표적인 계산 집약적 연산</span>
+</span></span><span style="display:flex;"><span>a <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>randn(<span style="color:#ae81ff">8192</span>, <span style="color:#ae81ff">8192</span>, device<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;cuda&#39;</span>)
+</span></span><span style="display:flex;"><span>b <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>randn(<span style="color:#ae81ff">8192</span>, <span style="color:#ae81ff">8192</span>, device<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;cuda&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># GPU 활용률 높음, 계산 병목</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">100</span>):
+</span></span><span style="display:flex;"><span>    c <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>matmul(a, b)
+</span></span><span style="display:flex;"><span>    torch<span style="color:#f92672">.</span>cuda<span style="color:#f92672">.</span>synchronize()
+</span></span></code></pre></div><h3 id="2-메모리-병목memory-bound">2. 메모리 병목(Memory Bound)<a hidden class="anchor" aria-hidden="true" href="#2-메모리-병목memory-bound">#</a></h3>
+<p>GPU의 메모리 대역폭이 병목이 되는 경우다. 이는 주로:</p>
+<ul>
+<li>모델이 많은 메모리 액세스를 필요로 하는 경우</li>
+<li>데이터 이동이 빈번한 경우</li>
+<li>메모리 레이아웃이 비효율적인 경우</li>
+</ul>
+<p>메모리 병목 상태에서는 GPU 계산 유닛들이 데이터를 기다리느라 유휴 상태가 되어, 활용률은 낮지만 메모리 대역폭 포화도는 높게 나타날 수 있다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 메모리 집약적 연산의 예</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 큰 텐서의 요소별 연산 - 메모리 집약적</span>
+</span></span><span style="display:flex;"><span>a <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>randn(<span style="color:#ae81ff">1024</span><span style="color:#f92672">*</span><span style="color:#ae81ff">1024</span><span style="color:#f92672">*</span><span style="color:#ae81ff">100</span>, device<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;cuda&#39;</span>)  <span style="color:#75715e"># 약 400MB</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># GPU 활용률 낮음, 메모리 병목</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">100</span>):
+</span></span><span style="display:flex;"><span>    b <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>sin(a) <span style="color:#f92672">+</span> torch<span style="color:#f92672">.</span>cos(a)  <span style="color:#75715e"># 단순 요소별 연산</span>
+</span></span><span style="display:flex;"><span>    torch<span style="color:#f92672">.</span>cuda<span style="color:#f92672">.</span>synchronize()
+</span></span></code></pre></div><p>실제 세계의 딥러닝 모델들은 이 두 가지 유형의 병목을 모두 경험하며, 레이어나 작업에 따라 달라진다. 예를 들어:</p>
+<ul>
+<li>컨볼루션 레이어는 주로 계산 병목</li>
+<li>활성화 함수는 주로 메모리 병목</li>
+<li>어텐션 메커니즘은 작업에 따라 다양함</li>
+</ul>
+<h2 id="cuda-메모리-할당-재시도memory-allocation-retries-이해하기">CUDA 메모리 할당 재시도(Memory Allocation Retries) 이해하기<a hidden class="anchor" aria-hidden="true" href="#cuda-메모리-할당-재시도memory-allocation-retries-이해하기">#</a></h2>
+<p>딥러닝 작업 중 자주 마주치는 문제 중 하나는 &ldquo;CUDA memory allocation retries&rdquo; 경고 메시지다. 이 메시지는 CUDA가 GPU 메모리 할당을 여러 번 시도하고 있음을 나타낸다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>CUDA memory allocation retries: 3. Tried to allocate 2.00 GiB.
+</span></span></code></pre></div><h3 id="cuda-메모리-할당-과정">CUDA 메모리 할당 과정<a hidden class="anchor" aria-hidden="true" href="#cuda-메모리-할당-과정">#</a></h3>
+<p>CUDA 런타임이 메모리를 할당하는 과정을 이해하는 것이 중요하다:</p>
+<ol>
+<li>할당 요청이 들어오면, CUDA는 먼저 <strong>빈 메모리 블록</strong>을 찾는다.</li>
+<li>적절한 크기의 빈 블록이 없으면, 가비지 컬렉션(메모리 정리)을 시도한다.</li>
+<li>그래도 충분한 메모리가 확보되지 않으면, 메모리 단편화를 줄이기 위해 **압축(compaction)**을 시도한다.</li>
+<li>여러 번 재시도 후에도 실패하면 최종적으로 OOM(Out of Memory) 오류가 발생한다.</li>
+</ol>
+<p>이 재시도 과정은 PyTorch, DeepSpeed와 같은 프레임워크에서 로그로 표시되며, GPU 성능에 부정적인 영향을 미칠 수 있다.</p>
+<!-- 검색 키워드: "CUDA memory allocation process diagram", "GPU memory fragmentation visualization", "CUDA memory pools illustration"  
+   이상적인 이미지는 CUDA 메모리 할당 과정과 단편화를 보여주는 시각적 다이어그램입니다. 할당 요청, 가비지 컬렉션, 압축 단계를 포함하고, 메모리 단편화가 어떻게 발생하고 해결되는지 보여주는 이미지가 좋습니다. -->
+<p><img loading="lazy" src="/images/dl/cuda_memory_allocation_process.png" alt="CUDA 메모리 할당 과정"  />
+</p>
+<h3 id="메모리-단편화와-할당-재시도의-원인">메모리 단편화와 할당 재시도의 원인<a hidden class="anchor" aria-hidden="true" href="#메모리-단편화와-할당-재시도의-원인">#</a></h3>
+<p>메모리 할당 재시도의 주요 원인은 **메모리 단편화(Memory Fragmentation)**다. 이는 메모리 공간이 작은 조각으로 나뉘어 있어, 총 가용 메모리는 충분하지만 연속된 큰 블록을 할당할 수 없는 상태를 말한다.</p>
+<p>메모리 단편화의 주요 원인:</p>
+<ol>
+<li><strong>다양한 크기의 텐서 할당과 해제</strong>: 특히 동적 형상을 가진 모델에서 자주 발생</li>
+<li><strong>배치 크기 변동</strong>: 처리하는 배치 크기가 자주 변경되는 경우</li>
+<li><strong>비효율적인 메모리 관리</strong>: 불필요한 중간 텐서 생성 또는 유지</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 메모리 단편화를 유발할 수 있는 패턴</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1000</span>):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 매번 다른 크기의 텐서 생성 및 해제</span>
+</span></span><span style="display:flex;"><span>    size <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">100</span>, <span style="color:#ae81ff">10000</span>)
+</span></span><span style="display:flex;"><span>    temp <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>randn(size, size, device<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;cuda&#39;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 계산 후 명시적 해제 없음 (Python GC에 의존)</span>
+</span></span><span style="display:flex;"><span>    result <span style="color:#f92672">=</span> temp<span style="color:#f92672">.</span>mean()
+</span></span></code></pre></div><h2 id="deepspeed와-pytorch의-메모리-관리-메커니즘">DeepSpeed와 PyTorch의 메모리 관리 메커니즘<a hidden class="anchor" aria-hidden="true" href="#deepspeed와-pytorch의-메모리-관리-메커니즘">#</a></h2>
+<p>DeepSpeed와 PyTorch는 각각 GPU 메모리 관리를 위한 고유한 메커니즘을 제공한다.</p>
+<h3 id="pytorch-cuda-메모리-캐싱-할당자">PyTorch CUDA 메모리 캐싱 할당자<a hidden class="anchor" aria-hidden="true" href="#pytorch-cuda-메모리-캐싱-할당자">#</a></h3>
+<p>PyTorch는 메모리 할당 오버헤드를 줄이기 위해 **캐싱 할당자(Caching Allocator)**를 사용한다:</p>
+<ol>
+<li>해제된 메모리 블록을 바로 반환하지 않고 캐시에 보관</li>
+<li>유사한 크기의 메모리 요청이 오면 캐시에서 재사용</li>
+<li>필요시 단편화 감소를 위한 압축 작업 수행</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch 메모리 통계 및 관리</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 현재 메모리 사용량 확인</span>
+</span></span><span style="display:flex;"><span>print(torch<span style="color:#f92672">.</span>cuda<span style="color:#f92672">.</span>memory_summary())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 메모리 할당자 설정 조정</span>
+</span></span><span style="display:flex;"><span>torch<span style="color:#f92672">.</span>cuda<span style="color:#f92672">.</span>memory_stats()  <span style="color:#75715e"># 세부 메모리 통계 확인</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 캐시 비우기</span>
+</span></span><span style="display:flex;"><span>torch<span style="color:#f92672">.</span>cuda<span style="color:#f92672">.</span>empty_cache()  <span style="color:#75715e"># 사용되지 않는 캐시 메모리 해제</span>
+</span></span></code></pre></div><h3 id="deepspeed-zero-3-메모리-플러시">DeepSpeed Zero-3 메모리 플러시<a hidden class="anchor" aria-hidden="true" href="#deepspeed-zero-3-메모리-플러시">#</a></h3>
+<p>DeepSpeed의 ZeRO-3는 대규모 모델 학습을 위해 메모리를 적극적으로 관리한다:</p>
+<ol>
+<li>파라미터 샤딩: 모델 파라미터를 여러 GPU에 분산</li>
+<li>옵티마이저 상태 샤딩: 옵티마이저 상태도 분산</li>
+<li>메모리 플러시: 필요할 때만 파라미터를 로드하고 사용 후 해제</li>
+</ol>
+<p>이 전략은 특히 큰 모델에서 메모리 단편화를 크게 줄일 수 있다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># DeepSpeed ZeRO-3 설정 예시</span>
+</span></span><span style="display:flex;"><span>ds_config <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;zero_optimization&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;stage&#34;</span>: <span style="color:#ae81ff">3</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;memory_efficient_linear&#34;</span>: <span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;contiguous_gradients&#34;</span>: <span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;overlap_comm&#34;</span>: <span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;reduce_bucket_size&#34;</span>: <span style="color:#ae81ff">5e8</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;stage3_prefetch_bucket_size&#34;</span>: <span style="color:#ae81ff">5e8</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;stage3_param_persistence_threshold&#34;</span>: <span style="color:#ae81ff">1e6</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="gpu-활용률-최적화-전략">GPU 활용률 최적화 전략<a hidden class="anchor" aria-hidden="true" href="#gpu-활용률-최적화-전략">#</a></h2>
+<p>이제 GPU 활용률에 영향을 미치는 요인을 이해했으니, 이를 최적화하기 위한 실질적인 전략을 살펴보자.</p>
+<h3 id="1-배치-크기-최적화">1. 배치 크기 최적화<a hidden class="anchor" aria-hidden="true" href="#1-배치-크기-최적화">#</a></h3>
+<p>배치 크기는 GPU 활용률에 직접적인 영향을 미치는 가장 중요한 요소 중 하나다:</p>
+<ul>
+<li><strong>너무 작은 배치</strong>: GPU 계산 능력 활용 부족, 커널 호출 오버헤드 증가</li>
+<li><strong>너무 큰 배치</strong>: 메모리 부족, 할당 재시도 증가, 학습 불안정성</li>
+</ul>
+<p>최적의 배치 크기를 찾는 방법:</p>
+<ol>
+<li>메모리 한계 내에서 가능한 최대 배치로 시작</li>
+<li>점진적으로 조정하며 성능과 메모리 사용량 모니터링</li>
+<li>그래디언트 누적을 활용하여 효과적인 배치 크기 증가</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 그래디언트 누적을 통한 효과적인 배치 크기 증가</span>
+</span></span><span style="display:flex;"><span>accumulation_steps <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>  <span style="color:#75715e"># 실제 배치 크기 = batch_size * accumulation_steps</span>
+</span></span><span style="display:flex;"><span>optimizer<span style="color:#f92672">.</span>zero_grad()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(accumulation_steps):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 더 작은 미니배치로 포워드/백워드 패스</span>
+</span></span><span style="display:flex;"><span>    outputs <span style="color:#f92672">=</span> model(inputs[i<span style="color:#f92672">*</span>mini_batch_size:(i<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>mini_batch_size])
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> criterion(outputs, targets[i<span style="color:#f92672">*</span>mini_batch_size:(i<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>mini_batch_size])
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> loss <span style="color:#f92672">/</span> accumulation_steps  <span style="color:#75715e"># 손실 스케일링</span>
+</span></span><span style="display:flex;"><span>    loss<span style="color:#f92672">.</span>backward()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 누적된 그래디언트로 한 번만 업데이트</span>
+</span></span><span style="display:flex;"><span>optimizer<span style="color:#f92672">.</span>step()
+</span></span></code></pre></div><h3 id="2-커널-융합-및-최적화">2. 커널 융합 및 최적화<a hidden class="anchor" aria-hidden="true" href="#2-커널-융합-및-최적화">#</a></h3>
+<p>GPU 연산은 작은 커널들이 연속적으로 실행되는 방식으로 이루어진다. 이러한 커널 호출 사이에는 오버헤드가 발생한다:</p>
+<ul>
+<li><strong>연산 융합(Operation Fusion)</strong>: 여러 작은 연산을 하나의 큰 커널로 결합</li>
+<li><strong>커스텀 CUDA 커널</strong>: 특정 워크로드에 최적화된 커널 구현</li>
+<li><strong>JIT 컴파일러 활용</strong>: TorchScript, JAX, Numba와 같은 JIT 컴파일러로 연산 최적화</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch의 컴파일 기능 활용 (PyTorch 2.0+)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> torch <span style="color:#f92672">import</span> nn
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Model</span>(nn<span style="color:#f92672">.</span>Module):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 모델 정의...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pass</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> Model()<span style="color:#f92672">.</span>cuda()
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 모델 컴파일로 자동 최적화</span>
+</span></span><span style="display:flex;"><span>compiled_model <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>compile(model, mode<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;reduce-overhead&#34;</span>)
+</span></span><span style="display:flex;"><span>output <span style="color:#f92672">=</span> compiled_model(input_data)
+</span></span></code></pre></div><h3 id="3-메모리-관리-최적화">3. 메모리 관리 최적화<a hidden class="anchor" aria-hidden="true" href="#3-메모리-관리-최적화">#</a></h3>
+<p>효과적인 메모리 관리는 불필요한 할당 재시도를 줄이고 GPU 활용률을 개선한다:</p>
+<ul>
+<li><strong>체크포인팅(Checkpointing)</strong>: 중간 활성화를 저장하지 않고 역전파 시 재계산</li>
+<li><strong>메모리 효율적인 연산자</strong>: 제자리(in-place) 연산으로 메모리 사용량 감소</li>
+<li><strong>선형 메모리 액세스 패턴</strong>: 연속적인 메모리 액세스로 캐시 효율성 향상</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch에서 체크포인팅 활용</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> torch.utils.checkpoint <span style="color:#f92672">import</span> checkpoint
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 중간 활성화를 저장하지 않고 역전파 시 재계산</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">forward</span>(self, x):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># layer1과 layer2 사이의 중간 활성화 저장 안 함</span>
+</span></span><span style="display:flex;"><span>    x <span style="color:#f92672">=</span> checkpoint(self<span style="color:#f92672">.</span>layer1, x)  
+</span></span><span style="display:flex;"><span>    x <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>layer2(x)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> x
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 메모리 효율적인 제자리 연산</span>
+</span></span><span style="display:flex;"><span>x<span style="color:#f92672">.</span>add_(y)  <span style="color:#75715e"># x = x + y (제자리 연산)</span>
+</span></span></code></pre></div><h3 id="4-데이터-로딩-파이프라인-최적화">4. 데이터 로딩 파이프라인 최적화<a hidden class="anchor" aria-hidden="true" href="#4-데이터-로딩-파이프라인-최적화">#</a></h3>
+<p>GPU가 데이터를 기다리느라 유휴 상태가 되지 않도록 데이터 로딩 파이프라인을 최적화해야 한다:</p>
+<ul>
+<li><strong>비동기 데이터 로딩</strong>: CPU에서 다음 배치를 미리 준비</li>
+<li><strong>데이터 프리페치</strong>: GPU 계산 중에 다음 배치를 미리 GPU 메모리로 전송</li>
+<li><strong>데이터 변환 최적화</strong>: CPU 병목을 줄이기 위한 빠른 데이터 전처리</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch DataLoader 최적화</span>
+</span></span><span style="display:flex;"><span>train_loader <span style="color:#f92672">=</span> DataLoader(
+</span></span><span style="display:flex;"><span>    dataset,
+</span></span><span style="display:flex;"><span>    batch_size<span style="color:#f92672">=</span>batch_size,
+</span></span><span style="display:flex;"><span>    num_workers<span style="color:#f92672">=</span><span style="color:#ae81ff">8</span>,        <span style="color:#75715e"># CPU 코어 수에 맞게 조정</span>
+</span></span><span style="display:flex;"><span>    pin_memory<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,      <span style="color:#75715e"># 페이지 잠금 메모리 사용으로 CPU-GPU 전송 가속화</span>
+</span></span><span style="display:flex;"><span>    prefetch_factor<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>,    <span style="color:#75715e"># 각 워커마다 미리 로드할 배치 수</span>
+</span></span><span style="display:flex;"><span>    persistent_workers<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>  <span style="color:#75715e"># 에포크 간 워커 유지</span>
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><h2 id="gpu-활용률-모니터링-및-프로파일링-도구">GPU 활용률 모니터링 및 프로파일링 도구<a hidden class="anchor" aria-hidden="true" href="#gpu-활용률-모니터링-및-프로파일링-도구">#</a></h2>
+<p>GPU 활용률을 개선하려면 먼저 현재 상태를 정확히 측정하고 병목을 식별해야 한다. 유용한 도구들을 살펴보자:</p>
+<h3 id="1-nvidia-smi와-기본-모니터링">1. nvidia-smi와 기본 모니터링<a hidden class="anchor" aria-hidden="true" href="#1-nvidia-smi와-기본-모니터링">#</a></h3>
+<p>가장 기본적인 모니터링 도구인 <code>nvidia-smi</code>는 GPU 활용률, 메모리 사용량, 전력 소비 등의 정보를 제공한다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 실시간 갱신되는 GPU 상태 모니터링</span>
+</span></span><span style="display:flex;"><span>nvidia-smi dmon -i <span style="color:#ae81ff">0</span> -s u
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 특정 프로세스의 GPU 사용량 확인</span>
+</span></span><span style="display:flex;"><span>nvidia-smi pmon -i <span style="color:#ae81ff">0</span> -c <span style="color:#ae81ff">10</span>
+</span></span></code></pre></div><h3 id="2-nvidia-nsight-systems와-compute">2. NVIDIA Nsight Systems와 Compute<a hidden class="anchor" aria-hidden="true" href="#2-nvidia-nsight-systems와-compute">#</a></h3>
+<p>더 상세한 프로파일링을 위해 NVIDIA 전문 도구를 활용할 수 있다:</p>
+<ul>
+<li><strong>Nsight Systems</strong>: 전체 애플리케이션의 타임라인 분석, CPU-GPU 상호작용 파악</li>
+<li><strong>Nsight Compute</strong>: 개별 CUDA 커널의 세부 성능 지표 분석</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Nsight Systems로 애플리케이션 프로파일링</span>
+</span></span><span style="display:flex;"><span>nsys profile -t cuda,nvtx,osrt,cudnn,cublas -o profile_output python train.py
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Nsight Compute로 특정 커널 상세 분석</span>
+</span></span><span style="display:flex;"><span>ncu --set full -o kernel_analysis --kernel-id ::regex:matmul python train.py
+</span></span></code></pre></div><h3 id="3-pytorch-프로파일러">3. PyTorch 프로파일러<a hidden class="anchor" aria-hidden="true" href="#3-pytorch-프로파일러">#</a></h3>
+<p>PyTorch는 내장 프로파일링 도구를 제공하여 모델 실행 중 CPU 및 GPU 활동을 추적할 수 있다:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch 프로파일러 사용 예시</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> torch.profiler <span style="color:#f92672">import</span> profile, record_function, ProfilerActivity
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> profile(
+</span></span><span style="display:flex;"><span>    activities<span style="color:#f92672">=</span>[ProfilerActivity<span style="color:#f92672">.</span>CPU, ProfilerActivity<span style="color:#f92672">.</span>CUDA],
+</span></span><span style="display:flex;"><span>    schedule<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>profiler<span style="color:#f92672">.</span>schedule(wait<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>, warmup<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>, active<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>, repeat<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>),
+</span></span><span style="display:flex;"><span>    on_trace_ready<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>profiler<span style="color:#f92672">.</span>tensorboard_trace_handler(<span style="color:#e6db74">&#39;./log/profile&#39;</span>),
+</span></span><span style="display:flex;"><span>    record_shapes<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>    profile_memory<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>    with_stack<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#66d9ef">as</span> prof:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> step, data <span style="color:#f92672">in</span> enumerate(train_loader):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> step <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">5</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">with</span> record_function(<span style="color:#e6db74">&#34;train_step&#34;</span>):
+</span></span><span style="display:flex;"><span>            train_step(data)
+</span></span><span style="display:flex;"><span>        prof<span style="color:#f92672">.</span>step()  <span style="color:#75715e"># 프로파일링의 다음 단계로 진행</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 결과 출력</span>
+</span></span><span style="display:flex;"><span>print(prof<span style="color:#f92672">.</span>key_averages()<span style="color:#f92672">.</span>table(sort_by<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;cuda_time_total&#34;</span>, row_limit<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>))
+</span></span></code></pre></div><h2 id="실전-사례-딥러닝-모델의-gpu-활용률-최적화">실전 사례: 딥러닝 모델의 GPU 활용률 최적화<a hidden class="anchor" aria-hidden="true" href="#실전-사례-딥러닝-모델의-gpu-활용률-최적화">#</a></h2>
+<p>실제 프로젝트에서 GPU 활용률 최적화가 어떻게 이루어지는지 몇 가지 사례를 통해 살펴보자.</p>
+<h3 id="사례-1-대규모-언어-모델llm-학습-최적화">사례 1: 대규모 언어 모델(LLM) 학습 최적화<a hidden class="anchor" aria-hidden="true" href="#사례-1-대규모-언어-모델llm-학습-최적화">#</a></h3>
+<p>대규모 언어 모델 학습은 많은 계산과 메모리를 필요로 하며, 효율적인 GPU 활용이 중요하다:</p>
+<p><strong>문제점</strong>:</p>
+<ul>
+<li>GPU 메모리 부족으로 작은 배치 크기 사용</li>
+<li>메모리 단편화로 인한 빈번한 할당 재시도</li>
+<li>어텐션 연산에서 낮은 GPU 활용률</li>
+</ul>
+<p><strong>해결책</strong>:</p>
+<ol>
+<li>ZeRO-3와 같은 메모리 최적화 기술 적용</li>
+<li>FlashAttention과 같은 최적화된 어텐션 구현 사용</li>
+<li>그래디언트 체크포인팅으로 메모리 사용량 감소</li>
+<li>혼합 정밀도 학습(Mixed Precision)으로 계산 및 메모리 효율성 향상</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># DeepSpeed ZeRO + 그래디언트 체크포인팅 + 혼합 정밀도 예시</span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> AutoModelForCausalLM<span style="color:#f92672">.</span>from_pretrained(<span style="color:#e6db74">&#34;gpt2-large&#34;</span>)
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>gradient_checkpointing_enable()  <span style="color:#75715e"># 체크포인팅 활성화</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># DeepSpeed 설정</span>
+</span></span><span style="display:flex;"><span>ds_config <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;fp16&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;enabled&#34;</span>: <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;zero_optimization&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;stage&#34;</span>: <span style="color:#ae81ff">3</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;offload_optimizer&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;device&#34;</span>: <span style="color:#e6db74">&#34;cpu&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># DeepSpeed 엔진 초기화</span>
+</span></span><span style="display:flex;"><span>model_engine, optimizer, _, _ <span style="color:#f92672">=</span> deepspeed<span style="color:#f92672">.</span>initialize(
+</span></span><span style="display:flex;"><span>    model<span style="color:#f92672">=</span>model,
+</span></span><span style="display:flex;"><span>    model_parameters<span style="color:#f92672">=</span>model<span style="color:#f92672">.</span>parameters(),
+</span></span><span style="display:flex;"><span>    config<span style="color:#f92672">=</span>ds_config
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 최적화된 학습 루프</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> batch <span style="color:#f92672">in</span> dataloader:
+</span></span><span style="display:flex;"><span>    outputs <span style="color:#f92672">=</span> model_engine(batch[<span style="color:#e6db74">&#39;input_ids&#39;</span>])
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> outputs<span style="color:#f92672">.</span>loss
+</span></span><span style="display:flex;"><span>    model_engine<span style="color:#f92672">.</span>backward(loss)
+</span></span><span style="display:flex;"><span>    model_engine<span style="color:#f92672">.</span>step()
+</span></span></code></pre></div><h3 id="사례-2-컴퓨터-비전-모델-추론-최적화">사례 2: 컴퓨터 비전 모델 추론 최적화<a hidden class="anchor" aria-hidden="true" href="#사례-2-컴퓨터-비전-모델-추론-최적화">#</a></h3>
+<p>실시간 비전 애플리케이션에서는 낮은 지연시간과 높은 처리량이 중요하다:</p>
+<p><strong>문제점</strong>:</p>
+<ul>
+<li>작은 배치 크기로 인한 낮은 GPU 활용률</li>
+<li>데이터 전처리 병목</li>
+<li>다양한 입력 크기로 인한 메모리 단편화</li>
+</ul>
+<p><strong>해결책</strong>:</p>
+<ol>
+<li>TensorRT 변환으로 커널 최적화</li>
+<li>CUDA 스트림을 활용한 비동기 처리</li>
+<li>배치 요청 버퍼링으로 효과적인 배치 크기 확보</li>
+<li>입력 크기 표준화로 메모리 단편화 감소</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># TensorRT + 비동기 스트림 처리 예시</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> tensorrt <span style="color:#66d9ef">as</span> trt
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pycuda.driver <span style="color:#66d9ef">as</span> cuda
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pycuda.autoinit
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># TensorRT 엔진 로드</span>
+</span></span><span style="display:flex;"><span>TRT_LOGGER <span style="color:#f92672">=</span> trt<span style="color:#f92672">.</span>Logger(trt<span style="color:#f92672">.</span>Logger<span style="color:#f92672">.</span>WARNING)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#34;model.trt&#34;</span>, <span style="color:#e6db74">&#34;rb&#34;</span>) <span style="color:#66d9ef">as</span> f, trt<span style="color:#f92672">.</span>Runtime(TRT_LOGGER) <span style="color:#66d9ef">as</span> runtime:
+</span></span><span style="display:flex;"><span>    engine <span style="color:#f92672">=</span> runtime<span style="color:#f92672">.</span>deserialize_cuda_engine(f<span style="color:#f92672">.</span>read())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># CUDA 스트림과 컨텍스트 생성</span>
+</span></span><span style="display:flex;"><span>stream <span style="color:#f92672">=</span> cuda<span style="color:#f92672">.</span>Stream()
+</span></span><span style="display:flex;"><span>context <span style="color:#f92672">=</span> engine<span style="color:#f92672">.</span>create_execution_context()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 비동기 추론 처리</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">process_batch</span>(input_batch):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 입력 데이터 준비</span>
+</span></span><span style="display:flex;"><span>    input_buffer <span style="color:#f92672">=</span> cuda<span style="color:#f92672">.</span>mem_alloc(input_batch<span style="color:#f92672">.</span>nbytes)
+</span></span><span style="display:flex;"><span>    output_buffer <span style="color:#f92672">=</span> cuda<span style="color:#f92672">.</span>mem_alloc(output_size)
+</span></span><span style="display:flex;"><span>    cuda<span style="color:#f92672">.</span>memcpy_htod_async(input_buffer, input_batch, stream)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 비동기 추론 실행</span>
+</span></span><span style="display:flex;"><span>    context<span style="color:#f92672">.</span>execute_async_v2(
+</span></span><span style="display:flex;"><span>        bindings<span style="color:#f92672">=</span>[int(input_buffer), int(output_buffer)],
+</span></span><span style="display:flex;"><span>        stream_handle<span style="color:#f92672">=</span>stream<span style="color:#f92672">.</span>handle
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 결과 비동기 복사</span>
+</span></span><span style="display:flex;"><span>    output <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>empty(output_shape, dtype<span style="color:#f92672">=</span>np<span style="color:#f92672">.</span>float32)
+</span></span><span style="display:flex;"><span>    cuda<span style="color:#f92672">.</span>memcpy_dtoh_async(output, output_buffer, stream)
+</span></span><span style="display:flex;"><span>    stream<span style="color:#f92672">.</span>synchronize()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> output
+</span></span></code></pre></div><h2 id="결론">결론<a hidden class="anchor" aria-hidden="true" href="#결론">#</a></h2>
+<p>GPU 활용률은 단순한 숫자 이상의 의미를 가진다. 이는 딥러닝 워크로드가 GPU 하드웨어와 어떻게 상호작용하는지를 보여주는 창이며, 최적화의 기회를 식별하는 중요한 지표다.</p>
+<p>이 글에서 살펴본 바와 같이, 높은 GPU 활용률 달성은 다양한 요소의 균형을 필요로 한다:</p>
+<ol>
+<li>계산 집약적 작업과 메모리 집약적 작업의 이해</li>
+<li>메모리 관리와 단편화 방지</li>
+<li>배치 크기, 모델 아키텍처, 데이터 로딩 파이프라인의 최적화</li>
+<li>적절한 모니터링 및 프로파일링 도구 활용</li>
+</ol>
+<p>특히 대규모 모델 학습과 배포가 표준이 되어가는 현재, 효율적인 GPU 활용은 비용 효율성과 학습/추론 속도 모두에 직접적인 영향을 미친다. 단순히 더 큰 GPU나 더 많은 GPU를 추가하기보다는, 현재 하드웨어의 잠재력을 최대한 활용하는 방법을 고민해보는 것이 중요하다.</p>
+<p>결국, GPU 활용률 최적화는 기술적 도전이자 예술이다. 이는 하드웨어, 소프트웨어, 그리고 워크로드의 특성을 깊이 이해하고 조화시키는 과정이며, 효율적인 딥러닝 시스템 구축의 핵심 요소다.</p>
+<h2 id="references">References<a hidden class="anchor" aria-hidden="true" href="#references">#</a></h2>
+<ul>
+<li>[1] NVIDIA Developer Blog: <a href="https://developer.nvidia.com/blog/gpu-performance-utilization-vs-saturation/">Understanding GPU Performance: Utilization vs. Saturation</a></li>
+<li>[2] PyTorch Documentation: <a href="https://pytorch.org/docs/stable/notes/cuda.html#memory-management">Memory Management</a></li>
+<li>[3] DeepSpeed: <a href="https://www.deepspeed.ai/docs/config-json/#zero-optimization-config">Zero Redundancy Optimizer</a></li>
+<li>[4] NVIDIA Tools: <a href="https://developer.nvidia.com/nsight-systems">Nsight Systems</a> and <a href="https://developer.nvidia.com/nsight-compute">Nsight Compute</a></li>
+<li>[5] Paper: &ldquo;Why Utilizing The Maximum Amount Of Memory (Almost) Never Leads To A Better Training Throughput&rdquo;, MLSys 2023</li>
+<li>[6] GitHub: <a href="https://github.com/lessw2020/transformer_central">lessw2020/transformer_central</a></li>
+<li>[7] Article: <a href="https://github.com/microsoft/DeepSpeed/issues/1622">DeepSpeed Memory Flush Warning Logic</a>
+&lt;/rewritten_file&gt;</li>
+</ul>
+
+        </div>
+        <div class="post-reward">
+            <div style="padding: 0 0 0 0; margin: 0 0 0 0; width: 100%; font-size:16px; text-align: center;">
+                <div id="QR" style="opacity: 0;">
+                    <div id="wechat" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="wechat_qr" src="http://localhost:51470/img/wechat_pay.png" alt="wechat_pay"></a>
+                        <p>微信</p>
+                    </div>
+                    <div id="alipay" style="display: inline-block">
+                        <a class="fancybox" rel="group">
+                            <img id="alipay_qr" src="http://localhost:51470/img/alipay.png" alt="alipay"></a>
+                        <p>支付宝</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <footer class="post-footer">
+            
+<nav class="paginav">
+  <a class="next" href="http://localhost:51470/posts/life/test/">
+    <span class="title">다음 페이지 »</span>
+    <br>
+    <span>Test</span>
+  </a>
+</nav>
+
+
+<div class="share-buttons">
+    <a target="_blank" rel="noopener noreferrer" aria-label="share NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심 on twitter"
+       href="https://twitter.com/intent/tweet/?text=NVIDIA%20GPU%20Utilization%ec%9d%98%20%ec%9d%b4%ed%95%b4%3a%20%eb%94%a5%eb%9f%ac%eb%8b%9d%20%ec%84%b1%eb%8a%a5%20%ec%b5%9c%ec%a0%81%ed%99%94%ec%9d%98%20%ed%95%b5%ec%8b%ac&amp;url=http%3a%2f%2flocalhost%3a51470%2fposts%2ftech%2ftraining_and_inference_optimization%2fnvidia_gpu_utilization%2f&amp;hashtags=deeplearning%2cnvidia%2cgpu%2cperformanceoptimization%2ccuda%2cmemorymanagement">
+    <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-253.927,424.544c135.939,0 210.268,-112.643 210.268,-210.268c0,-3.218 0,-6.437 -0.153,-9.502c14.406,-10.421 26.973,-23.448 36.935,-38.314c-13.18,5.824 -27.433,9.809 -42.452,11.648c15.326,-9.196 26.973,-23.602 32.49,-40.92c-14.252,8.429 -30.038,14.56 -46.896,17.931c-13.487,-14.406 -32.644,-23.295 -53.946,-23.295c-40.767,0 -73.87,33.104 -73.87,73.87c0,5.824 0.613,11.494 1.992,16.858c-61.456,-3.065 -115.862,-32.49 -152.337,-77.241c-6.284,10.881 -9.962,23.601 -9.962,37.088c0,25.594 13.027,48.276 32.95,61.456c-12.107,-0.307 -23.448,-3.678 -33.41,-9.196l0,0.92c0,35.862 25.441,65.594 59.311,72.49c-6.13,1.686 -12.72,2.606 -19.464,2.606c-4.751,0 -9.348,-0.46 -13.946,-1.38c9.349,29.426 36.628,50.728 68.965,51.341c-25.287,19.771 -57.164,31.571 -91.8,31.571c-5.977,0 -11.801,-0.306 -17.625,-1.073c32.337,21.15 71.264,33.41 112.95,33.41Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심 on linkedin"
+       href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3a%2f%2flocalhost%3a51470%2fposts%2ftech%2ftraining_and_inference_optimization%2fnvidia_gpu_utilization%2f&amp;title=NVIDIA%20GPU%20Utilization%ec%9d%98%20%ec%9d%b4%ed%95%b4%3a%20%eb%94%a5%eb%9f%ac%eb%8b%9d%20%ec%84%b1%eb%8a%a5%20%ec%b5%9c%ec%a0%81%ed%99%94%ec%9d%98%20%ed%95%b5%ec%8b%ac&amp;summary=NVIDIA%20GPU%20Utilization%ec%9d%98%20%ec%9d%b4%ed%95%b4%3a%20%eb%94%a5%eb%9f%ac%eb%8b%9d%20%ec%84%b1%eb%8a%a5%20%ec%b5%9c%ec%a0%81%ed%99%94%ec%9d%98%20%ed%95%b5%ec%8b%ac&amp;source=http%3a%2f%2flocalhost%3a51470%2fposts%2ftech%2ftraining_and_inference_optimization%2fnvidia_gpu_utilization%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심 on reddit"
+       href="https://reddit.com/submit?url=http%3a%2f%2flocalhost%3a51470%2fposts%2ftech%2ftraining_and_inference_optimization%2fnvidia_gpu_utilization%2f&title=NVIDIA%20GPU%20Utilization%ec%9d%98%20%ec%9d%b4%ed%95%b4%3a%20%eb%94%a5%eb%9f%ac%eb%8b%9d%20%ec%84%b1%eb%8a%a5%20%ec%b5%9c%ec%a0%81%ed%99%94%ec%9d%98%20%ed%95%b5%ec%8b%ac">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심 on facebook"
+       href="https://facebook.com/sharer/sharer.php?u=http%3a%2f%2flocalhost%3a51470%2fposts%2ftech%2ftraining_and_inference_optimization%2fnvidia_gpu_utilization%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심 on whatsapp"
+       href="https://api.whatsapp.com/send?text=NVIDIA%20GPU%20Utilization%ec%9d%98%20%ec%9d%b4%ed%95%b4%3a%20%eb%94%a5%eb%9f%ac%eb%8b%9d%20%ec%84%b1%eb%8a%a5%20%ec%b5%9c%ec%a0%81%ed%99%94%ec%9d%98%20%ed%95%b5%ec%8b%ac%20-%20http%3a%2f%2flocalhost%3a51470%2fposts%2ftech%2ftraining_and_inference_optimization%2fnvidia_gpu_utilization%2f">
+        <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve">
+            <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+        </svg>
+    </a>
+    <a target="_blank" rel="noopener noreferrer" aria-label="share NVIDIA GPU Utilization의 이해: 딥러닝 성능 최적화의 핵심 on telegram"
+       href="https://telegram.me/share/url?text=NVIDIA%20GPU%20Utilization%ec%9d%98%20%ec%9d%b4%ed%95%b4%3a%20%eb%94%a5%eb%9f%ac%eb%8b%9d%20%ec%84%b1%eb%8a%a5%20%ec%b5%9c%ec%a0%81%ed%99%94%ec%9d%98%20%ed%95%b5%ec%8b%ac&amp;url=http%3a%2f%2flocalhost%3a51470%2fposts%2ftech%2ftraining_and_inference_optimization%2fnvidia_gpu_utilization%2f">
+        <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28">
+            <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+        </svg>
+    </a>
+</div>
+
+        </footer>
+    </div>
+
+<div id="disqus_thread"></div>
+<script>
+    
+
+    
+
+    (function() { 
+    var d = document, s = d.createElement('script');
+    s.src = 'https://basic-18.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+<style>
+    .comments_details summary::marker {
+        font-size: 20px;
+        content: '👉展开评论';
+        color: var(--content);
+    }
+    .comments_details[open] summary::marker{
+        font-size: 20px;
+        content: '👇关闭评论';
+        color: var(--content);
+    }
+</style>
+
+
+<div>
+    <details class="comments_details">
+        <summary style="cursor: pointer; margin: 50px 0 20px 0;width: 130px;">
+            <span style="font-size: 20px;color: var(--content);">...</span>
+        </summary>
+        <div id="tcomment"></div>
+    </details>
+    <script src="https://cdn.staticfile.org/twikoo/1.5.8/twikoo.all.min.js">
+    </script>
+    <script>
+        twikoo.init({
+            envId:  null ,
+        el: "#tcomment",
+            lang: 'en-US',
+            region:  null ,
+        path: window.TWIKOO_MAGIC_PATH||window.location.pathname,
+        })
+    </script>
+</div>
+
+</article>
+</main>
+
+<footer class="footer">
+    <span>
+        Copyright
+        &copy;
+        2020-2025
+        <a href="http://localhost:51470/" style="color:#939393;">macsim&#39;s Blog</a>
+        All Rights Reserved
+    </span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" style="color:#939393;"></a>&nbsp;
+    <span>
+        <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=null"
+           style="display:inline-block;text-decoration:none;height:20px;color:#939393;">
+            <img src="" style="float:left;margin: 0px 5px 0px 0px;"/>
+            
+        </a>
+    </span>
+    <span id="busuanzi_container">
+        <span class="fa fa-user"></span> <span id="busuanzi_value_site_uv"></span>
+        <span class="fa fa-eye"></span> <span id="busuanzi_value_site_pv"></span>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <span class="topInner">
+        <svg class="topSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z"/>
+        </svg>
+        <span id="read_progress"></span>
+    </span>
+</a>
+
+<script>
+    document.addEventListener('scroll', function (e) {
+        const readProgress = document.getElementById("read_progress");
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        readProgress.innerText = ((scrollTop / (scrollHeight - clientHeight)).toFixed(2) * 100).toFixed(0);
+    })
+</script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    let mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        (function() {
+            document.cookie = "change-themes" + "="+ escape ("false");
+        })()
+
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('copy', function (e) {
+        if (window.getSelection().toString() && window.getSelection().toString().length > 50) {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                e.preventDefault();
+                let htmlData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                let textData = window.getSelection().toString() +
+                    '\r\n\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                clipboardData.setData('text/html', htmlData);
+                clipboardData.setData('text/plain', textData);
+            }
+        }
+    });
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = '복사';
+
+        function copyingDone() {
+            copybutton.innerText = '복사 완료!';
+            setTimeout(() => {
+                copybutton.innerText = '복사';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                let text = codeblock.textContent +
+                    '\r\n————————————————\r\n' +
+                    '版权声明：本文为「'+"macsim's Blog"+'」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。' +
+                '\r\n原文链接：' + location.href;
+                navigator.clipboard.writeText(text);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) {}
+            selection.removeRange(range);
+        });
+
+        let language = codeblock.className.replaceAll("language-", "")
+        let macTool = document.createElement("div")
+        let macTool1 = document.createElement("div")
+        let macTool2 = document.createElement("div")
+        let macTool3 = document.createElement("div")
+        let languageType = document.createElement("div")
+        languageType.innerText = language
+        macTool.setAttribute('class', 'mac-tool')
+        macTool1.setAttribute('class', 'mac bb1')
+        macTool2.setAttribute('class', 'mac bb2')
+        macTool3.setAttribute('class', 'mac bb3')
+        languageType.setAttribute('class', 'language-type')
+        macTool.appendChild(macTool1)
+        macTool.appendChild(macTool2)
+        macTool.appendChild(macTool3)
+        macTool.appendChild(languageType)
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+            container.appendChild(macTool)
+        }
+    });
+</script>
+</body>
+
+</html>
