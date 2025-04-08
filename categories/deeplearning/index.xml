@@ -13,7 +13,7 @@
       <pubDate>Sat, 10 Aug 2024 10:30:00 +0900</pubDate>
       
       <guid>https://macsim2.github.io/posts/tech/asr/ctc_loss/</guid>
-      <description>자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘과 실전 적용 경험을 공유합니다</description>
+      <description>자동 음성 인식에서 핵심적인 CTC Loss와 RNN-T Loss의 내부 메커니즘, 수학적 유도, 최적화 기법 및 실전 적용 경험에 대한 심도 있는 기술적 분석</description>
     </item>
     
     <item>
